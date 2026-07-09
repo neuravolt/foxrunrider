@@ -1,0 +1,186 @@
+{
+  "project_info": {
+    "project_number": "1022696865208",
+    "firebase_url": "https://foxrunmobility-default-rtdb.firebaseio.com",
+    "project_id": "foxrunmobility",
+    "storage_bucket": "foxrunmobility.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1022696865208:android:74849f72e2ef612693634d",
+        "android_client_info": {
+          "package_name": "com.foxrunmobility.driver"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1022696865208-eouo7oif3pllmmas5rq3qeiokmmt5lru.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.driver",
+            "certificate_hash": "7f6a974fbd4a0189fb3ba9259cd48933e4c6a57a"
+          }
+        },
+        {
+          "client_id": "1022696865208-h2jheoganj71bdn6nrfce666gkgal0tn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.driver",
+            "certificate_hash": "1e0341e3c497cf90e18a4aa0a5f3f243d50c33cf"
+          }
+        },
+        {
+          "client_id": "1022696865208-u95pfls4u40ddanljs4agja4ghj6j14j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.driver",
+            "certificate_hash": "b02438e31b981c2f02a8569b9fbd516d119b2bb8"
+          }
+        },
+        {
+          "client_id": "1022696865208-l18vasmkmp1lrbvpghis5sbn6d4rjdrp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXftmImSO4xL8lgvTEJRiBHhz2rc9LN1Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1022696865208-l18vasmkmp1lrbvpghis5sbn6d4rjdrp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1022696865208:android:b24b60ef07a87dd193634d",
+        "android_client_info": {
+          "package_name": "com.foxrunmobility.driverapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1022696865208-gjb73bgcb02dtq76s40g1p94b1edd3hk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.driverapp",
+            "certificate_hash": "8122e15e4adcd955b99a29c4fb844e47ecec9f6f"
+          }
+        },
+        {
+          "client_id": "1022696865208-llujdfj9hjog6alothdfvg29av0uelha.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.driverapp",
+            "certificate_hash": "1e0341e3c497cf90e18a4aa0a5f3f243d50c33cf"
+          }
+        },
+        {
+          "client_id": "1022696865208-l18vasmkmp1lrbvpghis5sbn6d4rjdrp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXftmImSO4xL8lgvTEJRiBHhz2rc9LN1Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1022696865208-l18vasmkmp1lrbvpghis5sbn6d4rjdrp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1022696865208:android:b545d7cd3587835693634d",
+        "android_client_info": {
+          "package_name": "com.foxrunmobility.rider"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1022696865208-6h2cp4pmhfei47r8bm5bsm03bbgngtjr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.rider",
+            "certificate_hash": "decc2f0f4df85d2711c59d87eb06e828d002cdc7"
+          }
+        },
+        {
+          "client_id": "1022696865208-9i2hfrkvtevu2f5ln813suktc8tko3ud.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.rider",
+            "certificate_hash": "3506f57db0c4c12772069517ac12660ad301a448"
+          }
+        },
+        {
+          "client_id": "1022696865208-nlm8chc2k3o2kvtrp1m4hnn7dp0e2t50.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.rider",
+            "certificate_hash": "7f6a974fbd4a0189fb3ba9259cd48933e4c6a57a"
+          }
+        },
+        {
+          "client_id": "1022696865208-unr2lldhap8egv8a7i2jlb8l7v1n0vli.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.rider",
+            "certificate_hash": "b02438e31b981c2f02a8569b9fbd516d119b2bb8"
+          }
+        },
+        {
+          "client_id": "1022696865208-vgljsrauhdt7lsd7rrq09b4c4133p1df.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.rider",
+            "certificate_hash": "778da2ff611597f5715ff1116a79fd09f38b703c"
+          }
+        },
+        {
+          "client_id": "1022696865208-vm1f76m8ir1hs8ng6i97rp45noga8kd6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.rider",
+            "certificate_hash": "a382613dff60bb710c50030e03379646d0315dba"
+          }
+        },
+        {
+          "client_id": "1022696865208-l18vasmkmp1lrbvpghis5sbn6d4rjdrp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXftmImSO4xL8lgvTEJRiBHhz2rc9LN1Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1022696865208-l18vasmkmp1lrbvpghis5sbn6d4rjdrp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
