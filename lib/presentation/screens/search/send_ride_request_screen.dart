@@ -405,7 +405,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           'Driver Location',
           'driver_marker',
           _vehicleMarkerAsset(),
-          138,
+          165,
         );
   }
 
@@ -769,7 +769,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           'Driver Location',
           'driver_marker',
           _vehicleMarkerAsset(),
-          138,
+          165,
           rotation: _driverMarkerRotation,
         );
   }
@@ -1235,10 +1235,11 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           Row(
             children: [
               SizedBox(
-                width: 92,
-                height: 46,
+                width: 110,
+                height: 55,
                 child: Image.network(
                   widget.selectedVehicleData["image"] ?? "",
+                  headers: const {"ngrok-skip-browser-warning": "true"},
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) =>
                       SvgPicture.asset("assets/images/car.svg"),

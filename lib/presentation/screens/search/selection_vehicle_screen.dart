@@ -365,10 +365,11 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                     Row(
                                       children: [
                                         SizedBox(
-                                          width: 92,
-                                          height: 46,
+                                          width: 110,
+                                          height: 55,
                                           child: Image.network(
                                             data["image"],
+                                            headers: const {"ngrok-skip-browser-warning": "true"},
                                             fit: BoxFit.contain,
                                             
                                             errorBuilder: (_, __, ___) =>

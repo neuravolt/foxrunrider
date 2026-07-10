@@ -589,6 +589,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> {
                             alignment: Alignment.center,
                             child: Image.network(
                               imageUrl,
+                              headers: const {"ngrok-skip-browser-warning": "true"},
                               fit: BoxFit.contain,
                               width: double.infinity,
                               height: double.infinity,
@@ -945,6 +946,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> {
                     children: [
                       Image.network(
                         item.image ?? "",
+                        headers: const {"ngrok-skip-browser-warning": "true"},
                         width: 50,
                         height: 50,
                         errorBuilder: (_, __, ___) => const Icon(Icons.image),

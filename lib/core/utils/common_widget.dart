@@ -463,7 +463,7 @@ Future<Uint8List> createCustomMarkerImage(String imageUrl) async {
     } else {
       // Try loading network image
       final Completer<ui.Image> completer = Completer<ui.Image>();
-      final Image image = Image.network(imageUrl, fit: BoxFit.cover);
+      final Image image = Image.network(imageUrl, headers: const {"ngrok-skip-browser-warning": "true"}, fit: BoxFit.cover);
 
       image.image.resolve(const ImageConfiguration()).addListener(
             ImageStreamListener((ImageInfo info, bool _) {
@@ -1057,6 +1057,7 @@ Widget myNetworkImage(String? image,
       height: height,
       child: Image.network(
         image,
+        headers: const {"ngrok-skip-browser-warning": "true"},
         fit: BoxFit.cover,
         loadingBuilder: (BuildContext context, Widget child,
             ImageChunkEvent? loadingProgress) {
