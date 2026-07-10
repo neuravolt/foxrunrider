@@ -405,7 +405,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           'Driver Location',
           'driver_marker',
           _vehicleMarkerAsset(),
-          120,
+          138,
         );
   }
 
@@ -769,7 +769,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           'Driver Location',
           'driver_marker',
           _vehicleMarkerAsset(),
-          120,
+          138,
           rotation: _driverMarkerRotation,
         );
   }
@@ -1235,8 +1235,8 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           Row(
             children: [
               SizedBox(
-                width: 80,
-                height: 40,
+                width: 92,
+                height: 46,
                 child: Image.network(
                   widget.selectedVehicleData["image"] ?? "",
                   fit: BoxFit.contain,

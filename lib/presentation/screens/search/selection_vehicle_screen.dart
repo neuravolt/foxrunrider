@@ -365,8 +365,8 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                     Row(
                                       children: [
                                         SizedBox(
-                                          width: 80,
-                                          height: 40,
+                                          width: 92,
+                                          height: 46,
                                           child: Image.network(
                                             data["image"],
                                             fit: BoxFit.contain,

@@ -1,11 +1,11 @@
 class Config {
-static const googleKey = "AIzaSyA216snpD1X6FG_CPwwoo0qyeb097cmt1k";
+  static const googleKey = "AIzaSyA216snpD1X6FG_CPwwoo0qyeb097cmt1k";
   static const String oneSiginalAppid = '660f7d98-f9fa-44a3-b429-0e45a5a580af';
-  static const String oneSiginalApiKey = 'os_v2_app_myhx3ghz7jckhnbjbzc2ljmav4ucalfzvg4uy3uln7vqu5jwpch4mn7gdbkmtgptq5ugqlb2ouprzso2llwmcw642bt4w34xecttkgy';
-
+  static const String oneSiginalApiKey =
+      'os_v2_app_myhx3ghz7jckhnbjbzc2ljmav4ucalfzvg4uy3uln7vqu5jwpch4mn7gdbkmtgptq5ugqlb2ouprzso2llwmcw642bt4w34xecttkgy';
 
 // Temporary base domain URL for setup (please add your final URL here)
- static const String baseDomain = 'https://admin.foxrun.in';
+  static const String baseDomain ='https://sleep-utensil-afternoon.ngrok-free.dev';
   // Do not change any code below this line. ==================================================
   static const String version = '/api/v1/';
   static const String bearerVersion = '/api/';
@@ -41,5 +41,4 @@ static const googleKey = "AIzaSyA216snpD1X6FG_CPwwoo0qyeb097cmt1k";
   static const String staticPage = 'StaticPage';
   static const String sos = 'sos';
   static const String getFirstBookingCoupon = 'getFirstBookingCoupon';
-
 }

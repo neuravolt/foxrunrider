@@ -307,6 +307,8 @@ class BookRideUserCubit extends Cubit<BookRideUserState> {
       required String paymentMethod,
       required String dropOffLat,
       required String dropOffLng}) async {
+    debugPrint(
+        "📡 BookRideUserCubit: bookRide called. rideId = $rideId, driverId = $driverId");
     try {
       final response = await vehicleRepository.bookRide(
           context: context,
@@ -325,25 +327,25 @@ class BookRideUserCubit extends Cubit<BookRideUserState> {
           dropOffLat: dropOffLat,
           dropOffLng: dropOffLng);
 
+      debugPrint(
+          "📡 BookRideUserCubit: Server Response status = ${response['status']}. Response body: $response");
       if (response["status"] == 200) {
         BookingSucessModel bookingSucessModel =
             BookingSucessModel.fromJson(response);
-       
-        box.put("bookingCount",response["data"]["bookingCount"].toString() );
-        box.put("coupon",response["data"]["coupon"].toString() );
+
+        box.put("bookingCount", response["data"]["bookingCount"].toString());
+        box.put("coupon", response["data"]["coupon"].toString());
         emit(BookRideUserSuccess(
             pikupOtp: bookingSucessModel.data!.pickupOtp ?? "",
             bookingId: response["data"]["booking_id"],
             paymentUrl: response["data"]["payment_url"],
             rideId: rideId));
-
       } else {
         emit(BookRideUserFailure(error: response["error"]));
-
       }
     } catch (error) {
+      debugPrint("❌ BookRideUserCubit: bookRide failed with error: $error");
       emit(BookRideUserFailure(error: "error$error"));
-
     }
   }
 
@@ -386,7 +388,7 @@ class UpdateRideStatusInDatabaseCubit
         emit(RideStatusSuceessUpdated(status: "com"));
       }
     } catch (err) {
-   //
+      //
     }
   }
 
