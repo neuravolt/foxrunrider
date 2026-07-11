@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,14 +35,40 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
 
   late PageController pageController;
   int currentIndex = 0;
+
+  final List<String> _backgroundImages = [
+    "assets/images/onboarding_bg1.png",
+    "assets/images/onboarding_bg2.png",
+    "assets/images/onboarding_bg3.png",
+  ];
+
+  Timer? _timer;
+  int _currentBgIndex = 0;
+
   @override
   void initState() {
     super.initState();
     pageController = PageController(initialPage: 0);
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentBgIndex = (_currentBgIndex + 1) % _backgroundImages.length;
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    for (var imagePath in _backgroundImages) {
+      precacheImage(AssetImage(imagePath), context);
+    }
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     pageController.dispose();
     super.dispose();
   }
@@ -93,137 +120,108 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
           ],
 
           child: SingleChildScrollView(
-            child: Stack(
-              children: [
-              
-                Column(
-                  children: [
-                
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.38,
-                      child: Stack(
-                        children: [
-                          Align(
-                            alignment: Alignment.topLeft,
-                            child: SvgPicture.asset(
-                              "assets/images/EllipseCircle.svg",
-                              height: MediaQuery.of(context).size.height * 0.38,
-                              fit: BoxFit.fill,
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 40,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 30, right: 20, bottom: 30),
-                              child: Image.asset("assets/images/carImage.png"),
-                            ),
-                          ),
-                        ],
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 1000),
+                      child: Image.asset(
+                        _backgroundImages[_currentBgIndex],
+                        key: ValueKey<int>(_currentBgIndex),
+                        fit: BoxFit.fill,
+                        width: double.infinity,
+                        height: double.infinity,
                       ),
                     ),
-                
-                
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 60,vertical: 20),
-                      child: Column(
-                        children: [
-                          Text(
-                            "Reliable Rides. Seamless Journeys.".translate(context),
-                            textAlign: TextAlign.center,
-                            style: largeHeadingMedium.copyWith(fontSize: 28),
-                          ),
-                          const SizedBox(height: 15),
-                          Text(
-                            "Book instantly, track live, and relax with verified drivers. Multiple ride types, one stress-free experience."
-                                .translate(context),
-                            textAlign: TextAlign.center,
-                            style: smallHeadingMedium.copyWith(
-                              color: notifires.getGrey2whiteColor,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                  ),
+                  Column(
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.74,
                       ),
-                    ),
-                    const SizedBox(height: 60),
-                
-                
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 60),
-                      child: Column(
-                        children: [
-                          CustomsButtons(
-                            textColor: blackColor,
-                            text: "Proceed to Sign-Up",
-                            backgroundColor: themeColor,
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => const SignUp()),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 25),
-                          Text(
-                            "Or continue using".translate(context),
-                            style: regular(context),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 60),
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              InkWell(
-                                onTap: () {
-                                  context.read<GoogleLoginCubit>().googleLogin(context);
+                              CustomsButtons(
+                                textColor: blackColor,
+                                text: "Proceed to Sign-Up",
+                                backgroundColor: themeColor,
+                                onPressed: () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const SignUp()),
+                                  );
                                 },
-                                child: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: themeColor.withValues(alpha: .3),
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: SvgPicture.asset("assets/images/google_icon.svg"),
-                                ),
                               ),
-                              if (Platform.isIOS) const SizedBox(width: 25),
-                              if (Platform.isIOS)
-                                InkWell(
-                                  onTap: () {
-                                    context.read<AppleLoginCubit>().appleLogin(context);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: themeColor.withValues(alpha: .3),
-                                      borderRadius: BorderRadius.circular(16),
+                              const SizedBox(height: 20),
+                              Text(
+                                "Or continue using".translate(context),
+                                style: regular(context),
+                              ),
+                              const SizedBox(height: 15),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      context.read<GoogleLoginCubit>().googleLogin(context);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: themeColor.withValues(alpha: .3),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: SvgPicture.asset("assets/images/google_icon.svg"),
                                     ),
-                                    child: SvgPicture.asset("assets/images/apple_icon.svg"),
                                   ),
-                                ),
+                                  if (Platform.isIOS) const SizedBox(width: 25),
+                                  if (Platform.isIOS)
+                                    InkWell(
+                                      onTap: () {
+                                        context.read<AppleLoginCubit>().appleLogin(context);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: themeColor.withValues(alpha: .3),
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: SvgPicture.asset("assets/images/apple_icon.svg"),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 40),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Positioned(
-                  top: 70,
-                  left: 20,
-                  right: 20,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      languageButton(onTap: (){
-
-                        goTo(const SelectLanguageScreen(isBack: true,));
-                      },),
                     ],
-                  )),
-              ],
+                  ),
+                  Positioned(
+                    top: 70,
+                    left: 20,
+                    right: 20,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        languageButton(
+                          onTap: () {
+                            goTo(const SelectLanguageScreen(
+                              isBack: true,
+                            ));
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           )
 
