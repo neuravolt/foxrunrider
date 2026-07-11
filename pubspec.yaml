@@ -4,7 +4,7 @@ description: "RideOn is a smart and reliable taxi booking app built for your dai
 publish_to: 'none' 
 
 
-version: 1.3.0+18
+version: 1.4.0+20
 
 environment:
   sdk: '>=3.4.3 <4.0.0'
