@@ -326,7 +326,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            "Powered by Foxrun Mobility India",
+                            "Powered by FOXRUN INDIA (OPC) PRIVATE LIMITED",
                             style: regular2(context).copyWith(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,

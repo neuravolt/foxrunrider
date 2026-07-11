@@ -76,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                "Foxrun Mobility India",
+                "FOXRUN INDIA (OPC) PRIVATE LIMITED",
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: 14,
