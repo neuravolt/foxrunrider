@@ -1,3 +1,11 @@
+int? _toInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 class HistoryModel {
   int? status;
   String? message;
@@ -7,7 +15,7 @@ class HistoryModel {
   HistoryModel({this.status, this.message, this.data, this.error});
 
   HistoryModel.fromJson(Map<String, dynamic> json) {
-    status = json['status'];
+    status = _toInt(json['status']);
     message = json['message'];
     data = json['data'] != null ? Data.fromJson(json['data']) : null;
     error = json['error'];
@@ -39,8 +47,8 @@ class Data {
         bookings!.add(Bookings.fromJson(v));
       });
     }
-    offset = json['offset'];
-    limit = json['limit'];
+    offset = _toInt(json['offset']);
+    limit = _toInt(json['limit']);
   }
 
   Map<String, dynamic> toJson() {
@@ -187,7 +195,7 @@ class Bookings {
       this.estimatedDurationMin});
 
   Bookings.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
+    id = _toInt(json['id']);
     token = json['token'];
     itemid = json['itemid'];
     userid = json['userid'];
@@ -208,8 +216,8 @@ class Bookings {
     securityMoney = json['security_money'];
     ivaTax = json['iva_tax'];
     couponCode = json['coupon_code'];
-    couponDiscount = json['coupon_discount'];
-    discountPrice = json['discount_price'];
+    couponDiscount = _toInt(json['coupon_discount']);
+    discountPrice = _toInt(json['discount_price']);
     totalGuest = json['total_guest'];
     amountToPay = json['amount_to_pay'];
     total = json['total'];
@@ -230,14 +238,14 @@ class Bookings {
     rating = json['rating'];
     module = json['module'];
     cancelledBy = json['cancelled_by'];
-    deductedAmount = json['deductedAmount'];
-    refundableAmount = json['refundableAmount'];
+    deductedAmount = _toInt(json['deductedAmount']);
+    refundableAmount = _toInt(json['refundableAmount']);
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
     deletedAt = json['deleted_at'];
-    isItemDelivered = json['is_item_delivered'];
-    isItemReceived = json['is_item_received'];
-    isItemReturned = json['is_item_returned'];
+    isItemDelivered = _toInt(json['is_item_delivered']);
+    isItemReceived = _toInt(json['is_item_received']);
+    isItemReturned = _toInt(json['is_item_returned']);
     userName = json['user_name'];
     userNumber = json['user_number'];
     userEmail = json['user_email'];
@@ -254,7 +262,7 @@ class Bookings {
         ? DropoffLocation.fromJson(json['dropoff_location'])
         : null;
     estimatedDistanceKm = json['estimated_distance_km'];
-    estimatedDurationMin = json['estimated_duration_min'];
+    estimatedDurationMin = _toInt(json['estimated_duration_min']);
   }
 
   Map<String, dynamic> toJson() {

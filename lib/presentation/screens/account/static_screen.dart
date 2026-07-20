@@ -20,12 +20,14 @@ class _StaticScreenState extends State<StaticScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StaticPageCubits>().getStaticData(context, data: widget.data);
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    context.read<StaticPageCubits>().getStaticData(context, data: widget.data);
   }
 
   @override
@@ -45,7 +47,7 @@ class _StaticScreenState extends State<StaticScreen> {
         backgroundColor: notifires.getbgcolor,
         appBar: widget.isBack == true
             ? CustomAppBars(
-                title: widget.data,
+                title: widget.data.translate(context),
                 backgroundColor: notifires.getbgcolor,
                 titleColor: notifires.getGrey1whiteColor)
             : AppBar(

@@ -120,7 +120,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           Divider(color: grey5),
           Expanded(
-            child: BlocBuilder<HistoryCubit, HistoryState>(
+            child: BlocConsumer<HistoryCubit, HistoryState>(
+                listener: (context, state) {
+                  if (state is HistoryError) {
+                    showErrorToastMessage(
+                        state.errorMessage ?? "Something went wrong".translate(context));
+                  }
+                },
                 builder: (context, state) {
               if (state is HistoryLoading && isShimmer) {
                 return ListView.builder(

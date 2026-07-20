@@ -5,8 +5,8 @@ class Config {
       'os_v2_app_myhx3ghz7jckhnbjbzc2ljmav4ucalfzvg4uy3uln7vqu5jwpch4mn7gdbkmtgptq5ugqlb2ouprzso2llwmcw642bt4w34xecttkgy';
 
 // Temporary base domain URL for setup (please add your final URL here)
-// static const String baseDomain ='https://sleep-utensil-afternoon.ngrok-free.dev';
-  static const String baseDomain ='https://admin.foxrun.in/';
+static const String baseDomain ='https://sleep-utensil-afternoon.ngrok-free.dev';
+  // static const String baseDomain ='https://admin.foxrun.in';
   // Do not change any code below this line. ==================================================
   static const String version = '/api/v1/';
   static const String bearerVersion = '/api/';

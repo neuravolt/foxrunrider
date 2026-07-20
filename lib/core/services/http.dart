@@ -85,7 +85,8 @@ Future<dynamic> httpPost(path, data, {required BuildContext context}) async {
 
     return responseData;
   } catch (err) {
-    return {"error": "Something went wrong"};
+    log("httpPost error: $err");
+    return {"error": "Something went wrong: $err"};
   }
 }
 
@@ -148,8 +149,9 @@ Future<dynamic> httpGet(String path, Map<String, dynamic> data,
     }
   } on TimeoutException {
     responsegetData = {'error': "Request timed out. Please try again."};
-
-    responsegetData = {'error': "Something went wrong. Please try again."};
+  } catch (e) {
+    log("httpGet error: $e");
+    responsegetData = {'error': "Something went wrong. Please try again: $e"};
   }
   return responsegetData;
 }

@@ -41,7 +41,9 @@ void main() async {
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]);
-   FlutterError.onError = (FlutterErrorDetails details) {};
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+  };
   runApp(
     MultiBlocProvider(
       providers: [
@@ -68,9 +70,9 @@ void main() async {
                 fontFamily: 'Gilroy Regular',
               ),
               supportedLocales: const [
-                Locale('en', 'US'),
-                Locale('ar', 'AR'),
-
+                Locale('en'),
+                Locale('ar'),
+                Locale('hi'),
               ],
               locale: appLocale,
               localizationsDelegates: const [

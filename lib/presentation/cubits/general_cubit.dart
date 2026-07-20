@@ -90,8 +90,7 @@ class GeneralCubit extends Cubit<GeneralState>{
 
       }
     }   catch (e) {
-
-      GeneralFailed("Something went wrong");
+      emit(GeneralFailed("Something went wrong"));
     }
 
 

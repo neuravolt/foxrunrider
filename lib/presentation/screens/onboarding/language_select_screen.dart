@@ -25,7 +25,7 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen>
 
 final List<Map<String, dynamic>> localeList = [
   {"name": "English", "locale": "en", "flag": "🇬🇧"},
-  {"name": "العربية (Arabic)", "locale": "ar", "flag": "🇸🇦"},
+  {"name": "हिन्दी (Hindi)", "locale": "hi", "flag": "🇮🇳"},
 ];
 
   @override

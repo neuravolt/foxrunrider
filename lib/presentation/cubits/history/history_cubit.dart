@@ -42,7 +42,7 @@ class HistoryCubit extends Cubit<HistoryState> {
       emit(HistoryLoading());
       var response = await historyRepository.getHistoryData(
           context: context, bookingKeyMap: bookingKeyMap);
-      if (response["status"] == 200) {
+      if (response["status"]?.toString() == "200") {
         HistoryModel historyModel = HistoryModel.fromJson(response);
 
         emit(HistorySuccess(

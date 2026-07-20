@@ -52,21 +52,21 @@ class ProfileRepository {
       BuildContext context, String data) async {
     try {
       dynamic response;
-      if (data == "About Us".translate(context)) {
+      if (data == "About Us".translate(context) || data == "About Us") {
         response = await httpGet(Config.staticPage, {"id": "2"},
-            context: navigatorKey.currentContext!);
-      } else if (data == "Help and Support".translate(context)) {
+            context: context);
+      } else if (data == "Help and Support".translate(context) || data == "Help and Support") {
         response = await httpGet(Config.staticPage, {"id": "4"},
-            context: navigatorKey.currentContext!);
-      } else if (data == "Give us feedback".translate(context)) {
+            context: context);
+      } else if (data == "Give us feedback".translate(context) || data == "Give us feedback") {
         response = await httpGet(Config.staticPage, {"id": "25"},
-            context: navigatorKey.currentContext!);
+            context: context);
       } else if (data == "Terms and Conditions" || data == "Privacy Policy") {
         response = await httpGet(Config.staticPage, {"id": "11"},
-            context: navigatorKey.currentContext!);
+            context: context);
       } else if (data == "Support") {
         response = await httpGet(Config.staticPage, {"id": "26"},
-            context: navigatorKey.currentContext!);
+            context: context);
       }
       return response;
     } catch (e) {
