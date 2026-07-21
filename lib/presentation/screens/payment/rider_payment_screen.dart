@@ -15,6 +15,7 @@ import '../../../core/utils/theme/theme_style.dart';
 import '../../cubits/book_ride_cubit.dart';
 import '../../cubits/location/get_nearby_drivers_cubit.dart';
 import '../../cubits/payment/payment_cubit.dart';
+import '../../cubits/wallet/wallet_cubit.dart';
 import '../../cubits/realtime/get_ride_request_status_cubit.dart';
 import '../../cubits/realtime/ride_request_cubit.dart';
 import '../../cubits/realtime/update_ride_request_parameter.dart';
@@ -76,6 +77,10 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
 
     originalFare = double.tryParse(widget.fare ?? '0') ?? 0.0;
     discountedFare = originalFare;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WalletCubit>().fetchWallet(context: context);
+    });
   }
 
   @override
@@ -111,10 +116,34 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      child: BlocListener<GetRideRequestPaymentCubit, Map<String, String>>(
-        listener: (context, state) {
-          paymentStatus = state["paymentStatus"] ?? "";
-        },
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<GetRideRequestPaymentCubit, Map<String, String>>(
+            listener: (context, state) {
+              paymentStatus = state["paymentStatus"] ?? "";
+            },
+          ),
+          BlocListener<UpdatePaymentByUserCubit, UpdatePaymentByUserState>(
+            listener: (context, state) {
+              if (state is UpdatePaymentLoading) {
+                showLoading();
+              } else if (state is UpdatePaymentSuceess) {
+                closeLoading();
+                showToastMessage("Payment completed successfully from wallet!");
+                final rideId = (widget.rideId ?? "").trim();
+                if (rideId.isNotEmpty) {
+                  context.read<UpdateRideRequestParameterCubit>().updatePaymentStatus(
+                    rideId: rideId,
+                    paymentStatus: "collected",
+                  );
+                }
+              } else if (state is UpdatePaymentFailure) {
+                closeLoading();
+                showErrorToastMessage(state.paymentMessage ?? "Payment failed");
+              }
+            },
+          ),
+        ],
         child: Scaffold(
           backgroundColor: whiteColor,
           appBar: CustomAppBarNew(
@@ -138,6 +167,8 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
             listener: (context, state) {
               if (state["paymentMethod"] == "cash") {
                 context.read<PaymentCubit>().selectMethod(PaymentMethod.cash);
+              } else if (state["paymentMethod"] == "wallet") {
+                context.read<PaymentCubit>().selectMethod(PaymentMethod.wallet);
               } else {
                 context.read<PaymentCubit>().selectMethod(PaymentMethod.online);
               }
@@ -715,6 +746,18 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
             method: PaymentMethod.online,
             selectedMethod: selectedMethod,
           ),
+
+          const SizedBox(height: 12),
+
+          // Wallet Payment Option
+          _buildPaymentOption(
+            context: context,
+            icon: Icons.account_balance_wallet_outlined,
+            title: "Wallet".translate(context),
+            subtitle: "Pay using wallet balance (₹${context.read<WalletCubit>().currentBalance.toStringAsFixed(2)})".translate(context),
+            method: PaymentMethod.wallet,
+            selectedMethod: selectedMethod,
+          ),
         ],
       ),
     );
@@ -779,10 +822,14 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                     rideId: widget.rideId ?? "",
                     paymentMethod: value == PaymentMethod.cash
                         ? "cash"
-                        : "online",
+                        : value == PaymentMethod.wallet
+                            ? "wallet"
+                            : "online",
                   );
               if (value == PaymentMethod.online) {
                 _redirectToOnlinePayment(context);
+              } else if (value == PaymentMethod.wallet) {
+                _processWalletPayment(context);
               }
             }
           },
@@ -791,14 +838,50 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
           context.read<PaymentCubit>().selectMethod(method);
           context.read<UpdateRideRequestParameterCubit>().updatePaymentMehod(
             rideId: widget.rideId ?? "",
-            paymentMethod: method == PaymentMethod.cash ? "cash" : "online",
+            paymentMethod: method == PaymentMethod.cash
+                ? "cash"
+                : method == PaymentMethod.wallet
+                    ? "wallet"
+                    : "online",
           );
           if (method == PaymentMethod.online) {
             _redirectToOnlinePayment(context);
+          } else if (method == PaymentMethod.wallet) {
+            _processWalletPayment(context);
           }
         },
       ),
     );
+  }
+
+  Future<void> _processWalletPayment(BuildContext context) async {
+    showLoading();
+    try {
+      await context.read<WalletCubit>().fetchWallet(context: context);
+      final walletCubit = context.read<WalletCubit>();
+      final balance = walletCubit.currentBalance;
+      closeLoading();
+
+      if (balance < discountedFare) {
+        showErrorToastMessage("Insufficient wallet balance. Please select another method or top up.");
+        context.read<PaymentCubit>().selectMethod(PaymentMethod.cash);
+        context.read<UpdateRideRequestParameterCubit>().updatePaymentMehod(
+              rideId: widget.rideId ?? "",
+              paymentMethod: "cash",
+            );
+        return;
+      }
+
+      // Deduct from wallet and complete payment
+      context.read<UpdatePaymentByUserCubit>().updatePaymentStatusByUser(
+            context: context,
+            bookingId: widget.bookingId ?? "",
+            paymentMethod: "wallet",
+          );
+    } catch (e) {
+      closeLoading();
+      showErrorToastMessage("Failed to process wallet payment: $e");
+    }
   }
 
   Future<void> _redirectToOnlinePayment(BuildContext context) async {

@@ -10,6 +10,8 @@ import '../data/repositories/payment_repository.dart';
 import '../data/repositories/profile_repository.dart';
 import '../data/repositories/review_repository.dart';
 import '../data/repositories/vehicle_repository.dart';
+import '../data/repositories/wallet_repository.dart';
+import '../presentation/cubits/wallet/wallet_cubit.dart';
 import '../presentation/cubits/auth/apple_login_cubit.dart';
 import '../presentation/cubits/auth/change_email_cubit.dart';
 import '../presentation/cubits/auth/change_phone_number_cubit.dart';
@@ -109,5 +111,6 @@ class RegisterCubits {
     BlocProvider(create: (context) => MinimumHitsTimeToUpdateTime()),
     BlocProvider(create: (context) => LastActiveApp()),
     BlocProvider(create: (context) => CouponCubit(PaymentRepository())),
+    BlocProvider(create: (context) => WalletCubit(WalletRepository())),
   ];
 }

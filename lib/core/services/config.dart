@@ -42,4 +42,10 @@ static const String baseDomain ='https://sleep-utensil-afternoon.ngrok-free.dev'
   static const String staticPage = 'StaticPage';
   static const String sos = 'sos';
   static const String getFirstBookingCoupon = 'getFirstBookingCoupon';
+
+  // Wallet Endpoints
+  static const String getWallet = 'wallet';
+  static const String getWalletTransactions = 'wallet/transactions';
+  static const String addMoney = 'wallet/add-money';
+  static const String verifyPayment = 'wallet/verify-payment';
 }

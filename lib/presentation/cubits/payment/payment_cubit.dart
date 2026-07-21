@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-enum PaymentMethod { cash, online }
+enum PaymentMethod { cash, online, wallet }
 
 class PaymentCubit extends Cubit<PaymentMethod?> {
   PaymentCubit() : super(PaymentMethod.cash);
