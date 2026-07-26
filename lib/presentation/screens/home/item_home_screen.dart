@@ -32,7 +32,8 @@ class ItemHomeScreen extends StatefulWidget {
   State<ItemHomeScreen> createState() => _ItemHomeScreenState();
 }
 
-class _ItemHomeScreenState extends State<ItemHomeScreen> {
+class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObserver {
+  bool _isLocationServiceDialogShowing = false;
   final ValueNotifier<LatLng> _selectedLocation =
       ValueNotifier(const LatLng(0, 0));
   static const LatLng _defaultLocation = LatLng(37.7749, -122.4194);
@@ -45,6 +46,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     getFCMToken();
     _loadRecentDropLocations();
     context.read<MyImageCubit>().updateMyImage(myImage);
@@ -201,6 +203,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _debounceTimer?.cancel();
     _bannerTimer?.cancel();
     _promoBannerController.dispose();
@@ -208,12 +211,30 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> {
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkLocationServiceOnResume();
+    }
+  }
+
+  Future<void> _checkLocationServiceOnResume() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (serviceEnabled) {
+      if (_isLocationServiceDialogShowing && mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        _isLocationServiceDialogShowing = false;
+      }
+      if (!_isInitialLocationLoaded && !_isLoadingLocation) {
+        _loadInitialLocation();
+      }
+    }
+  }
+
   Future<LocationPermission> _checkPermissions() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      showErrorToastMessage(
-          // ignore: use_build_context_synchronously
-          "Please enable location services".translate(context));
+      _showLocationServiceDialog();
       return LocationPermission.denied;
     }
 
@@ -223,6 +244,68 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> {
     }
 
     return permission;
+  }
+
+  Future<void> _showLocationServiceDialog() async {
+    if (_isLocationServiceDialogShowing || !mounted) return;
+    _isLocationServiceDialogShowing = true;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => AlertDialog(
+        backgroundColor: notifires.getbgcolor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.location_off_rounded,
+              color: themeColor,
+              size: 28,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Enable Location Services'.translate(context),
+                style: heading3(context),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Location services are disabled on your device. Please enable location services to continue using the app.'
+              .translate(context),
+          style: regular(context),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text('Cancel'.translate(context)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: themeColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              await Geolocator.openLocationSettings();
+            },
+            child: Text(
+              'Enable Location'.translate(context),
+              style: const TextStyle(
+                  color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    _isLocationServiceDialogShowing = false;
   }
 
   void updateUserLocation(Position position) {
