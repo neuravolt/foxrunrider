@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:ride_on/core/services/config.dart';
@@ -326,114 +325,96 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
           dialogExit(context), // Assuming this is defined elsewhere
       canPop: false,
       child: Scaffold(
-        extendBodyBehindAppBar: true,
+        backgroundColor: const Color(0xFFFFFDF5),
         drawer: const MyDrawer(),
         key: _scaffoldKey,
-        appBar: PreferredSize(
-          preferredSize:
-              const Size.fromHeight(170), // Custom height for both sections
-          child: Container(
-            color: Colors.transparent,
-            child: SafeArea(
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 5),
-                  _buildLocationInput(),
-                ],
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Layer 1: Fixed decorative background wallpaper
+            Positioned.fill(
+              child: Image.asset(
+                "assets/images/home_background_ui.png",
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
               ),
             ),
-          ),
-        ),
-        body: Container(
-          height: double.maxFinite,
-          width: double.maxFinite,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                const Color(0xFFFFFFFF),
-
-                const Color(0xFFFFFBF3), // white
-                const Color(0xFFFAE4A9), // white
-                const Color(0xFFFAE4A9), // white
-                const Color(0xFFFAE4A9), // white
-                const Color(0xFFFDDD8C),
-                themeColor.withValues(alpha: 0.7) // white
-              ],
-            ),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: SvgPicture.asset(
-                    "assets/images/home_group.svg",
-                  )),
-              SafeArea(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildPromoBanner(),
-                      const SizedBox(height: 20),
-                      if (recentDropLocations.isNotEmpty)
-                        _buildRecentSearches(),
-                      const SizedBox(height: 20),
-                      _buildExploreSection(),
+            // Layer 2: Independent scrollable foreground content
+            SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 5),
+                    _buildLocationInput(),
+                    const SizedBox(height: 15),
+                    _buildPromoBanner(),
+                    const SizedBox(height: 20),
+                    _buildExploreSection(),
+                    const SizedBox(height: 20),
+                    if (recentDropLocations.isNotEmpty) ...[
+                      _buildRecentSearches(),
                       const SizedBox(height: 20),
                     ],
-                  ),
+                    const SizedBox(height: 70), // Bottom padding so content scrolls above fixed footer
+                  ],
                 ),
               ),
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 8,
-                child: SafeArea(
-                  top: false,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "Powered by FOXRUN INDIA (OPC) PRIVATE LIMITED",
-                            style: regular2(context).copyWith(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                            textAlign: TextAlign.center,
+            ),
+            // Layer 3: Persistent Footer anchored at bottom of screen
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 8,
+              child: SafeArea(
+                top: false,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Powered by FOXRUN INDIA (OPC) PRIVATE LIMITED",
+                          style: regular2(context).copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            "Proudly made for India 🇮🇳",
-                            style: regular2(context).copyWith(
-                              fontSize: 10,
-                              color: Colors.black54,
-                            ),
-                            textAlign: TextAlign.center,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Proudly made for India \uD83C\uDDEE\uD83C\uDDF3",
+                          style: regular2(context).copyWith(
+                            fontSize: 10,
+                            color: Colors.black54,
                           ),
-                        ],
-                      ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -615,21 +596,23 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
     if (_promoBannerLoading) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: Container(
-          height: 140,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: CircularProgressIndicator(),
+        child: AspectRatio(
+          aspectRatio: 3 / 1,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
           ),
         ),
       );
@@ -640,8 +623,8 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
           children: [
-            SizedBox(
-              height: 160,
+            AspectRatio(
+              aspectRatio: 3 / 1,
               child: PageView.builder(
                 controller: _promoBannerController,
                 itemCount: _promoBanners.length,
@@ -653,6 +636,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 2),
                     decoration: BoxDecoration(
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -667,46 +651,38 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          Container(
-                            color: themeColor.withValues(alpha: 0.08),
-                            alignment: Alignment.center,
-                            child: Image.network(
-                              imageUrl,
-                              headers: const {"ngrok-skip-browser-warning": "true"},
-                              fit: BoxFit.contain,
-                              width: double.infinity,
-                              height: double.infinity,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: themeColor.withValues(alpha: 0.15),
-                                alignment: Alignment.center,
-                                child: const Icon(Icons.image, size: 40),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                                colors: [
-                                  Colors.black.withValues(alpha: 0.65),
-                                  Colors.black.withValues(alpha: 0.15),
-                                ],
-                              ),
+                          Image.network(
+                            imageUrl,
+                            headers: const {"ngrok-skip-browser-warning": "true"},
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            height: double.infinity,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: themeColor.withValues(alpha: 0.15),
+                              alignment: Alignment.center,
+                              child: const Icon(Icons.image, size: 40),
                             ),
                           ),
                           if (heading.isNotEmpty)
                             Align(
                               alignment: Alignment.bottomLeft,
                               child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Text(
-                                  heading,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: heading2Grey1(context).copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
+                                padding: const EdgeInsets.all(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    heading,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: heading2Grey1(context).copyWith(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -719,9 +695,9 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
               ),
             ),
             if (_promoBanners.length > 1) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               SizedBox(
-                height: 8,
+                height: 6,
                 child: ListenableBuilder(
                   listenable: _promoBannerController,
                   builder: (context, _) {
@@ -736,13 +712,13 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
                         (index) => AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: currentPage == index ? 18 : 8,
-                          height: 8,
+                          width: currentPage == index ? 16 : 6,
+                          height: 6,
                           decoration: BoxDecoration(
                             color: currentPage == index
                                 ? themeColor
                                 : Colors.grey.shade400,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                         ),
                       ),
@@ -758,80 +734,66 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Directionality(
-        textDirection: TextDirection.ltr,
+      child: AspectRatio(
+        aspectRatio: 3 / 1,
         child: Container(
-          height: 120,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFFFFDF5), // halka cream
-                Color(0xFFFFFFFF), // white
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Row(
             children: [
-              // Left Black Part (tedha cut ke sath)
               Expanded(
                 flex: 5,
-                child: ClipPath(
-                  clipper: DiagonalClipper(),
-                  child: Container(
-                    height: double.maxFinite,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: Colors.black,
-                      borderRadius:
-                          BorderRadius.horizontal(left: Radius.circular(12)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Get 20% Off".translate(context),
-                          style: heading2Grey1(context)
-                              .copyWith(color: whiteColor),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Get 20% Off".translate(context),
+                        style: heading2Grey1(context).copyWith(
+                          color: blackColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Your First Ride".translate(context),
-                          style: heading2Grey1(context)
-                              .copyWith(color: whiteColor),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "Your First Ride".translate(context),
+                        style: heading3Grey1(context).copyWith(
+                          color: themeColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-
-              // Right White Part
               Expanded(
                 flex: 3,
                 child: Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Image.asset(
                         "assets/images/appIcon.png",
-                        height: 60,
+                        height: 45,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         "FoxRun\u2122".translate(context),
-                        style: heading2Grey1(context),
+                        style: heading2Grey1(context).copyWith(fontSize: 12),
                       ),
                     ],
                   ),
@@ -845,89 +807,115 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
   }
 
   Widget _buildRecentSearches() {
+    final displayedSearches = recentDropLocations.take(5).toList();
+    if (displayedSearches.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 10,
-              offset: const Offset(0, 2),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Recent Searches".translate(context),
-              style: heading3Grey1(context).copyWith(fontSize: 14),
-            ),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: recentDropLocations.length,
-              itemBuilder: (context, index) {
-                final item = recentDropLocations[index];
-                return ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                  leading: Icon(Icons.history, color: themeColor),
-                  title: Text(
-                    item['address'] ?? "",
-                    style: regular(context)
-                        .copyWith(color: notifires.getGrey1whiteColor),
+            Row(
+              children: [
+                Icon(Icons.history, color: themeColor, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  "Recent Searches".translate(context),
+                  style: heading3Grey1(context).copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
-                  onTap: () {
-                    if (_currentAddress.isEmpty) {
-                      showAlert = false;
-                      startLiveLocationTracking();
-                      setState(() {});
-                      return;
-                    }
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 250),
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: displayedSearches.length > 3
+                    ? const BouncingScrollPhysics()
+                    : const NeverScrollableScrollPhysics(),
+                itemCount: displayedSearches.length,
+                separatorBuilder: (context, index) => const Divider(
+                  height: 1,
+                  color: Color(0xFFF0F0F0),
+                ),
+                itemBuilder: (context, index) {
+                  final item = displayedSearches[index];
+                  return ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    dense: true,
+                    leading: Icon(Icons.history, color: themeColor, size: 18),
+                    title: Text(
+                      item['address'] ?? "",
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: regular(context).copyWith(
+                        color: notifires.getGrey1whiteColor,
+                        fontSize: 13,
+                      ),
+                    ),
+                    onTap: () {
+                      if (_currentAddress.isEmpty) {
+                        showAlert = false;
+                        startLiveLocationTracking();
+                        setState(() {});
+                        return;
+                      }
 
-                    context
-                        .read<SelectedAddressCubit>()
-                        .dropOffAddressController
-                        .text = item['address'] ?? "";
-                    context
-                        .read<BookRideRealTimeDataBaseCubit>()
-                        .updateDropOffLatAndLng(
-                          dropoffAddressLatitude: item['lat'] ?? "",
-                          dropoffAddressLongitude: item['lng'] ?? "",
-                        );
+                      context
+                          .read<SelectedAddressCubit>()
+                          .dropOffAddressController
+                          .text = item['address'] ?? "";
+                      context
+                          .read<BookRideRealTimeDataBaseCubit>()
+                          .updateDropOffLatAndLng(
+                            dropoffAddressLatitude: item['lat'] ?? "",
+                            dropoffAddressLongitude: item['lng'] ?? "",
+                          );
 
-                    final bookRide =
-                        context.read<BookRideRealTimeDataBaseCubit>();
+                      final bookRide =
+                          context.read<BookRideRealTimeDataBaseCubit>();
 
-                    bookRide.updatePickupAddress(
-                      pickupAddress: _currentAddress,
-                    );
-                    bookRide.updateDropOffAddress(
-                      dropoffAddress: item['address'] ?? "",
-                    );
-                    debugPrint(
-                        'pic latLang with address ${bookRide.state.pickupAddressLatitude},${bookRide.state.pickupAddressLongitude} ${bookRide.state.pickupAddress}');
-                    debugPrint(
-                        'drop latLang with address ${bookRide.state.dropoffAddressLatitude},${bookRide.state.dropoffAddressLongitude} ${bookRide.state.dropoffAddress}');
+                      bookRide.updatePickupAddress(
+                        pickupAddress: _currentAddress,
+                      );
+                      bookRide.updateDropOffAddress(
+                        dropoffAddress: item['address'] ?? "",
+                      );
+                      debugPrint(
+                          'pic latLang with address ${bookRide.state.pickupAddressLatitude},${bookRide.state.pickupAddressLongitude} ${bookRide.state.pickupAddress}');
+                      debugPrint(
+                          'drop latLang with address ${bookRide.state.dropoffAddressLatitude},${bookRide.state.dropoffAddressLongitude} ${bookRide.state.dropoffAddress}');
 
-                    if (bookRide.state.pickupAddress.isNotEmpty &&
-                        bookRide.state.dropoffAddress.isNotEmpty &&
-                        bookRide.state.pickupAddressLatitude.isNotEmpty &&
-                        bookRide.state.pickupAddressLongitude.isNotEmpty &&
-                        bookRide.state.dropoffAddressLatitude.isNotEmpty &&
-                        bookRide.state.dropoffAddressLongitude.isNotEmpty) {
-                      goTo(const LoadingNearbySearchScreen());
-                    } else {}
-
-                    // setState(() {});
-                  },
-                );
-              },
+                      if (bookRide.state.pickupAddress.isNotEmpty &&
+                          bookRide.state.dropoffAddress.isNotEmpty &&
+                          bookRide.state.pickupAddressLatitude.isNotEmpty &&
+                          bookRide.state.pickupAddressLongitude.isNotEmpty &&
+                          bookRide.state.dropoffAddressLatitude.isNotEmpty &&
+                          bookRide.state.dropoffAddressLongitude.isNotEmpty) {
+                        goTo(const LoadingNearbySearchScreen());
+                      } else {}
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -939,13 +927,16 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 "Explore".translate(context),
-                style: heading3Grey1(context),
+                style: heading3Grey1(context).copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -985,13 +976,13 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
             padding: const EdgeInsets.symmetric(vertical: 15),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: isLoading ? 4 : items.length,
+            itemCount: isLoading ? 8 : items.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
                 childAspectRatio: 1,
-                mainAxisExtent: 80),
+                mainAxisExtent: 88),
             itemBuilder: (_, index) {
               if (isLoading) return ShimmerLoader();
               final item = items[index];
@@ -1020,9 +1011,17 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
                 },
                 child: Container(
                   alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                   decoration: BoxDecoration(
-                    color: whiteColor,
-                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1030,13 +1029,22 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
                       Image.network(
                         item.image ?? "",
                         headers: const {"ngrok-skip-browser-warning": "true"},
-                        width: 50,
-                        height: 50,
+                        width: 44,
+                        height: 44,
                         errorBuilder: (_, __, ___) => const Icon(Icons.image),
                       ),
-                      Text(item.name ?? "",
-                          style: heading3(context)
-                              .copyWith(color: blackColor, fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.name ?? "",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: heading3(context).copyWith(
+                          color: blackColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
