@@ -15,6 +15,7 @@ import '../../cubits/auth/apple_login_cubit.dart';
 import '../../cubits/auth/google_login_cubit.dart';
 import '../../cubits/auth/signup_cubit.dart';
 import '../../cubits/auth/user_authenticate_cubit.dart';
+import '../../cubits/profile/edit_profile_cubit.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/form_validations.dart';
 import 'google_update_screen.dart';
@@ -72,6 +73,29 @@ class _SignUpState extends State<SignUp> {
           backgroundColor: notifires.getbgcolor,
           body: MultiBlocListener(
               listeners: [
+                BlocListener<UpdateProfileCubit, UpdateProfileState>(
+                  listener: (context, state) {
+                    if (state is UpdateProfileLoading) {
+                      Widgets.showLoader(context);
+                    } else if (state is UpdateProfileSuccess) {
+                      Widgets.hideLoder(context);
+                      context.read<NameCubit>().updateName(textEditingSignUpControllerFirstName.text);
+                      context.read<EmailCubit>().updateEmail(textEditingSignUpControllerEmail.text);
+                      if (loginModel?.data != null) {
+                        loginModel!.data!.firstNameSetter = textEditingSignUpControllerFirstName.text;
+                      }
+                      showToastMessage("Profile saved successfully!".translate(context));
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ItemHomeScreen()),
+                        (route) => false,
+                      );
+                    } else if (state is UpdateProfileFailed) {
+                      Widgets.hideLoder(context);
+                      showErrorToastMessage(state.error);
+                    }
+                  },
+                ),
                 BlocListener<AuthSignUpCubit, AuthSignUpState>(
                     listener: (context, state) {
                   if (state is SignUpLoading) {
@@ -165,13 +189,31 @@ class _SignUpState extends State<SignUp> {
                                   const SizedBox(
                                     height: 10,
                                   ),
-                                  Text("Get Started".translate(context),
-                                      style: heading1(context)),
-                                  Text(
-                                      "Create an account to continue."
-                                          .translate(context),
-                                      style: regular2(context).copyWith(
-                                          color: notifires.getGrey3whiteColor)),
+                                  Text.rich(
+                                    TextSpan(
+                                      text: "Complete ",
+                                      style: heading1(context),
+                                      children: [
+                                        TextSpan(
+                                          text: "Your Profile",
+                                          style: heading1(context).copyWith(color: themeColor),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text.rich(
+                                    TextSpan(
+                                      text: "Create an account to ",
+                                      style: regular2(context).copyWith(color: notifires.getGrey3whiteColor),
+                                      children: [
+                                        TextSpan(
+                                          text: "continue.",
+                                          style: regular2(context).copyWith(color: themeColor, fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                   const SizedBox(
                                     height: 20,
                                   ),
@@ -342,183 +384,334 @@ class _SignUpState extends State<SignUp> {
                                                             fontSize: 14))
                                               ])),
                                         ),
-                                      )
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 50),
-                                  CustomsButtons(
-                                      onPressed: () {
-                                        if (_formKey.currentState!.validate()) {
-                                          if (isChecked == false) {
-                                            showErrorToastMessage(
-                                                "Please select the terms and condition."
-                                                    .translate(context));
-                                            return;
-                                          }
-                                          if (textEditingSingUpControllerPhoneNumber
-                                              .text.isEmpty) {
-                                            showErrorToastMessage(
-                                                "Fill valid mobile number"
-                                                    .translate(context));
-                                            return;
-                                          }
-                                          context
-                                              .read<AuthSignUpCubit>()
-                                              .signUp(
-                                                context: context,
-                                                name:
-                                                    textEditingSignUpControllerFirstName
-                                                        .text,
-                                                phoneCountry: context
-                                                        .read<SetCountryCubit>()
-                                                        .state
-                                                        .dialCode
-                                                        .startsWith("+")
-                                                    ? context
-                                                        .read<SetCountryCubit>()
-                                                        .state
-                                                        .dialCode
-                                                    : "+${context.read<SetCountryCubit>().state.dialCode}",
-                                                defaultCountry: context
-                                                    .read<SetCountryCubit>()
-                                                    .state
-                                                    .countryCode,
-                                                phoneNumber:
-                                                    textEditingSingUpControllerPhoneNumber
-                                                        .text,
-                                                email:
-                                                    textEditingSignUpControllerEmail
-                                                        .text,
-                                              );
-                                        }
-                                      },
-                                      textColor:blackColor ,
-                                      text: "Sign up",
-                                      backgroundColor: themeColor),
-                                  const SizedBox(
-                                    height: 40,
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                          height: 2,
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.08,
-                                          color: notifires.getGrey4whiteColor),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        "or Sign up with".translate(context),
-                                        style: regular3(context),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Container(
-                                          height: 1.5,
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.08,
-                                          color: notifires.getGrey4whiteColor),
-                                    ],
-                                  ),
-                                  const SizedBox(
-                                    height: 20,
-                                  ),
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        InkWell(
-                                          onTap: () {
-                                            context.read<GoogleLoginCubit>().googleLogin(context);
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(12),
-                                            decoration: BoxDecoration(
-                                              color: themeColor.withValues(alpha: .3),
-                                              borderRadius: BorderRadius.circular(16),
-                                            ),
-                                            child: SvgPicture.asset("assets/images/google_icon.svg"),
-                                          ),
-                                        ),
-                                        if (Platform.isIOS) const SizedBox(width: 25),
-                                        if (Platform.isIOS)
-                                          InkWell(
-                                            onTap: () {
-                                              context.read<AppleLoginCubit>().appleLogin(context);
-                                            },
-                                            child: Container(
-                                              padding: const EdgeInsets.all(12),
-                                              decoration: BoxDecoration(
-                                                color: themeColor.withValues(alpha: .3),
-                                                borderRadius: BorderRadius.circular(16),
-                                              ),
-                                              child: SvgPicture.asset("assets/images/apple_icon.svg"),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 50,
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        "Already have an account?"
-                                            .translate(context),
-                                        style: regular3(context).copyWith(
-                                            color:
-                                                notifires.getGrey2whiteColor),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      InkWell(
-                                        onTap: () {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const LoginScreen()));
-                                        },
-                                        child: Text(
-                                          "Sign in".translate(context),
-                                          style: heading1(context).copyWith(
-                                            color: blackColor,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 250),
+                                   GestureDetector(
+                                     onTap: () {
+                                       if (_formKey.currentState!.validate()) {
+                                         if (isChecked == false) {
+                                           showErrorToastMessage(
+                                               "Please select the terms and condition."
+                                                   .translate(context));
+                                           return;
+                                         }
+                                         if (token.isNotEmpty) {
+                                           context.read<UpdateProfileCubit>().updateProfileMethod(
+                                             postData: {
+                                               "first_name": textEditingSignUpControllerFirstName.text,
+                                               "email": textEditingSignUpControllerEmail.text,
+                                             },
+                                           );
+                                           return;
+                                         }
+                                         if (textEditingSingUpControllerPhoneNumber
+                                             .text.isEmpty) {
+                                           showErrorToastMessage(
+                                               "Fill valid mobile number"
+                                                   .translate(context));
+                                           return;
+                                         }
+                                         context
+                                             .read<AuthSignUpCubit>()
+                                             .signUp(
+                                               context: context,
+                                               name:
+                                                   textEditingSignUpControllerFirstName
+                                                       .text,
+                                               phoneCountry: context
+                                                       .read<SetCountryCubit>()
+                                                       .state
+                                                       .dialCode
+                                                       .startsWith("+")
+                                                   ? context
+                                                       .read<SetCountryCubit>()
+                                                       .state
+                                                       .dialCode
+                                                   : "+${context.read<SetCountryCubit>().state.dialCode}",
+                                               defaultCountry: context
+                                                   .read<SetCountryCubit>()
+                                                   .state
+                                                   .countryCode,
+                                               phoneNumber:
+                                                   textEditingSingUpControllerPhoneNumber
+                                                       .text,
+                                               email:
+                                                   textEditingSignUpControllerEmail
+                                                       .text,
+                                             );
+                                       }
+                                     },
+                                     child: Container(
+                                       height: 56,
+                                       padding: const EdgeInsets.symmetric(horizontal: 10),
+                                       decoration: BoxDecoration(
+                                         gradient: LinearGradient(
+                                           colors: [
+                                             themeColor.withValues(alpha: 0.85),
+                                             themeColor,
+                                             const Color(0xFFFFB300),
+                                           ],
+                                           begin: Alignment.centerLeft,
+                                           end: Alignment.centerRight,
+                                         ),
+                                         borderRadius: BorderRadius.circular(30),
+                                         boxShadow: [
+                                           BoxShadow(
+                                             color: themeColor.withValues(alpha: 0.35),
+                                             blurRadius: 15,
+                                             offset: const Offset(0, 6),
+                                           ),
+                                         ],
+                                       ),
+                                       child: Row(
+                                         children: [
+                                           Container(
+                                             width: 40,
+                                             height: 40,
+                                             decoration: const BoxDecoration(
+                                               color: Colors.white,
+                                               shape: BoxShape.circle,
+                                             ),
+                                             child: const Icon(
+                                               Icons.person_add_outlined,
+                                               color: Colors.black87,
+                                               size: 20,
+                                             ),
+                                           ),
+                                           Expanded(
+                                             child: Center(
+                                               child: Text(
+                                                 "Sign up".translate(context),
+                                                 style: heading1(context).copyWith(
+                                                   color: Colors.black,
+                                                   fontSize: 18,
+                                                   fontWeight: FontWeight.bold,
+                                                 ),
+                                               ),
+                                             ),
+                                           ),
+                                           const Icon(
+                                             Icons.auto_awesome,
+                                             color: Colors.white,
+                                             size: 16,
+                                           ),
+                                           const SizedBox(width: 8),
+                                           Container(
+                                             width: 40,
+                                             height: 40,
+                                             decoration: const BoxDecoration(
+                                               color: Colors.white,
+                                               shape: BoxShape.circle,
+                                             ),
+                                             child: const Icon(
+                                               Icons.arrow_forward,
+                                               color: Colors.black87,
+                                               size: 20,
+                                             ),
+                                           ),
+                                         ],
+                                       ),
+                                     ),
+                                   ),
+                                   const SizedBox(height: 35),
+                                   Row(
+                                     mainAxisAlignment: MainAxisAlignment.center,
+                                     crossAxisAlignment: CrossAxisAlignment.center,
+                                     children: [
+                                       Container(
+                                         height: 1.5,
+                                         width: MediaQuery.of(context).size.width * 0.12,
+                                         color: notifires.getGrey4whiteColor,
+                                       ),
+                                       const SizedBox(width: 12),
+                                       Container(
+                                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                         decoration: BoxDecoration(
+                                           color: notifires.getbgcolor,
+                                           borderRadius: BorderRadius.circular(20),
+                                           border: Border.all(
+                                             color: notifires.getGrey5whiteColor,
+                                           ),
+                                         ),
+                                         child: Text(
+                                           "or Sign up with".translate(context),
+                                           style: regular3(context).copyWith(fontSize: 13),
+                                         ),
+                                       ),
+                                       const SizedBox(width: 12),
+                                       Container(
+                                         height: 1.5,
+                                         width: MediaQuery.of(context).size.width * 0.12,
+                                         color: notifires.getGrey4whiteColor,
+                                       ),
+                                     ],
+                                   ),
+                                   const SizedBox(height: 20),
+                                   Align(
+                                     alignment: Alignment.center,
+                                     child: Row(
+                                       mainAxisAlignment: MainAxisAlignment.center,
+                                       children: [
+                                         InkWell(
+                                           onTap: () {
+                                             context.read<GoogleLoginCubit>().googleLogin(context);
+                                           },
+                                           child: Container(
+                                             padding: const EdgeInsets.all(14),
+                                             decoration: BoxDecoration(
+                                               color: Colors.white,
+                                               shape: BoxShape.circle,
+                                               boxShadow: [
+                                                 BoxShadow(
+                                                   color: Colors.black.withValues(alpha: 0.06),
+                                                   blurRadius: 12,
+                                                   offset: const Offset(0, 4),
+                                                 ),
+                                               ],
+                                             ),
+                                             child: SvgPicture.asset("assets/images/google_icon.svg", width: 26, height: 26),
+                                           ),
+                                         ),
+                                         if (Platform.isIOS) const SizedBox(width: 25),
+                                         if (Platform.isIOS)
+                                           InkWell(
+                                             onTap: () {
+                                               context.read<AppleLoginCubit>().appleLogin(context);
+                                             },
+                                             child: Container(
+                                               padding: const EdgeInsets.all(14),
+                                               decoration: BoxDecoration(
+                                                 color: Colors.white,
+                                                 shape: BoxShape.circle,
+                                                 boxShadow: [
+                                                   BoxShadow(
+                                                     color: Colors.black.withValues(alpha: 0.06),
+                                                     blurRadius: 12,
+                                                     offset: const Offset(0, 4),
+                                                   ),
+                                                 ],
+                                               ),
+                                               child: SvgPicture.asset("assets/images/apple_icon.svg", width: 26, height: 26),
+                                             ),
+                                           ),
+                                       ],
+                                     ),
+                                   ),
+                                   const SizedBox(height: 35),
+                                   GestureDetector(
+                                     onTap: () {
+                                       Navigator.push(
+                                         context,
+                                         MaterialPageRoute(
+                                           builder: (context) => const LoginScreen(),
+                                         ),
+                                       );
+                                     },
+                                     child: Container(
+                                       padding: const EdgeInsets.all(16),
+                                       decoration: BoxDecoration(
+                                         color: const Color(0xFFFFFDF7),
+                                         borderRadius: BorderRadius.circular(20),
+                                         border: Border.all(
+                                           color: const Color(0xFFFFE8B3),
+                                           width: 1.5,
+                                         ),
+                                         boxShadow: [
+                                           BoxShadow(
+                                             color: Colors.black.withValues(alpha: 0.04),
+                                             blurRadius: 15,
+                                             offset: const Offset(0, 4),
+                                           ),
+                                         ],
+                                       ),
+                                       child: Row(
+                                         children: [
+                                           Container(
+                                             width: 50,
+                                             height: 50,
+                                             decoration: BoxDecoration(
+                                               color: const Color(0xFFFFF3D6),
+                                               borderRadius: BorderRadius.circular(16),
+                                             ),
+                                             child: const Icon(
+                                               Icons.shield_outlined,
+                                               color: Color(0xFFE6A100),
+                                               size: 26,
+                                             ),
+                                           ),
+                                           const SizedBox(width: 14),
+                                           Expanded(
+                                             child: Column(
+                                               crossAxisAlignment: CrossAxisAlignment.start,
+                                               children: [
+                                                 Text(
+                                                   "Already have an account?".translate(context),
+                                                   style: heading1(context).copyWith(
+                                                     color: Colors.black,
+                                                     fontSize: 15,
+                                                     fontWeight: FontWeight.bold,
+                                                   ),
+                                                 ),
+                                                 const SizedBox(height: 2),
+                                                 Text(
+                                                   "Welcome back! Please sign in to continue.".translate(context),
+                                                   style: regular3(context).copyWith(
+                                                     color: Colors.grey.shade600,
+                                                     fontSize: 12,
+                                                   ),
+                                                 ),
+                                               ],
+                                             ),
+                                           ),
+                                           const SizedBox(width: 8),
+                                           Container(
+                                             width: 38,
+                                             height: 38,
+                                             decoration: BoxDecoration(
+                                               color: Colors.white,
+                                               shape: BoxShape.circle,
+                                               border: Border.all(
+                                                 color: const Color(0xFFFFD54F),
+                                                 width: 1.5,
+                                               ),
+                                             ),
+                                             child: const Icon(
+                                               Icons.arrow_forward,
+                                               color: Colors.black87,
+                                               size: 18,
+                                             ),
+                                           ),
+                                         ],
+                                       ),
+                                     ),
+                                   ),
+                                   const SizedBox(height: 40),
                                 ]),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  Positioned(
-                  top: 70,
-                  left: 10,
-                  right: 10,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      languageButton(onTap: (){
 
-                        goTo(const SelectLanguageScreen(isBack: true,));
-                      },),
-                    ],
-                  )),
-                  const SizedBox(height: 40),
+                  Positioned(
+                    top: 70,
+                    left: 10,
+                    right: 10,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        languageButton(
+                          onTap: () {
+                            goTo(const SelectLanguageScreen(isBack: true));
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ))),
     );
-  }
-}
+   }
+ }

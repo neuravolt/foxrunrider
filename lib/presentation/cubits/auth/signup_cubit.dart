@@ -64,9 +64,13 @@ class AuthSignUpCubit extends Cubit<AuthSignUpState> {
           phoneNumber: phoneNumber ?? "",
         );
         if (firebaseOtpResponse["status"] != 200) {
-          emit(SignUpFailure(
-              firebaseOtpResponse["error"] ?? "Unable to send OTP."));
-          return;
+          final hasBackendOtp = loginModel?.data?.resetToken != null || loginModel?.data?.otpValue != null;
+          if (!hasBackendOtp) {
+            emit(SignUpFailure(
+                firebaseOtpResponse["error"] ?? "Unable to send OTP."));
+            return;
+          }
+          debugPrint("Firebase Phone Auth info: ${firebaseOtpResponse["error"]}. Proceeding with backend OTP flow.");
         }
         context.read<SetCountryCubit>().reset();
 

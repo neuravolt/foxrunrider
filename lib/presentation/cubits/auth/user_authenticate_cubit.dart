@@ -53,8 +53,7 @@ class AuthUserAuthenticateCubit extends Cubit<AuthUserAuthenticateState> {
       final firebaseResponse =
           await FirebasePhoneAuthService.instance.verifyOtp(otpValue);
       if (firebaseResponse["status"] != 200) {
-        emit(UserFailure(firebaseResponse["error"] ?? "Invalid OTP"));
-        return;
+        debugPrint("Firebase verifyOtp info: ${firebaseResponse["error"]}. Proceeding with backend OTP verification.");
       }
       var response = await authRepository.userAuthenticateLogin(
           phoneNumber: phoneNumber,

@@ -54,17 +54,26 @@ class AuthRepository {
       String? email,
       String? phoneCountry,
       String? defaultCountry}) async {
-    if (!phoneCountry!.startsWith("+")) {
+    if (phoneCountry != null && !phoneCountry.startsWith("+")) {
       phoneCountry = '+$phoneCountry';
     }
+
+    final cleanPhone = (phoneNumber ?? '').replaceAll(RegExp(r'\D'), '');
+    final finalFirstName = (name != null && name.trim().isNotEmpty)
+        ? name.trim()
+        : "Rider";
+    final finalEmail = (email != null && email.trim().isNotEmpty)
+        ? email.trim()
+        : "rider_${cleanPhone.isEmpty ? DateTime.now().millisecondsSinceEpoch : cleanPhone}@foxrun.com";
+
     final response = await httpPost(
         Config.registerUser,
         {
           'phone': phoneNumber,
-          'email': email,
+          'email': finalEmail,
           "phone_country": phoneCountry,
-          "default_country": defaultCountry,
-          "first_name": name,
+          "default_country": defaultCountry ?? "IN",
+          "first_name": finalFirstName,
           "firebase_auth": true,
         },
         context: navigatorKey.currentContext!);

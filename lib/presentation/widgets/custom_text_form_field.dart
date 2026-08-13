@@ -139,23 +139,38 @@ class IntelPhoneFieldRefs extends StatefulWidget {
   final bool readOnly;
   final bool isenable;
   final Widget? suffixIcon;
-  final VoidCallback? onTap;// New param here!
+  final VoidCallback? onTap;
+  final AutovalidateMode? autovalidateMode;
+  final Color? fillColor;
+  final Color? borderColor;
+  final double? borderRadius;
+  final Widget? customPrefixIcon;
+  final TextStyle? dropdownTextStyle;
+  final TextStyle? inputTextStyle;
+  final TextStyle? hintStyle;
 
-  final AutovalidateMode? autovalidateMode; // New param here!
-  const IntelPhoneFieldRefs(
-      {super.key,
-      required this.textEditingControllerCommons,
-      this.validator,
-      this.onChanged,
-      this.oncountryChanged,
-      this.selectedcountry,
-        this.onTap,
-      this.defultcountry,
-      this.readOnly = false,
-      this.suffixIcon,
-      this.autovalidateMode = AutovalidateMode.disabled, // Default value
-      this.hintText,
-      this.isenable = true});
+  const IntelPhoneFieldRefs({
+    super.key,
+    required this.textEditingControllerCommons,
+    this.validator,
+    this.onChanged,
+    this.oncountryChanged,
+    this.selectedcountry,
+    this.onTap,
+    this.defultcountry,
+    this.readOnly = false,
+    this.suffixIcon,
+    this.autovalidateMode = AutovalidateMode.disabled,
+    this.hintText,
+    this.isenable = true,
+    this.fillColor,
+    this.borderColor,
+    this.borderRadius,
+    this.customPrefixIcon,
+    this.dropdownTextStyle,
+    this.inputTextStyle,
+    this.hintStyle,
+  });
 
   @override
   State<IntelPhoneFieldRefs> createState() => _IntelPhoneFieldRefState();
@@ -168,15 +183,19 @@ class _IntelPhoneFieldRefState extends State<IntelPhoneFieldRefs> {
   @override
   Widget build(BuildContext context) {
     notifires = Provider.of<ColorNotifires>(context, listen: true);
+    final effectiveFillColor = widget.fillColor ?? notifires.getBoxColor;
+    final effectiveBorderColor = widget.borderColor ?? notifires.getBoxColor;
+    final effectiveRadius = widget.borderRadius ?? Dimensions.radiusDefault;
+
     return IntlPhoneField(
       onTap: widget.onTap,
-      autovalidateMode: widget.autovalidateMode, // Applying here
-      flagsButtonPadding: const EdgeInsets.only(left: 10),
+      autovalidateMode: widget.autovalidateMode,
+      flagsButtonPadding: const EdgeInsets.only(left: 14, right: 6),
       dropdownIconPosition: IconPosition.trailing,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       enabled: widget.isenable,
       readOnly: widget.readOnly,
-      dropdownTextStyle: regular2(context),
+      dropdownTextStyle: widget.dropdownTextStyle ?? regular2(context),
       pickerDialogStyle: PickerDialogStyle(
           backgroundColor: notifires.getBoxColor,
           width: 330,
@@ -223,8 +242,9 @@ class _IntelPhoneFieldRefState extends State<IntelPhoneFieldRefs> {
 
       controller: widget.textEditingControllerCommons,
       dropdownIcon: Icon(
-        Icons.arrow_drop_down,
-        color: notifires.getGrey3whiteColor,
+        Icons.keyboard_arrow_down_rounded,
+        color: widget.dropdownTextStyle?.color ?? notifires.getGrey3whiteColor,
+        size: 20,
       ),
 
       onChanged: (phone) {
@@ -257,43 +277,43 @@ class _IntelPhoneFieldRefState extends State<IntelPhoneFieldRefs> {
       initialValue: widget.selectedcountry,
       cursorColor: notifires.getwhiteblackColor,
 
-      style: regular2(context),
+      style: widget.inputTextStyle ?? regular2(context),
       textAlign: TextAlign.start,
 
       focusNode: focusNode,
       autofocus: false,
       decoration: InputDecoration(
-        prefixIcon: Icon(
-          Icons.call,
-          color: acentColor,
-        ),
+        prefixIcon: widget.customPrefixIcon ??
+            Icon(
+              Icons.call,
+              color: acentColor,
+            ),
         filled: true,
-        fillColor: notifires.getBoxColor,
+        fillColor: effectiveFillColor,
         hintText: widget.hintText ?? "Mobile Phone".translate(context),
-        hintStyle: regular3(context),
-        border: const OutlineInputBorder(),
+        hintStyle: widget.hintStyle ?? regular3(context),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(effectiveRadius),
+          borderSide: BorderSide(color: effectiveBorderColor),
+        ),
         counterText: "",
         enabled: true,
         errorStyle: regular(context).copyWith(color: pC1),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-          borderSide: BorderSide(color: notifires.getBoxColor),
+          borderRadius: BorderRadius.circular(effectiveRadius),
+          borderSide: BorderSide(color: effectiveBorderColor),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-          borderSide: BorderSide(color: notifires.getBoxColor),
+          borderRadius: BorderRadius.circular(effectiveRadius),
+          borderSide: BorderSide(color: effectiveBorderColor, width: 1.5),
         ),
-
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-          borderSide: BorderSide(
-              color: notifires.getBoxColor),
+          borderRadius: BorderRadius.circular(effectiveRadius),
+          borderSide: BorderSide(color: Colors.red.shade300),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(Dimensions.radiusDefault),
-          borderSide: BorderSide(
-              color: notifires.getBoxColor,
-              width: 1.0),
+          borderRadius: BorderRadius.circular(effectiveRadius),
+          borderSide: BorderSide(color: Colors.red.shade300, width: 1.5),
         ),
       ),
 

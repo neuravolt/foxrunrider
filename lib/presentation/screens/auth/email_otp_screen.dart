@@ -33,13 +33,6 @@ class _EmailOtpScreenState extends State<EmailOtpScreen> {
   @override
   void initState() {
     super.initState();
-
-    Future.delayed(
-      const Duration(seconds: 1),
-      () {
-        textEditingOtpController.text = widget.otpValue!;
-      },
-    );
     startResendTimer();
   }
 
@@ -85,8 +78,6 @@ class _EmailOtpScreenState extends State<EmailOtpScreen> {
               goBack();
             } else if (state is ResendEmailOtpSuccess) {
               Widgets.hideLoder(context);
-
-              textEditingOtpController.text = state.otp;
             } else if (state is EmailOtpFailed) {
               Widgets.hideLoder(context);
 

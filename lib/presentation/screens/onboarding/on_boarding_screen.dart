@@ -6,6 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:ride_on/core/utils/translate.dart';
 import 'package:ride_on/presentation/screens/auth/google_update_screen.dart';
+import 'package:ride_on/presentation/screens/auth/login_screen.dart';
 import 'package:ride_on/presentation/screens/auth/signup_screen.dart';
 import 'package:ride_on/presentation/screens/home/item_home_screen.dart';
 import 'package:ride_on/presentation/screens/onboarding/language_select_screen.dart';
@@ -136,72 +137,67 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
                       ),
                     ),
                   ),
-                  Column(
-                    children: [
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.74,
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 60),
-                          child: Column(
+                  Positioned(
+                    bottom: 24,
+                    left: 40,
+                    right: 40,
+                    child: SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CustomsButtons(
+                            textColor: blackColor,
+                            text: "Get Started",
+                            backgroundColor: themeColor,
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            "Or continue using".translate(context),
+                            style: regular(context),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              CustomsButtons(
-                                textColor: blackColor,
-                                text: "Proceed to Sign-Up",
-                                backgroundColor: themeColor,
-                                onPressed: () {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const SignUp()),
-                                  );
+                              InkWell(
+                                onTap: () {
+                                  context.read<GoogleLoginCubit>().googleLogin(context);
                                 },
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                "Or continue using".translate(context),
-                                style: regular(context),
-                              ),
-                              const SizedBox(height: 15),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      context.read<GoogleLoginCubit>().googleLogin(context);
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: themeColor.withValues(alpha: .3),
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      child: SvgPicture.asset("assets/images/google_icon.svg"),
-                                    ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: themeColor.withValues(alpha: .3),
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
-                                  if (Platform.isIOS) const SizedBox(width: 25),
-                                  if (Platform.isIOS)
-                                    InkWell(
-                                      onTap: () {
-                                        context.read<AppleLoginCubit>().appleLogin(context);
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: themeColor.withValues(alpha: .3),
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        child: SvgPicture.asset("assets/images/apple_icon.svg"),
-                                      ),
-                                    ),
-                                ],
+                                  child: SvgPicture.asset("assets/images/google_icon.svg"),
+                                ),
                               ),
+                              if (Platform.isIOS) const SizedBox(width: 25),
+                              if (Platform.isIOS)
+                                InkWell(
+                                  onTap: () {
+                                    context.read<AppleLoginCubit>().appleLogin(context);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: themeColor.withValues(alpha: .3),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: SvgPicture.asset("assets/images/apple_icon.svg"),
+                                  ),
+                                ),
                             ],
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                   Positioned(
                     top: 70,

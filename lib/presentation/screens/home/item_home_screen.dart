@@ -16,6 +16,7 @@ import 'package:ride_on/core/extensions/workspace.dart';
 import 'package:ride_on/presentation/screens/search/loading_nearby_search_screen.dart';
 import 'package:ride_on/presentation/screens/search/route_location_screen.dart';
 import 'package:ride_on/presentation/widgets/drawer_custom.dart';
+import '../auth/signup_screen.dart';
 import '../../../core/services/data_store.dart';
 import '../../cubits/book_ride_cubit.dart';
 import '../../cubits/general_cubit.dart';
@@ -317,6 +318,102 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
     });
   }
 
+  void _checkProfileAndProceed(VoidCallback onProceed) {
+    final userName = (loginModel?.data?.firstName ?? context.read<NameCubit>().state).trim();
+    if (userName.isEmpty || userName.toLowerCase() == "rider") {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        builder: (context) {
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFF8E7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.person_add_rounded,
+                    color: Color(0xFFFFB300),
+                    size: 36,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Complete Your Profile".translate(context),
+                  style: heading2Grey1(context).copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Please tell us your name to proceed with booking your ride.".translate(context),
+                  textAlign: TextAlign.center,
+                  style: regular(context).copyWith(color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SignUp(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    height: 52,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          themeColor.withValues(alpha: 0.85),
+                          themeColor,
+                          const Color(0xFFFFB300),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "Complete Profile Now".translate(context),
+                        style: heading3(context).copyWith(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      onProceed();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -523,27 +620,29 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
                   const SizedBox(width: 20),
                   Flexible(
                     child: InkWell(
-                      onTap: () async {
-                        context
-                            .read<VehicleDataUpdateCubit>()
-                            .updateVehicleTypeSelectedId(1);
+                      onTap: () {
+                        _checkProfileAndProceed(() async {
+                          context
+                              .read<VehicleDataUpdateCubit>()
+                              .updateVehicleTypeSelectedId(1);
 
-                        context
-                            .read<SelectedAddressCubit>()
-                            .pickupAddressController
-                            .text = _currentAddress;
-                        context
-                            .read<GetSuggestionAddressCubit>()
-                            .getSuggestions("");
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => UserSearchLocation(
-                              currentAddress: _currentAddress,
+                          context
+                              .read<SelectedAddressCubit>()
+                              .pickupAddressController
+                              .text = _currentAddress;
+                          context
+                              .read<GetSuggestionAddressCubit>()
+                              .getSuggestions("");
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => UserSearchLocation(
+                                currentAddress: _currentAddress,
+                              ),
                             ),
-                          ),
-                        );
-                        _loadRecentDropLocations();
+                          );
+                          _loadRecentDropLocations();
+                        });
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -872,46 +971,44 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
                       ),
                     ),
                     onTap: () {
-                      if (_currentAddress.isEmpty) {
-                        showAlert = false;
-                        startLiveLocationTracking();
-                        setState(() {});
-                        return;
-                      }
+                      _checkProfileAndProceed(() {
+                        if (_currentAddress.isEmpty) {
+                          showAlert = false;
+                          startLiveLocationTracking();
+                          setState(() {});
+                          return;
+                        }
 
-                      context
-                          .read<SelectedAddressCubit>()
-                          .dropOffAddressController
-                          .text = item['address'] ?? "";
-                      context
-                          .read<BookRideRealTimeDataBaseCubit>()
-                          .updateDropOffLatAndLng(
-                            dropoffAddressLatitude: item['lat'] ?? "",
-                            dropoffAddressLongitude: item['lng'] ?? "",
-                          );
+                        context
+                            .read<SelectedAddressCubit>()
+                            .dropOffAddressController
+                            .text = item['address'] ?? "";
+                        context
+                            .read<BookRideRealTimeDataBaseCubit>()
+                            .updateDropOffLatAndLng(
+                              dropoffAddressLatitude: item['lat'] ?? "",
+                              dropoffAddressLongitude: item['lng'] ?? "",
+                            );
 
-                      final bookRide =
-                          context.read<BookRideRealTimeDataBaseCubit>();
+                        final bookRide =
+                            context.read<BookRideRealTimeDataBaseCubit>();
 
-                      bookRide.updatePickupAddress(
-                        pickupAddress: _currentAddress,
-                      );
-                      bookRide.updateDropOffAddress(
-                        dropoffAddress: item['address'] ?? "",
-                      );
-                      debugPrint(
-                          'pic latLang with address ${bookRide.state.pickupAddressLatitude},${bookRide.state.pickupAddressLongitude} ${bookRide.state.pickupAddress}');
-                      debugPrint(
-                          'drop latLang with address ${bookRide.state.dropoffAddressLatitude},${bookRide.state.dropoffAddressLongitude} ${bookRide.state.dropoffAddress}');
+                        bookRide.updatePickupAddress(
+                          pickupAddress: _currentAddress,
+                        );
+                        bookRide.updateDropOffAddress(
+                          dropoffAddress: item['address'] ?? "",
+                        );
 
-                      if (bookRide.state.pickupAddress.isNotEmpty &&
-                          bookRide.state.dropoffAddress.isNotEmpty &&
-                          bookRide.state.pickupAddressLatitude.isNotEmpty &&
-                          bookRide.state.pickupAddressLongitude.isNotEmpty &&
-                          bookRide.state.dropoffAddressLatitude.isNotEmpty &&
-                          bookRide.state.dropoffAddressLongitude.isNotEmpty) {
-                        goTo(const LoadingNearbySearchScreen());
-                      } else {}
+                        if (bookRide.state.pickupAddress.isNotEmpty &&
+                            bookRide.state.dropoffAddress.isNotEmpty &&
+                            bookRide.state.pickupAddressLatitude.isNotEmpty &&
+                            bookRide.state.pickupAddressLongitude.isNotEmpty &&
+                            bookRide.state.dropoffAddressLatitude.isNotEmpty &&
+                            bookRide.state.dropoffAddressLongitude.isNotEmpty) {
+                          goTo(const LoadingNearbySearchScreen());
+                        }
+                      });
                     },
                   );
                 },
@@ -988,26 +1085,28 @@ class _ItemHomeScreenState extends State<ItemHomeScreen> with WidgetsBindingObse
               final item = items[index];
 
               return InkWell(
-                onTap: () async {
-                  context
-                      .read<VehicleDataUpdateCubit>()
-                      .updateVehicleTypeSelectedId(item.id);
+                onTap: () {
+                  _checkProfileAndProceed(() async {
+                    context
+                        .read<VehicleDataUpdateCubit>()
+                        .updateVehicleTypeSelectedId(item.id);
 
-                  context
-                      .read<SelectedAddressCubit>()
-                      .pickupAddressController
-                      .text = _currentAddress;
-                  context.read<GetSuggestionAddressCubit>().getSuggestions("");
+                    context
+                        .read<SelectedAddressCubit>()
+                        .pickupAddressController
+                        .text = _currentAddress;
+                    context.read<GetSuggestionAddressCubit>().getSuggestions("");
 
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => UserSearchLocation(
-                        currentAddress: _currentAddress,
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UserSearchLocation(
+                          currentAddress: _currentAddress,
+                        ),
                       ),
-                    ),
-                  );
-                  _loadRecentDropLocations();
+                    );
+                    _loadRecentDropLocations();
+                  });
                 },
                 child: Container(
                   alignment: Alignment.center,

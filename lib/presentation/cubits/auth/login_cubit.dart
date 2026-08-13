@@ -44,8 +44,18 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
       required String phoneCountry}) async {
     try {
       emit(LoginLoading());
-      final response = await authRepository.login(
+      var response = await authRepository.login(
           phoneCountry: phoneCountry, phoneNumber: phoneNumber);
+
+      // If phone number is not found (new user), auto-fallback to signUp API
+      if (response['status'] != 200) {
+        response = await authRepository.signUp(
+          phoneNumber: phoneNumber,
+          phoneCountry: phoneCountry,
+          name: "",
+          email: "",
+        );
+      }
 
       if (response['status'] == 200) {
         loginModel = LoginModel.fromJson(response);
@@ -57,15 +67,19 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
           phoneNumber: phoneNumber,
         );
         if (firebaseOtpResponse["status"] != 200) {
-          emit(LoginFailure(
-              firebaseOtpResponse["error"] ?? "Unable to send OTP."));
-          return;
+          final hasBackendOtp = loginModel?.data?.resetToken != null || loginModel?.data?.otpValue != null;
+          if (!hasBackendOtp) {
+            emit(LoginFailure(
+                firebaseOtpResponse["error"] ?? "Unable to send OTP."));
+            return;
+          }
+          debugPrint("Firebase Phone Auth info: ${firebaseOtpResponse["error"]}. Proceeding with backend OTP flow.");
         }
         context.read<SetCountryCubit>().reset();
 
         emit(LoginSuccess(LoginModel.fromJson(response)));
       } else {
-        emit(LoginFailure(response['error']));
+        emit(LoginFailure(response['error'] ?? "Unable to proceed"));
       }
     } catch (e) {
       context.read<SetCountryCubit>().reset();
