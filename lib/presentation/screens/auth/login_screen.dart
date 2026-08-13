@@ -730,44 +730,31 @@ class _LoginScreenState extends State<LoginScreen> {
                                       gradient: isPhoneFilled
                                           ? const LinearGradient(
                                               colors: [
-                                                Color(0xFFFFD54F),
-                                                Color(0xFFFFB300),
-                                                Color(0xFFFF8F00),
+                                                Color(0xFFFFC533),
+                                                Color(0xFFFF9F0A),
                                               ],
-                                              begin: Alignment.centerLeft,
-                                              end: Alignment.centerRight,
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
                                             )
                                           : null,
                                       color: isPhoneFilled
                                           ? null
                                           : const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(28),
+                                      borderRadius: BorderRadius.circular(16),
                                       boxShadow: isPhoneFilled
                                           ? [
                                               BoxShadow(
-                                                color: const Color(0xFFFFB300)
-                                                    .withValues(alpha: 0.4),
+                                                color: const Color(0xFFFF9F0A)
+                                                    .withValues(alpha: 0.35),
                                                 blurRadius: 14,
                                                 offset: const Offset(0, 5),
                                               ),
                                             ]
                                           : [],
                                     ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                    child: Stack(
+                                      alignment: Alignment.center,
                                       children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 20),
-                                          child: Icon(
-                                            Icons.auto_awesome,
-                                            color: isPhoneFilled
-                                                ? Colors.white
-                                                : Colors.transparent,
-                                            size: 20,
-                                          ),
-                                        ),
                                         Text(
                                           "Next".translate(context),
                                           style: heading2(context).copyWith(
@@ -775,38 +762,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 ? const Color(0xFF1E1E1E)
                                                 : const Color(0xFF94A3B8),
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 17,
+                                            fontSize: 18,
                                           ),
                                         ),
-                                        Container(
-                                          margin:
-                                              const EdgeInsets.only(right: 6),
-                                          width: 44,
-                                          height: 44,
-                                          decoration: BoxDecoration(
-                                            color: isPhoneFilled
-                                                ? Colors.white
-                                                : const Color(0xFFE2E8F0),
-                                            shape: BoxShape.circle,
-                                            boxShadow: isPhoneFilled
-                                                ? [
-                                                    BoxShadow(
-                                                      color: Colors.black
-                                                          .withValues(
-                                                              alpha: 0.08),
-                                                      blurRadius: 6,
-                                                      offset:
-                                                          const Offset(0, 2),
-                                                    ),
-                                                  ]
-                                                : [],
-                                          ),
+                                        Positioned(
+                                          right: 20,
                                           child: Icon(
                                             Icons.arrow_forward_rounded,
                                             color: isPhoneFilled
                                                 ? const Color(0xFF1E1E1E)
                                                 : const Color(0xFF94A3B8),
-                                            size: 20,
+                                            size: 22,
                                           ),
                                         ),
                                       ],

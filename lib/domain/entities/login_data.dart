@@ -228,6 +228,10 @@ class Data {
     _firstName = value;
   }
 
+  set emailSetter(value) {
+    _email = value;
+  }
+
   set remainingItemsSetter(value) {
     _remainingItems = remainingItems;
   }

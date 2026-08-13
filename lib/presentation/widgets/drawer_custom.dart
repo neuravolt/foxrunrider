@@ -40,7 +40,9 @@ class _MyDrawerState extends State<MyDrawer> {
         rideId: context.read<BookRideRealTimeDataBaseCubit>().state.rideId,
         userParameter: {"userImageUrl": myImage});
     context.read<NameCubit>().updateName(loginModel?.data?.firstName ?? "");
-    context.read<EmailCubit>().updateEmail(loginModel?.data?.email ?? "");
+    final rawEmail = loginModel?.data?.email ?? "";
+    final cleanEmail = (rawEmail.contains("foxrun.com") || rawEmail.toLowerCase().startsWith("rider_")) ? "" : rawEmail;
+    context.read<EmailCubit>().updateEmail(cleanEmail);
 
     super.initState();
   }
@@ -115,9 +117,13 @@ class _MyDrawerState extends State<MyDrawer> {
                         }),
                         BlocBuilder<EmailCubit, dynamic>(
                             builder: (context, state) {
+                          final emailText = context.read<EmailCubit>().state;
+                          if (emailText.isEmpty || emailText.contains("foxrun.com") || emailText.toLowerCase().startsWith("rider_")) {
+                            return const SizedBox.shrink();
+                          }
                           return Row(
                             children: [
-                              Text(context.read<EmailCubit>().state,
+                              Text(emailText,
                                   style: headingBlack(context)
                                       .copyWith(fontSize: 14)),
                             ],

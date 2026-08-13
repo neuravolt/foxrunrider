@@ -307,17 +307,58 @@ class _EditProfileState extends State<EditProfile> {
                 ),
               ),
             ),
-            CustomsButtons(
-                textColor: blackColor,
-                text: "Update Profile".translate(context),
-                backgroundColor: themeColor,
-                onPressed: () {
-                  context
-                      .read<UpdateProfileCubit>()
-                      .updateProfileMethod(postData: {
-                    "first_name": textEditingEditProfileNameController.text,
-                  });
-                }),
+            GestureDetector(
+              onTap: () {
+                context
+                    .read<UpdateProfileCubit>()
+                    .updateProfileMethod(postData: {
+                  "first_name": textEditingEditProfileNameController.text,
+                });
+              },
+              child: Container(
+                height: 56,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFFFC533),
+                      Color(0xFFFF9F0A),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF9F0A).withValues(alpha: 0.35),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Text(
+                      "Update Profile".translate(context),
+                      style: const TextStyle(
+                        color: Color(0xFF1E1E1E),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Positioned(
+                      right: 20,
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Color(0xFF1E1E1E),
+                        size: 22,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(
               height: 50,
             )
