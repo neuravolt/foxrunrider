@@ -170,7 +170,10 @@ class IntelPhoneFieldRefs extends StatefulWidget {
     this.dropdownTextStyle,
     this.inputTextStyle,
     this.hintStyle,
+    this.focusNode,
   });
+
+  final FocusNode? focusNode;
 
   @override
   State<IntelPhoneFieldRefs> createState() => _IntelPhoneFieldRefState();
@@ -280,7 +283,7 @@ class _IntelPhoneFieldRefState extends State<IntelPhoneFieldRefs> {
       style: widget.inputTextStyle ?? regular2(context),
       textAlign: TextAlign.start,
 
-      focusNode: focusNode,
+      focusNode: widget.focusNode ?? focusNode,
       autofocus: false,
       decoration: InputDecoration(
         prefixIcon: widget.customPrefixIcon ??
