@@ -314,16 +314,50 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        "foxrun",
-                                        style: heading1(context).copyWith(
-                                          color: const Color(0xFF1A1A1A),
-                                          fontSize: 28,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: -0.8,
-                                        ),
-                                      ),
+                                       const SizedBox(width: 8),
+                                       // Foxrun Logo Icon
+                                       ClipRRect(
+                                         borderRadius:
+                                             BorderRadius.circular(8),
+                                         child: Image.asset(
+                                           'assets/images/appIcon.png',
+                                           height: 32,
+                                           width: 32,
+                                           fit: BoxFit.contain,
+                                         ),
+                                       ),
+                                       const SizedBox(width: 6),
+                                       // Foxrun Text & Small TM Sign
+                                       Text.rich(
+                                         TextSpan(
+                                           text: "foxrun",
+                                           style: heading1(context).copyWith(
+                                             color: const Color(0xFF1A1A1A),
+                                             fontSize: 24,
+                                             fontWeight: FontWeight.w900,
+                                             letterSpacing: -0.6,
+                                           ),
+                                           children: const [
+                                             WidgetSpan(
+                                               alignment:
+                                                   PlaceholderAlignment.top,
+                                               child: Padding(
+                                                 padding: EdgeInsets.only(
+                                                     left: 2, top: 2),
+                                                 child: Text(
+                                                   "TM",
+                                                   style: TextStyle(
+                                                     fontSize: 9,
+                                                     fontWeight:
+                                                         FontWeight.w800,
+                                                     color: Color(0xFFD98A00),
+                                                   ),
+                                                 ),
+                                               ),
+                                             ),
+                                           ],
+                                         ),
+                                       ),
                                     ],
                                   ),
                                   Row(

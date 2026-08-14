@@ -1,20 +1,14 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:ride_on/core/utils/translate.dart';
-import 'package:ride_on/presentation/screens/auth/google_update_screen.dart';
 import 'package:ride_on/presentation/screens/auth/login_screen.dart';
-import 'package:ride_on/presentation/screens/auth/signup_screen.dart';
-import 'package:ride_on/presentation/screens/home/item_home_screen.dart';
 import 'package:ride_on/presentation/screens/onboarding/language_select_screen.dart';
 import '../../../core/utils/common_widget.dart';
 import '../../../core/utils/theme/project_color.dart';
 import '../../../core/utils/theme/theme_style.dart';
-import '../../cubits/auth/apple_login_cubit.dart';
-import '../../cubits/auth/google_login_cubit.dart';
+
 
 
 class Onboardingscreen extends StatefulWidget {
@@ -79,148 +73,126 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
     notifires = Provider.of<ColorNotifires>(context, listen: true);
     return Scaffold(
       backgroundColor: whiteColor,
-      body: MultiBlocListener(
-          listeners: [
-            BlocListener<GoogleLoginCubit, GoogleLoginState>(
-              listener: (context, state) {
-                if (state is GoogleLoginSucess) {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const ItemHomeScreen()));
-                } else if (state is AddPhoneNumberState) {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => GoogleUpdate(
-                                email: state.loginModel.data?.email ?? "",
-                              )));
-                } else if (state is GoogleLoginFailure) {
-                  showErrorToastMessage(state.error);
-                }
-              },
-            ),
-            BlocListener<AppleLoginCubit, AppleLoginState>(
-              listener: (context, state) {
-                if (state is AppleLoginSuccess) {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const ItemHomeScreen()));
-                } else if (state is AddPhoneNumberAppleState) {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const GoogleUpdate()));
-                } else if (state is AppleLoginFailure) {
-                  closeLoading();
-                  showErrorToastMessage(state.error);
-                }
-              },
-            )
-          ],
-
-          child: SingleChildScrollView(
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 1000),
-                      child: Image.asset(
-                        _backgroundImages[_currentBgIndex],
-                        key: ValueKey<int>(_currentBgIndex),
-                        fit: BoxFit.fill,
-                        width: double.infinity,
-                        height: double.infinity,
-                      ),
-                    ),
+      body: SingleChildScrollView(
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 1000),
+                  child: Image.asset(
+                    _backgroundImages[_currentBgIndex],
+                    key: ValueKey<int>(_currentBgIndex),
+                    fit: BoxFit.fill,
+                    width: double.infinity,
+                    height: double.infinity,
                   ),
-                  Positioned(
-                    bottom: 24,
-                    left: 40,
-                    right: 40,
-                    child: SafeArea(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                ),
+              ),
+              Positioned(
+                bottom: 24,
+                left: 40,
+                right: 40,
+                child: SafeArea(
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginScreen()),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(35),
+                    child: Container(
+                      height: 70,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFFFFC045), // Lighter yellowish-orange
+                            Color(0xFFFF9C1A), // Rich orange
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(35),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF9C1A).withValues(alpha: 0.4),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Row(
                         children: [
-                          CustomsButtons(
-                            textColor: blackColor,
-                            text: "Get Started",
-                            backgroundColor: themeColor,
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                              );
-                            },
+                          // Left: White circle with location pin
+                          Container(
+                            width: 54,
+                            height: 54,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                            ),
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Color(0xFFFF9C1A),
+                              size: 26,
+                            ),
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            "Or continue using".translate(context),
-                            style: regular(context),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              InkWell(
-                                onTap: () {
-                                  context.read<GoogleLoginCubit>().googleLogin(context);
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: themeColor.withValues(alpha: .3),
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: SvgPicture.asset("assets/images/google_icon.svg"),
-                                ),
+                          // Center: Text
+                          Expanded(
+                            child: Text(
+                              "Get Started".translate(context),
+                              textAlign: TextAlign.center,
+                              style: largeHeadingMedium.copyWith(
+                                color: const Color(0xFF1E1E1E),
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
-                              if (Platform.isIOS) const SizedBox(width: 25),
-                              if (Platform.isIOS)
-                                InkWell(
-                                  onTap: () {
-                                    context.read<AppleLoginCubit>().appleLogin(context);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: themeColor.withValues(alpha: .3),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: SvgPicture.asset("assets/images/apple_icon.svg"),
-                                  ),
-                                ),
-                            ],
+                            ),
+                          ),
+                          // Right: Black circle with arrow
+                          Container(
+                            width: 54,
+                            height: 54,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF1A1A1A),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: 70,
-                    left: 20,
-                    right: 20,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        languageButton(
-                          onTap: () {
-                            goTo(const SelectLanguageScreen(
-                              isBack: true,
-                            ));
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          )
-
+              Positioned(
+                top: 70,
+                left: 20,
+                right: 20,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    languageButton(
+                      onTap: () {
+                        goTo(const SelectLanguageScreen(
+                          isBack: true,
+                        ));
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

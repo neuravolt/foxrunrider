@@ -40,9 +40,10 @@ class _InitialScreenState extends State<InitialScreen> {
   RideRequest? ridedata;
 
   void handleNavigation() {
-    final bool isFirstUser = box.get('Firstuser', defaultValue: false) != true;
+    final bool isFirstUser =
+        box.get('Firstuser', defaultValue: false) != true;
 
-    final duration = Duration(seconds: isFirstUser ? 4 : 0);
+    final duration = Duration(milliseconds: isFirstUser ? 1800 : 1500);
     Timer(duration, () {
       if (isFirstUser) {
         navigateToScreen(context, () => const Onboardingscreen());
