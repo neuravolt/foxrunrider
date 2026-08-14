@@ -6,6 +6,7 @@ import 'package:ride_on/core/utils/translate.dart';
 import 'package:ride_on/presentation/screens/account/static_screen.dart';
 import 'package:ride_on/presentation/screens/home/item_home_screen.dart';
 import 'package:ride_on/presentation/screens/onboarding/language_select_screen.dart';
+import 'package:ride_on/presentation/screens/onboarding/on_boarding_screen.dart';
 import '../../../core/extensions/workspace.dart';
 import '../../../core/utils/common_widget.dart';
 import '../../../core/utils/theme/project_color.dart';
@@ -275,15 +276,17 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
                                     children: [
                                       InkWell(
                                         onTap: () {
-                                          if (Navigator.canPop(context)) {
+                                          if (token.isNotEmpty &&
+                                              Navigator.canPop(context)) {
                                             Navigator.pop(context);
                                           } else {
-                                            Navigator.pushReplacement(
+                                            Navigator.pushAndRemoveUntil(
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    const InitialScreen(),
+                                                    const Onboardingscreen(),
                                               ),
+                                              (route) => false,
                                             );
                                           }
                                         },

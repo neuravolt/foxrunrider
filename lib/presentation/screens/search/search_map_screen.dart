@@ -6,6 +6,7 @@ import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:google_places_flutter/model/prediction.dart';
 import 'package:ride_on/core/utils/translate.dart';
 import '../../../core/services/config.dart';
+import '../../../core/services/data_store.dart';
 import '../../../core/utils/common_widget.dart';
 import '../../../core/utils/theme/project_color.dart';
 import '../../../core/utils/theme/theme_style.dart';
@@ -28,6 +29,7 @@ class _SearchMapScreenState extends State<SearchMapScreen> {
   TextEditingController textEditingAddressSearchController =
       TextEditingController();
   FocusNode focusNode1 = FocusNode();
+  Timer? _debounce;
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -77,7 +79,25 @@ class _SearchMapScreenState extends State<SearchMapScreen> {
     super.dispose();
   }
 
-  Timer? _debounce;
+  void _saveRecentDropLocation(String address, String lat, String lng) {
+    if (address.isEmpty) return;
+    final storedList = box.get('recent_drop_locations', defaultValue: []);
+    List<Map<String, String>> currentList = [];
+    if (storedList is List) {
+      currentList = storedList.map((e) => Map<String, String>.from(e)).toList();
+    }
+    currentList.removeWhere((item) => item['address'] == address);
+    currentList.insert(0, {
+      "address": address,
+      "lat": lat,
+      "lng": lng,
+    });
+    if (currentList.length > 3) {
+      currentList = currentList.sublist(0, 3);
+    }
+    box.put('recent_drop_locations', currentList);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -345,14 +365,19 @@ class _SearchMapScreenState extends State<SearchMapScreen> {
                         .updateIsCrossIconSelectedDropOff(
                             ischeckedCrossIconDropOff: true);
 
-                    context
-                            .read<SelectedAddressCubit>()
-                            .dropOffAddressController
-                            .text =
+                    final dropAddress =
                         textEditingAddressSearchController.text.toString();
+                    _saveRecentDropLocation(
+                      dropAddress,
+                      selectedMapLat.toString(),
+                      selectedMapLng.toString(),
+                    );
+                    context
+                        .read<SelectedAddressCubit>()
+                        .dropOffAddressController
+                        .text = dropAddress;
                     context.read<GetCordinatesCubit>().getCoordinates(
-                        address:
-                            textEditingAddressSearchController.text.toString());
+                        address: dropAddress);
 
                     if (context
                             .read<SelectedAddressCubit>()

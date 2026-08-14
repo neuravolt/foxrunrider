@@ -188,9 +188,9 @@ class _UserSearchLocationState extends State<UserSearchLocation> {
       "lng": lng,
     });
 
-    // Max 10 limit
-    if (recentDropLocations.length > 5) {
-      recentDropLocations = recentDropLocations.sublist(0, 5);
+    // Max 3 limit
+    if (recentDropLocations.length > 3) {
+      recentDropLocations = recentDropLocations.sublist(0, 3);
     }
 
     // Save in Hive

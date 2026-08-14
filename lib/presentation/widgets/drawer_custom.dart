@@ -262,10 +262,13 @@ class _MyDrawerState extends State<MyDrawer> {
                     if (state is LogoutFailure) {
                       showErrorToastMessage("Logout Failed: ${state.error}");
                     } else if (state is LogoutSuccess) {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const LoginScreen()));
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(),
+                        ),
+                        (route) => false,
+                      );
                     }
                   },
                   builder: (context, state) {
