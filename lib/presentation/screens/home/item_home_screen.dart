@@ -149,6 +149,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
       }
       if (seconds < 1) seconds = 4;
 
+      _bannerTimer?.cancel();
       _bannerTimer = Timer(Duration(seconds: seconds), () {
         if (!mounted || !_promoBannerController.hasClients) return;
         final nextPage = (currentPage + 1) % _promoBanners.length;
@@ -159,7 +160,9 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
           curve: Curves.easeInOut,
         )
             .then((_) {
-          scheduleNextBanner();
+          if (mounted && _promoBannerController.hasClients) {
+            scheduleNextBanner();
+          }
         });
       });
     }
@@ -489,8 +492,21 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
   }
 
   void _checkProfileAndProceed(VoidCallback onProceed) {
-    final userName =
+    String userName =
         (loginModel?.data?.firstName ?? context.read<NameCubit>().state).trim();
+    if (userName.isEmpty) {
+      final storedData = box.get("UserData");
+      if (storedData != null && storedData.toString().isNotEmpty) {
+        try {
+          final jsonMap = jsonDecode(storedData.toString());
+          if (jsonMap is Map &&
+              jsonMap['data'] != null &&
+              jsonMap['data']['first_name'] != null) {
+            userName = jsonMap['data']['first_name'].toString().trim();
+          }
+        } catch (_) {}
+      }
+    }
     if (userName.isEmpty || userName.toLowerCase() == "rider") {
       showModalBottomSheet(
         context: context,
@@ -589,9 +605,10 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      // ignore: deprecated_member_use
-      onPopInvoked: (v) async =>
-          dialogExit(context), // Assuming this is defined elsewhere
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        dialogExit(context);
+      },
       canPop: false,
       child: Scaffold(
         backgroundColor: const Color(0xFFFFFDF5),
@@ -1354,126 +1371,170 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
   Widget _buildFixedOfferBannerCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: InkWell(
-        onTap: () {
-          _checkProfileAndProceed(() async {
-            context
-                .read<VehicleDataUpdateCubit>()
-                .updateVehicleTypeSelectedId(1);
-            context
-                .read<SelectedAddressCubit>()
-                .pickupAddressController
-                .text = _currentAddress;
-            context.read<GetSuggestionAddressCubit>().getSuggestions("");
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => UserSearchLocation(
-                  currentAddress: _currentAddress,
+      child: Container(
+        height: 105,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFFFB800),
+              Color(0xFFFF9100),
+              Color(0xFFFF7A00),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF8800).withValues(alpha: 0.35),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: Stack(
+            children: [
+              // Background Ambient Light Circle 1 (Top Left)
+              Positioned(
+                top: -25,
+                left: -25,
+                child: Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.18),
+                  ),
                 ),
               ),
-            );
-            _loadRecentDropLocations();
-          });
-        },
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFFC045), Color(0xFFFF9C1A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFFF9C1A).withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+              // Background Ambient Light Circle 2 (Bottom Right)
+              Positioned(
+                bottom: -35,
+                right: 40,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black.withValues(alpha: 0.06),
+                  ),
+                ),
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+              // Decorative Sparkle Icon (Top Right)
+              Positioned(
+                top: 10,
+                right: 95,
+                child: Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white.withValues(alpha: 0.6),
+                  size: 16,
+                ),
+              ),
+              // Content Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        "SPECIAL OFFER \u26A1".translate(context),
-                        style: regular2(context).copyWith(
-                          color: Colors.black87,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Get 20% OFF Your First Ride".translate(context),
-                      style: heading2Grey1(context).copyWith(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            "Book Now".translate(context),
-                            style: regular2(context).copyWith(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                          // Special Offer Glassmorphic Pill Tag
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.4),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.local_offer_rounded,
+                                  size: 12,
+                                  color: Color(0xFF1E1E1E),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  "SPECIAL OFFER".translate(context),
+                                  style: regular2(context).copyWith(
+                                    color: const Color(0xFF1E1E1E),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.arrow_forward,
-                            color: Colors.white,
-                            size: 11,
+                          const SizedBox(height: 8),
+                          // Headline
+                          Text(
+                            "Get 20% OFF Your First Ride".translate(context),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: heading2Grey1(context).copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          // Subtitle Info
+                          Text(
+                            "Automatic discount applied at checkout"
+                                .translate(context),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: regular2(context).copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 12),
+                    // App Logo Badge Ring
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          width: 2,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Image.asset(
+                            "assets/images/appIcon.png",
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  shape: BoxShape.circle,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Image.asset(
-                    "assets/images/appIcon.png",
-                    fit: BoxFit.contain,
-                  ),
                 ),
               ),
             ],

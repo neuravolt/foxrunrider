@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -56,19 +55,24 @@ class _OtpScreenState extends State<OtpScreen> {
 
   int _remainingTime = 15;
   bool _isResendEnabled = true;
-  late Timer _timer;
+  Timer? _timer;
 
   void startResendTimer() {
+    _timer?.cancel();
     setState(() {
       _isResendEnabled = false;
     });
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       setState(() {
         if (_remainingTime > 0) {
           _remainingTime--;
         } else {
-          _timer.cancel();
+          _timer?.cancel();
           _isResendEnabled = true;
           _remainingTime = 0;
         }
@@ -77,6 +81,13 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   TextEditingController textEditingOtpController = TextEditingController();
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    textEditingOtpController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

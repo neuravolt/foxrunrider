@@ -18,7 +18,6 @@ import '../../cubits/auth/user_authenticate_cubit.dart';
 import '../../widgets/custom_text_form_field.dart';
 import 'google_update_screen.dart';
 import 'otp_screen.dart';
-import '../splash/initial_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -84,7 +83,17 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
     notifires = Provider.of<ColorNotifires>(context, listen: true);
 
     return PopScope(
-      canPop: true,
+      canPop: Navigator.canPop(context),
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const Onboardingscreen(),
+          ),
+          (route) => false,
+        );
+      },
       child: Scaffold(
         backgroundColor: const Color(0xFFFFFDF7),
         bottomSheet: isNumeric == true && Platform.isIOS
@@ -694,339 +703,222 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
                                               countryCode: number.code,
                                             );
                                       },
-                                      hintText:
-                                          "Enter phone number".translate(context),
-                                      validator: (phoneNumber) {
-                                        if (phoneNumber == null ||
-                                            phoneNumber.number.isEmpty) {
-                                          return "Please enter your phone number"
-                                              .translate(context);
-                                        }
-
-                                        final countryCode =
-                                            phoneNumber.countryISOCode;
-                                        final expectedLength =
-                                            phoneLengths[countryCode] ?? 10;
-
-                                        String cleanedNumber = phoneNumber
-                                            .number
-                                            .replaceAll(RegExp(r'\D'), '');
-                                        if (cleanedNumber.startsWith('0')) {
-                                          cleanedNumber =
-                                              cleanedNumber.substring(1);
-                                        }
-
-                                        if (cleanedNumber.length !=
-                                            expectedLength) {
-                                          return "${"Phone number must be".translate(context)} $expectedLength ${"digits".translate(context)}";
-                                        }
-
-                                        return null;
-                                      },
                                     );
                                   },
                                 ),
                               ),
 
-                              ValueListenableBuilder<bool>(
-                                valueListenable: isFieldFocusedNotifier,
-                                builder: (context, isFocused, child) {
-                                  return SizedBox(height: isFocused ? 12 : 20);
-                                },
+                              const SizedBox(height: 24),
+
+                              // Terms & Conditions Checkbox Row Card
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(0xFFF2EAD6),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black
+                                          .withValues(alpha: 0.03),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    ValueListenableBuilder<bool>(
+                                      valueListenable: isTermsAcceptedNotifier,
+                                      builder: (context, isAccepted, child) {
+                                        return Checkbox(
+                                          value: isAccepted,
+                                          activeColor: const Color(0xFFF59E0B),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                          ),
+                                          onChanged: (val) {
+                                            isTermsAcceptedNotifier.value =
+                                                val ?? false;
+                                          },
+                                        );
+                                      },
+                                    ),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          isTermsAcceptedNotifier.value =
+                                              !isTermsAcceptedNotifier.value;
+                                        },
+                                        child: RichText(
+                                          text: TextSpan(
+                                            text:
+                                                "I confirm that I am 18 years of age and agree to the "
+                                                    .translate(context),
+                                            style: regular2(context).copyWith(
+                                              color: const Color(0xFF718096),
+                                              fontSize: 12,
+                                              height: 1.4,
+                                            ),
+                                            children: [
+                                              WidgetSpan(
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    showModalBottomSheet(
+                                                      useRootNavigator: true,
+                                                      backgroundColor:
+                                                          notifires.getbgcolor,
+                                                      isScrollControlled: true,
+                                                      useSafeArea: true,
+                                                      context: context,
+                                                      builder:
+                                                          (BuildContext context) {
+                                                        return const StaticScreen(
+                                                          data:
+                                                              "Terms & Conditions",
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                  child: Text(
+                                                    "Terms & Conditions".translate(context),
+                                                    style: regular2(context).copyWith(
+                                                      color: const Color(0xFFD98A00),
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.bold,
+                                                      decoration: TextDecoration.underline,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: " and ".translate(context),
+                                              ),
+                                              WidgetSpan(
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    showModalBottomSheet(
+                                                      useRootNavigator: true,
+                                                      backgroundColor:
+                                                          notifires.getbgcolor,
+                                                      isScrollControlled: true,
+                                                      useSafeArea: true,
+                                                      context: context,
+                                                      builder:
+                                                          (BuildContext context) {
+                                                        return const StaticScreen(
+                                                          data: "Privacy Policy",
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                  child: Text(
+                                                    "Privacy Policy".translate(context),
+                                                    style: regular2(context).copyWith(
+                                                      color: const Color(0xFFD98A00),
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.bold,
+                                                      decoration: TextDecoration.underline,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
 
-                              // Checkbox & Legal Terms Box
+                              const SizedBox(height: 28),
+
+                              // Next Submit Button
                               ValueListenableBuilder<bool>(
                                 valueListenable: isTermsAcceptedNotifier,
                                 builder: (context, isAccepted, child) {
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isAccepted
-                                          ? const Color(0xFFFFF9EB)
-                                          : const Color(0xFFFAFAFA),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: isAccepted
-                                            ? const Color(0xFFFFF0C2)
-                                            : const Color(0xFFE2E8F0),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        // Interactive Custom Animated Checkbox
-                                        GestureDetector(
-                                          onTap: () {
-                                            isTermsAcceptedNotifier.value =
-                                                !isAccepted;
-                                          },
-                                          child: AnimatedContainer(
-                                            duration: const Duration(
-                                                milliseconds: 200),
-                                            width: 24,
-                                            height: 24,
-                                            decoration: BoxDecoration(
-                                              color: isAccepted
-                                                  ? const Color(0xFFFF9F0A)
-                                                  : Colors.white,
+                                  return ValueListenableBuilder<TextEditingValue>(
+                                    valueListenable:
+                                        textEditingLoginControllerPhoneNumber,
+                                    builder: (context, value, child) {
+                                      final isPhoneValid =
+                                          value.text.trim().length >= 7;
+                                      final isButtonEnabled =
+                                          isAccepted && isPhoneValid;
+
+                                      return SizedBox(
+                                        width: double.infinity,
+                                        height: 54,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: isButtonEnabled
+                                                ? const Color(0xFFF59E0B)
+                                                : const Color(0xFFEEF2F6),
+                                            foregroundColor: isButtonEnabled
+                                                ? Colors.white
+                                                : const Color(0xFFA0AEC0),
+                                            elevation: isButtonEnabled ? 4 : 0,
+                                            shadowColor: const Color(0xFFF5A623)
+                                                .withValues(alpha: 0.3),
+                                            shape: RoundedRectangleBorder(
                                               borderRadius:
-                                                  BorderRadius.circular(6),
-                                              border: Border.all(
-                                                color: isAccepted
-                                                    ? const Color(0xFFFF9F0A)
-                                                    : const Color(0xFFCBD5E1),
-                                                width: 1.8,
-                                              ),
-                                            ),
-                                            child: isAccepted
-                                                ? const Icon(
-                                                    Icons.check_rounded,
-                                                    size: 16,
-                                                    color: Colors.white,
-                                                  )
-                                                : null,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              isTermsAcceptedNotifier.value =
-                                                  !isAccepted;
-                                            },
-                                            child: Text.rich(
-                                              TextSpan(
-                                                text:
-                                                    "I confirm that I am 18 years of age and agree to the "
-                                                        .translate(context),
-                                                style: regular3(context)
-                                                    .copyWith(
-                                                  fontSize: 11.5,
-                                                  color:
-                                                      const Color(0xFF475569),
-                                                  height: 1.45,
-                                                ),
-                                                children: [
-                                                  WidgetSpan(
-                                                    alignment:
-                                                        PlaceholderAlignment
-                                                            .baseline,
-                                                    baseline:
-                                                        TextBaseline.alphabetic,
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        showModalBottomSheet(
-                                                          useRootNavigator:
-                                                              true,
-                                                          backgroundColor:
-                                                              notifires
-                                                                  .getbgcolor,
-                                                          isScrollControlled:
-                                                              true,
-                                                          useSafeArea: true,
-                                                          context: context,
-                                                          builder: (BuildContext
-                                                              context) {
-                                                            return const StaticScreen(
-                                                              data:
-                                                                  "Terms and Conditions",
-                                                            );
-                                                          },
-                                                        );
-                                                      },
-                                                      child: Text(
-                                                        "Terms & Conditions"
-                                                            .translate(context),
-                                                        style: regular3(context)
-                                                            .copyWith(
-                                                          fontSize: 11.5,
-                                                          color: const Color(
-                                                              0xFFD98A00),
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          decoration:
-                                                              TextDecoration
-                                                                  .underline,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  TextSpan(
-                                                    text: " and "
-                                                        .translate(context),
-                                                  ),
-                                                  WidgetSpan(
-                                                    alignment:
-                                                        PlaceholderAlignment
-                                                            .baseline,
-                                                    baseline:
-                                                        TextBaseline.alphabetic,
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        showModalBottomSheet(
-                                                          useRootNavigator:
-                                                              true,
-                                                          backgroundColor:
-                                                              notifires
-                                                                  .getbgcolor,
-                                                          isScrollControlled:
-                                                              true,
-                                                          useSafeArea: true,
-                                                          context: context,
-                                                          builder: (BuildContext
-                                                              context) {
-                                                            return const StaticScreen(
-                                                              data:
-                                                                  "Terms and Conditions",
-                                                            );
-                                                          },
-                                                        );
-                                                      },
-                                                      child: Text(
-                                                        "Privacy Policy"
-                                                            .translate(context),
-                                                        style: regular3(context)
-                                                            .copyWith(
-                                                          fontSize: 11.5,
-                                                          color: const Color(
-                                                              0xFFD98A00),
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          decoration:
-                                                              TextDecoration
-                                                                  .underline,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                                  BorderRadius.circular(16),
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
+                                          onPressed: isButtonEnabled
+                                              ? () {
+                                                  if (_formKey.currentState!
+                                                      .validate()) {
+                                                    String rawPhone =
+                                                        textEditingLoginControllerPhoneNumber
+                                                            .text
+                                                            .trim();
+                                                    String cleanPhone = rawPhone
+                                                        .replaceFirst(
+                                                            RegExp(r'^0+'), '');
 
-                              const SizedBox(height: 20),
-
-                              // Full-Width Gradient Next Button
-                              ValueListenableBuilder<TextEditingValue>(
-                                valueListenable:
-                                    textEditingLoginControllerPhoneNumber,
-                                builder: (context, phoneValue, child) {
-                                  return ValueListenableBuilder<bool>(
-                                    valueListenable: isTermsAcceptedNotifier,
-                                    builder: (context, isAccepted, child) {
-                                      final isPhoneFilled =
-                                          phoneValue.text.trim().length >= 10;
-                                      final isNextEnabled =
-                                          isPhoneFilled && isAccepted;
-
-                                      return GestureDetector(
-                                        onTap: () {
-                                          if (!isAccepted) {
-                                            showErrorToastMessage(
-                                              "Please accept the Terms & Conditions and Privacy Policy to continue"
-                                                  .translate(context),
-                                            );
-                                            return;
-                                          }
-                                          if (_formKey.currentState!
-                                              .validate()) {
-                                            if (textEditingLoginControllerPhoneNumber
-                                                .text.isEmpty) {
-                                              showErrorToastMessage(
-                                                  "Please enter the phone number"
-                                                      .translate(context));
-                                              return;
-                                            }
-                                            context
-                                                .read<AuthLoginCubit>()
-                                                .login(
-                                                  context: context,
-                                                  phoneCountry: context
-                                                          .read<SetCountryCubit>()
-                                                          .state
-                                                          .dialCode
-                                                          .startsWith("+")
-                                                      ? context
-                                                          .read<
-                                                              SetCountryCubit>()
-                                                          .state
-                                                          .dialCode
-                                                      : "+${context.read<SetCountryCubit>().state.dialCode}",
-                                                  phoneNumber:
-                                                      textEditingLoginControllerPhoneNumber
-                                                          .text,
-                                                );
-                                          }
-                                        },
-                                        child: AnimatedContainer(
-                                          duration: const Duration(
-                                              milliseconds: 250),
-                                          height: 56,
-                                          width: double.infinity,
-                                          decoration: BoxDecoration(
-                                            gradient: isNextEnabled
-                                                ? const LinearGradient(
-                                                    colors: [
-                                                      Color(0xFFFFC533),
-                                                      Color(0xFFFF9F0A),
-                                                    ],
-                                                    begin: Alignment.topCenter,
-                                                    end: Alignment.bottomCenter,
-                                                  )
-                                                : null,
-                                            color: isNextEnabled
-                                                ? null
-                                                : const Color(0xFFF1F5F9),
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                            boxShadow: isNextEnabled
-                                                ? [
-                                                    BoxShadow(
-                                                      color: const Color(
-                                                              0xFFFF9F0A)
-                                                          .withValues(
-                                                              alpha: 0.35),
-                                                      blurRadius: 14,
-                                                      offset:
-                                                          const Offset(0, 5),
-                                                    ),
-                                                  ]
-                                                : [],
-                                          ),
-                                          child: Stack(
-                                            alignment: Alignment.center,
+                                                    FocusScope.of(context)
+                                                        .unfocus();
+                                                    context
+                                                        .read<AuthLoginCubit>()
+                                                        .login(
+                                                          context: context,
+                                                          phoneNumber: cleanPhone,
+                                                          phoneCountry: context
+                                                              .read<
+                                                                  SetCountryCubit>()
+                                                              .state
+                                                              .dialCode,
+                                                        );
+                                                  }
+                                                }
+                                              : null,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
                                             children: [
                                               Text(
                                                 "Next".translate(context),
-                                                style:
-                                                    heading2(context).copyWith(
-                                                  color: isNextEnabled
-                                                      ? const Color(0xFF1E1E1E)
-                                                      : const Color(0xFF94A3B8),
+                                                style: regular2(context).copyWith(
+                                                  fontSize: 16,
                                                   fontWeight: FontWeight.bold,
-                                                  fontSize: 18,
+                                                  color: isButtonEnabled
+                                                      ? Colors.white
+                                                      : const Color(0xFFA0AEC0),
                                                 ),
                                               ),
-                                              Positioned(
-                                                right: 20,
-                                                child: Icon(
-                                                  Icons.arrow_forward_rounded,
-                                                  color: isNextEnabled
-                                                      ? const Color(0xFF1E1E1E)
-                                                      : const Color(0xFF94A3B8),
-                                                  size: 22,
-                                                ),
+                                              const SizedBox(width: 8),
+                                              Icon(
+                                                Icons.arrow_forward_rounded,
+                                                size: 20,
+                                                color: isButtonEnabled
+                                                    ? Colors.white
+                                                    : const Color(0xFFA0AEC0),
                                               ),
                                             ],
                                           ),
@@ -1052,7 +944,7 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
       ),
     ),
   );
-  }
+}
 }
 
 // 3D Phone Platform Hero Widget with Sparkles
