@@ -39,6 +39,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
   int selectedIdIndex = -1;
   double traveCharge = 0.0;
   int setIndex=-1;
+  bool showSelectionError = false;
 
 
   Map<String,dynamic> selectedVehicleData={};
@@ -52,8 +53,13 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
   void initState() {
     super.initState();
     _polylines = widget.polylines;
-    selectedIdIndex =
+    final cubitSelectedId =
         context.read<VehicleDataUpdateCubit>().state.vehicleSelectedId;
+    if (widget.fareList.any((element) => element["id"] == cubitSelectedId)) {
+      selectedIdIndex = cubitSelectedId;
+    } else {
+      selectedIdIndex = -1;
+    }
     addMarkers();
   }
 
@@ -190,22 +196,24 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                             goBack();
                           },
                           child: Container(
-                            height: 40,
-                            width: 40,
+                            height: 44,
+                            width: 44,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: notifires.getbgcolor,
-                              border:
-                              Border.all(color: notifires.getGrey3whiteColor),
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                )
+                              ],
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 5),
-                              child: Icon(
-                                Icons.arrow_back,
-                                size: 18,
-                                color: notifires.getwhiteblackColor,
-                              ),
+                            child: const Icon(
+                              Icons.arrow_back,
+                              size: 20,
+                              color: Colors.black,
                             ),
                           ),
                         ),
@@ -222,15 +230,15 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
               builder: (context, scrollController) {
                 return SafeArea(
                   child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: notifires.getbgcolor,
                       borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(20)),
+                      const BorderRadius.vertical(top: Radius.circular(30)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          spreadRadius: 2,
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 20,
+                          spreadRadius: 5,
                         ),
                       ],
                     ),
@@ -241,58 +249,133 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                         const SizedBox(height: 10),
                         Center(
                           child: Container(
-                            width: 50,
-                            height: 5,
+                            width: 48,
+                            height: 6,
                             decoration: BoxDecoration(
                               color: Colors.grey[300],
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 25),
 
                         // Pickup & Drop UI
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: notifires.getBoxColor,
-                              borderRadius: BorderRadius.circular(10),
+                              color: notifires.getIsDark ? notifires.getBoxColor : const Color(0xFFF7F9F7),
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            padding: const EdgeInsets.all(10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                buildLocationRow(
-                                  icon: Icons.circle,
-                                  color: Colors.green,
-                                  bgColor: Colors.green.shade100,
-                                  text: context
-                                      .read<BookRideRealTimeDataBaseCubit>()
-                                      .state
-                                      .pickupAddress,
-                                  context: context,
-                                ),
-                                const SizedBox(height: 10),
-                                buildLocationRow(
-                                  icon: Icons.location_on_outlined,
-                                  color: Colors.red,
-                                  bgColor: Colors.red.shade100,
-                                  text: context
-                                      .read<BookRideRealTimeDataBaseCubit>()
-                                      .state
-                                      .dropoffAddress,
-                                  context: context,
-                                ),
-                              ],
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                            child: IntrinsicHeight(
+                              child: Row(
+                                children: [
+                                  Column(
+                                    children: [
+                                      Container(
+                                        height: 28,
+                                        width: 28,
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.shade50,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(Icons.circle, color: Colors.green.shade700, size: 12),
+                                      ),
+                                      Expanded(
+                                        child: Container(
+                                          width: 1.5,
+                                          color: Colors.grey.withValues(alpha: 0.4),
+                                          margin: const EdgeInsets.symmetric(vertical: 4),
+                                        ),
+                                      ),
+                                      Container(
+                                        height: 28,
+                                        width: 28,
+                                        decoration: BoxDecoration(
+                                          color: Colors.deepOrange.shade50,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(Icons.location_on, color: Colors.deepOrange.shade500, size: 16),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Container(
+                                          constraints: const BoxConstraints(minHeight: 28),
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            context
+                                                .read<BookRideRealTimeDataBaseCubit>()
+                                                .state
+                                                .pickupAddress,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: notifires.getwhiteblackColor,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Container(
+                                          constraints: const BoxConstraints(minHeight: 28),
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            context
+                                                .read<BookRideRealTimeDataBaseCubit>()
+                                                .state
+                                                .dropoffAddress,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: notifires.getwhiteblackColor,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle, 
+                                          border: Border.all(color: Colors.orange.shade200),
+                                          color: Colors.orange.shade50,
+                                        ),
+                                        child: Icon(Icons.my_location, size: 16, color: Colors.orange.shade700),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle, 
+                                          border: Border.all(color: Colors.orange.shade200),
+                                          color: Colors.orange.shade50,
+                                        ),
+                                        child: Icon(Icons.swap_vert, size: 16, color: Colors.orange.shade700),
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 16),
 
-                        Divider(
-                          color: grey5,
-                        ),
 
                         const SizedBox(height: 10),
 
@@ -323,92 +406,121 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                 : "0";
 
                             if (isSelected) {
-                              setIndex=index;
-                              traveCharge =
-                                  double.tryParse(fare.toString()) ?? 0.0;
-
-
-
+                              setIndex = index;
+                              traveCharge = double.tryParse(fare.toString()) ?? 0.0;
                             }
+
+                            final String vName = data["vehicleName"]?.toString().toLowerCase() ?? "";
+                            final String subtitle = vName.contains("bike") 
+                                ? "1 rider • Doorstep pickup" 
+                                : vName.contains("auto") 
+                                    ? "3 seats • Shared ride" 
+                                    : "4 seats • AC ride";
 
                             return GestureDetector(
                               onTap: () {
                                 if (!isSelected) {
                                   setState(() {
+                                    showSelectionError = false;
                                     setIndex=index;
                                     selectedIdIndex = data["id"]!;
                                     context
                                         .read<VehicleDataUpdateCubit>()
                                         .updateVehicleTypeSelectedId(
-                                       
                                       data["id"],
                                     );
-                                    // _updateMapWithDrivers();
                                   });
                                 }
                               },
                               child: Container(
                                 margin: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 8),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                                    horizontal: 20, vertical: 8),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? themeColor
-                                      : Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(8),
+                                      ? const Color(0xFFFFF8EE)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isSelected ? Colors.orange.shade400 : Colors.grey.shade200,
+                                    width: 1,
+                                  ),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Row(
-                                      children: [
-                                        SizedBox(
-                                          width: 110,
-                                          height: 55,
-                                          child: Image.network(
-                                            data["image"],
-                                            headers: const {"ngrok-skip-browser-warning": "true"},
-                                            fit: BoxFit.contain,
-                                            
-                                            errorBuilder: (_, __, ___) =>
-                                                SvgPicture.asset(
-                                                    "assets/images/car.svg"),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Text(
-                                          data["vehicleName"] ?? "Unknown".translate(context),
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: blackColor,
-                                          ),
-                                        ),
-                                      ],
+                                    Container(
+                                      width: 60,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF4F5F4),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.all(8),
+                                      child: Image.network(
+                                        data["image"],
+                                        headers: const {"ngrok-skip-browser-warning": "true"},
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (_, __, ___) => SvgPicture.asset("assets/images/car.svg"),
+                                      ),
                                     ),
-                                    if (hasFares)
-                                      Column(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.end,
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            "$currency $fare",
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: blackColor,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  data["vehicleName"] ?? "Unknown".translate(context),
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: notifires.getwhiteblackColor,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
                                           ),
+                                          const SizedBox(height: 4),
                                           Text(
-                                            "$duration ($distance ${"Km".translate(context)})",
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: grey2,
-                                            ),
+                                            subtitle,
+                                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                                           ),
                                         ],
                                       ),
+                                    ),
+                                    if (hasFares)
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            "$currency$fare",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: notifires.getwhiteblackColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text.rich(
+                                            TextSpan(
+                                              children: [
+                                                TextSpan(text: "$duration ", style: TextStyle(color: Colors.green.shade600, fontWeight: FontWeight.w600, fontSize: 11)),
+                                                TextSpan(text: "• $distance Km", style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
+                                              ]
+                                            )
+                                          ),
+                                        ],
+                                      ),
+                                    const SizedBox(width: 16),
+                                    Icon(
+                                      isSelected ? Icons.check_circle : Icons.circle_outlined,
+                                      color: isSelected ? Colors.orange.shade500 : Colors.grey.shade300,
+                                      size: 24,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -425,44 +537,72 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
             )
           ],
         ),
-        bottomNavigationBar: selectedIdIndex != -1
-            ? SizedBox(
-            height: 75,
+        bottomNavigationBar: SafeArea(
             child: Container(
               padding: const EdgeInsets.only(
-                  left: 16, right: 15, bottom: 20, top: 5),
-              color: notifires.getbgcolor,
-              child: CustomsButtons(
-                text: isRequestInProgress
-                    ? "Requesting...".translate(context)
-                    : "Book Now".translate(context),
-                textColor: blackColor,
-                backgroundColor:
-                isRequestInProgress ? Colors.grey : themeColor,
-                onPressed: () {
-
-                  if (selectedIdIndex == -1) {
-                    showErrorToastMessage(
-                        "Please select a vehicle type."
-                            .translate(context));
-                    return;
-                  }
-                  context.read<BookRideUserCubit>().removeBookRideState();
-                  context.read<DriverNearByCubit>().resetNearByDriverState();
-                  context.read<RideRequestCubit>().resetState();
-                  box.delete("rideId");
-
-
-                  goTo(SendRideRequestScreen(selectedVehicleData: widget.fareList[setIndex], statusOfRide: "",));
-
-
-                },
+                  left: 20, right: 20, bottom: 10, top: 15),
+              decoration: BoxDecoration(
+                color: notifires.getbgcolor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  )
+                ]
               ),
-            ))
-            : null,
-      ),
-    );
-  }
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (showSelectionError)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.info_outline, size: 14, color: Colors.red.shade600),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Please select a vehicle to proceed".translate(context),
+                            style: TextStyle(
+                              color: Colors.red.shade600,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  AnimatedBookNowButton(
+                    isRequestInProgress: isRequestInProgress,
+                    themeColor: themeColor,
+                    isEnabled: selectedIdIndex != -1 && 
+                        widget.fareList.any((element) => element["id"] == selectedIdIndex),
+                    onTap: () {
+                      context.read<BookRideUserCubit>().removeBookRideState();
+                      context.read<DriverNearByCubit>().resetNearByDriverState();
+                      context.read<RideRequestCubit>().resetState();
+                      box.delete("rideId");
+
+                      goTo(SendRideRequestScreen(selectedVehicleData: widget.fareList[setIndex], statusOfRide: "",));
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.security, size: 14, color: Colors.orange.shade500),
+                      const SizedBox(width: 6),
+                      Text("Your safety is our priority", style: TextStyle(fontSize: 12, color: notifires.getwhiteblackColor, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ]
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
   void updateRide({String? rideId, String? bookingId}) {
     final rideRequestRef =
@@ -481,5 +621,179 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
         showErrorToastMessage("Failed to update ride.");
       });
     }
+  }
+}
+
+class AnimatedBookNowButton extends StatefulWidget {
+  final bool isRequestInProgress;
+  final Color themeColor;
+  final bool isEnabled;
+  final VoidCallback onTap;
+
+  const AnimatedBookNowButton({
+    super.key,
+    required this.isRequestInProgress,
+    required this.themeColor,
+    required this.isEnabled,
+    required this.onTap,
+  });
+
+  @override
+  State<AnimatedBookNowButton> createState() => _AnimatedBookNowButtonState();
+}
+
+class _AnimatedBookNowButtonState extends State<AnimatedBookNowButton> with TickerProviderStateMixin {
+  late AnimationController _breatheController;
+  late AnimationController _tapController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _textFadeAnimation;
+  bool _isTapped = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _breatheController = AnimationController(
+      vsync: this, 
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _tapController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.93).chain(CurveTween(curve: Curves.easeOut)), weight: 40),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.93, end: 0.97).chain(CurveTween(curve: Curves.easeInOut)), weight: 30),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.97, end: 1.0).chain(CurveTween(curve: Curves.easeIn)), weight: 30),
+    ]).animate(_tapController);
+
+    _textFadeAnimation = Tween<double>(begin: 1.0, end: 0.7).animate(
+      CurvedAnimation(parent: _tapController, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _breatheController.dispose();
+    _tapController.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    if (!widget.isEnabled || _isTapped || widget.isRequestInProgress) {
+      if (!widget.isEnabled) {
+        showErrorToastMessage("Please select a vehicle type.".translate(context));
+      }
+      return;
+    }
+
+    setState(() {
+      _isTapped = true;
+    });
+    _tapController.forward(from: 0.0).then((_) {
+      widget.onTap();
+      if (mounted) {
+        _tapController.reverse();
+        setState(() {
+          _isTapped = false;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _handleTap,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_breatheController, _tapController]),
+        builder: (context, child) {
+          final double breatheScale = widget.isEnabled ? (0.985 + (_breatheController.value * 0.015)) : 1.0;
+
+          final double currentScale = _tapController.isAnimating || _tapController.isCompleted
+              ? _scaleAnimation.value
+              : breatheScale;
+
+          return Transform.scale(
+            scale: currentScale,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              height: 54,
+              decoration: BoxDecoration(
+                gradient: (widget.isEnabled && !widget.isRequestInProgress)
+                    ? const LinearGradient(
+                        colors: [Color(0xFFFFA726), Color(0xFFFF6D00)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      )
+                    : null,
+                color: (!widget.isEnabled || widget.isRequestInProgress)
+                    ? Colors.grey.shade300
+                    : null,
+                borderRadius: BorderRadius.circular(27),
+                boxShadow: [
+                  if (widget.isEnabled)
+                    BoxShadow(
+                      color: const Color(0xFFFF6D00).withValues(alpha: _isTapped ? 0.5 : 0.3),
+                      blurRadius: _isTapped ? 10 : 8,
+                      offset: const Offset(0, 4),
+                    ),
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                children: [
+                  const SizedBox(width: 44),
+                  Expanded(
+                    child: Center(
+                      child: Opacity(
+                        opacity: _isTapped ? _textFadeAnimation.value : 1.0,
+                        child: Text(
+                          widget.isRequestInProgress
+                              ? "Requesting...".translate(context)
+                              : _isTapped
+                                  ? "Booking...".translate(context)
+                                  : "Book Now".translate(context),
+                          style: TextStyle(
+                            fontSize: 17, 
+                            fontWeight: FontWeight.bold, 
+                            color: widget.isEnabled ? Colors.white : Colors.grey.shade600, 
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    height: 42,
+                    width: 42,
+                    decoration: BoxDecoration(
+                      color: widget.isEnabled ? Colors.white : Colors.grey.shade200,
+                      shape: BoxShape.circle,
+                    ),
+                    child: _isTapped
+                        ? const Padding(
+                            padding: EdgeInsets.all(10.0),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6D00)),
+                            ),
+                          )
+                        : Icon(
+                            Icons.arrow_forward_rounded, 
+                            size: 22, 
+                            color: widget.isEnabled ? const Color(0xFFFF6D00) : Colors.grey.shade400,
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
