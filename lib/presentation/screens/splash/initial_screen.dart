@@ -40,21 +40,34 @@ class _InitialScreenState extends State<InitialScreen> {
   RideRequest? ridedata;
 
   void handleNavigation() {
-    final bool isFirstUser =
-        box.get('Firstuser', defaultValue: false) != true;
+    bool isFirstUser = false;
+    try {
+      isFirstUser = box.get('Firstuser', defaultValue: false) != true;
+    } catch (_) {}
 
-    final duration = Duration(milliseconds: isFirstUser ? 1800 : 1500);
+    final duration = Duration(milliseconds: isFirstUser ? 1000 : 800);
     Timer(duration, () {
-      if (isFirstUser) {
-        navigateToScreen(context, () => const Onboardingscreen());
-      } else {
-        data = box.get('ride_data');
-        if (data == null) {
-          navigateToScreen(context, () => const ItemHomeScreen());
+      try {
+        if (isFirstUser) {
+          goToWithReplacement(const Onboardingscreen());
         } else {
-          String rideId = data["rideId"] ?? "";
-          context.read<CheckStatusCubit>().checkStatus(rideId);
+          data = box.get('ride_data');
+          if (data == null || data is! Map || (data["rideId"] ?? "").toString().isEmpty) {
+            box.delete('ride_data');
+            goToWithReplacement(const ItemHomeScreen());
+          } else {
+            String rideId = data["rideId"].toString();
+            context.read<CheckStatusCubit>().checkStatus(rideId).timeout(
+              const Duration(seconds: 2),
+              onTimeout: () {
+                box.delete('ride_data');
+                goToWithReplacement(const ItemHomeScreen());
+              },
+            );
+          }
         }
+      } catch (e) {
+        goToWithReplacement(const ItemHomeScreen());
       }
     });
   }
@@ -67,62 +80,75 @@ class _InitialScreenState extends State<InitialScreen> {
       body: BlocListener<CheckStatusCubit, CheckRideStatusState>(
           listener: (context, state) {
             if (state is CheckRideSuccess) {
-              context.read<RideRequestCubit>().loadRideFromHive();
+              try {
+                context.read<RideRequestCubit>().loadRideFromHive();
 
-              final bookride = context.read<BookRideRealTimeDataBaseCubit>();
-              bookride.updatePickupLatAndLng(
-                  pickupAddressLatitude: data["pickLat"].toString(),
-                  pickupAddressLongitude: data["pickLng"].toString());
-              bookride.updateDropOffLatAndLng(
-                  dropoffAddressLatitude: data["dropLat"].toString(),
-                  dropoffAddressLongitude: data["dropLng"].toString());
+                final bookride = context.read<BookRideRealTimeDataBaseCubit>();
+                if (data is Map) {
+                  bookride.updatePickupLatAndLng(
+                      pickupAddressLatitude: (data["pickLat"] ?? "").toString(),
+                      pickupAddressLongitude: (data["pickLng"] ?? "").toString());
+                  bookride.updateDropOffLatAndLng(
+                      dropoffAddressLatitude: (data["dropLat"] ?? "").toString(),
+                      dropoffAddressLongitude: (data["dropLng"] ?? "").toString());
+                  bookride.updateDropOffAddress(
+                      dropoffAddress: (data["dropAddress"] ?? "").toString());
+                  bookride.updatePickupAddress(
+                      pickupAddress: (data["pickAddress"] ?? "").toString());
+                }
 
-              Map<String, dynamic> vehicle =
-                  jsonDecode(box.get('selected_vehicle'));
-              bookride.updateDropOffAddress(
-                  dropoffAddress: data["dropAddress"]);
-              bookride.updatePickupAddress(pickupAddress: data["pickAddress"]);
+                Map<String, dynamic> vehicle = {};
+                final rawVehicle = box.get('selected_vehicle');
+                if (rawVehicle != null && rawVehicle.toString().isNotEmpty) {
+                  vehicle = jsonDecode(rawVehicle.toString());
+                }
 
-              if (state.status == "accepted") {
-                goToWithReplacement(SendRideRequestScreen(
-                  selectedVehicleData: vehicle,
-                  statusOfRide: "accepted",
-                  pickUpOtp: box.get("PickOtp"),
-                  bookingId: box.get("bookingId").toString(),
-                  rideId: data["rideId"],
-                  paymentUrl: box.get("payment_url"),
-                ));
-              } else if (state.status == "ongoing") {
-                goToWithReplacement(SendRideRequestScreen(
-                  selectedVehicleData: vehicle,
-                  statusOfRide: "ongoing",
-                  pickUpOtp: box.get("PickOtp"),
-                  bookingId: box.get("bookingId").toString(),
-                  rideId: data["rideId"],
-                  paymentUrl: box.get("payment_url"),
-                ));
-              } else if (state.status == "completed" &&
-                  state.paymentStatus == "collected") {
-                box.delete("ride_data");
-                navigateToScreen(context, () => const ItemHomeScreen());
-              } else if (state.status == "completed" &&
-                  state.paymentStatus == "") {
-                navigateToScreen(
-                    context,
-                    () => RiderPaymentScreen(
-                          bookingId: box.get("bookingId").toString(),
-                          rideId: data["rideId"],
-                          fare: vehicle["fare"],
-                          paymentUrl: box.get("payment_url"),
-                        ));
-              } else if (state.status == "rejected") {
+                if (state.status == "accepted") {
+                  goToWithReplacement(SendRideRequestScreen(
+                    selectedVehicleData: vehicle,
+                    statusOfRide: "accepted",
+                    pickUpOtp: box.get("PickOtp")?.toString(),
+                    bookingId: box.get("bookingId")?.toString(),
+                    rideId: data is Map ? (data["rideId"]?.toString()) : null,
+                    paymentUrl: box.get("payment_url")?.toString(),
+                  ));
+                } else if (state.status == "ongoing") {
+                  goToWithReplacement(SendRideRequestScreen(
+                    selectedVehicleData: vehicle,
+                    statusOfRide: "ongoing",
+                    pickUpOtp: box.get("PickOtp")?.toString(),
+                    bookingId: box.get("bookingId")?.toString(),
+                    rideId: data is Map ? (data["rideId"]?.toString()) : null,
+                    paymentUrl: box.get("payment_url")?.toString(),
+                  ));
+                } else if (state.status == "completed" &&
+                    state.paymentStatus == "collected") {
+                  box.delete("ride_data");
+                  goToWithReplacement(const ItemHomeScreen());
+                } else if (state.status == "completed" &&
+                    state.paymentStatus == "") {
+                  goToWithReplacement(
+                      RiderPaymentScreen(
+                        bookingId: box.get("bookingId")?.toString() ?? "",
+                        rideId: data is Map ? (data["rideId"]?.toString() ?? "") : "",
+                        fare: vehicle["fare"] ?? 0,
+                        paymentUrl: box.get("payment_url")?.toString() ?? "",
+                      ));
+                } else {
+                  box.delete("ride_data");
+                  box.delete("payment_url");
+                  box.delete("PickOtp");
+                  box.delete("bookingId");
+                  box.delete("selected_vehicle");
+                  goToWithReplacement(const ItemHomeScreen());
+                }
+              } catch (e) {
                 box.delete("ride_data");
                 box.delete("payment_url");
                 box.delete("PickOtp");
                 box.delete("bookingId");
                 box.delete("selected_vehicle");
-
-                navigateToScreen(context, () => const ItemHomeScreen());
+                goToWithReplacement(const ItemHomeScreen());
               }
             } else if (state is CheckRideFailed) {
               box.delete("ride_data");
@@ -131,7 +157,7 @@ class _InitialScreenState extends State<InitialScreen> {
               box.delete("bookingId");
               box.delete("selected_vehicle");
 
-              navigateToScreen(context, () => const ItemHomeScreen());
+              goToWithReplacement(const ItemHomeScreen());
             }
           },
           child: const SplashScreen()),

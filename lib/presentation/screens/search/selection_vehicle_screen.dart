@@ -65,33 +65,44 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
 
 
 
-  Future<void> addMarkers()async{
-    final Uint8List markerIconDropOff =
-    await getBytesFromAsset("assets/images/dropmarker.png", 15);
-    Uint8List markerIconPickUp =
-    await getBytesFromAsset("assets/images/pickupmarker.png", 15);
+  Future<void> addMarkers() async {
+    final Uint8List markerIconDropOff = await createCustomDropoffMarker();
+    final Uint8List markerIconPickUp = await createCustomPickupMarker();
     // ignore: use_build_context_synchronously
     final bookRideState = context.read<BookRideRealTimeDataBaseCubit>().state;
+
+    LatLng pickupPos = LatLng(
+        double.parse(bookRideState.pickupAddressLatitude),
+        double.parse(bookRideState.pickupAddressLongitude));
+    LatLng dropoffPos = LatLng(
+        double.parse(bookRideState.dropoffAddressLatitude),
+        double.parse(bookRideState.dropoffAddressLongitude));
+
+    if (_polylines.isNotEmpty && _polylines.first.points.isNotEmpty) {
+      pickupPos = _polylines.first.points.first;
+      dropoffPos = _polylines.first.points.last;
+    }
+
+    markers.clear();
+
     markers.add(Marker(
       markerId: const MarkerId('pickup'),
-      position: LatLng(double.parse(bookRideState.pickupAddressLatitude), double.parse(bookRideState.pickupAddressLongitude)),
+      position: pickupPos,
       icon: BitmapDescriptor.bytes(markerIconPickUp),
+      anchor: const Offset(0.5, 0.5),
       infoWindow: const InfoWindow(title: 'Pickup Location'),
     ));
 
-
     markers.add(Marker(
       markerId: const MarkerId('dropoff'),
-      position: LatLng(double.parse(bookRideState.dropoffAddressLatitude), double.parse(bookRideState.dropoffAddressLongitude)),
+      position: dropoffPos,
       icon: BitmapDescriptor.bytes(markerIconDropOff),
+      anchor: const Offset(0.5, 1.0),
       infoWindow: const InfoWindow(title: 'Dropoff Location'),
     ));
     moveMapAccordingPoline();
 
-
-    setState(() {
-
-    });
+    setState(() {});
   }
 
   void moveMapAccordingPoline()async{

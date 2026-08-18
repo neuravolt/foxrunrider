@@ -79,33 +79,56 @@ class _LoadingNearbySearchScreenState extends State<LoadingNearbySearchScreen> {
 
 
       bool polylineFetched = false;
-
       bool distanceFetched = false;
-
       List<Map<String, dynamic>> vehicleFares = [];
       double? distance;
+
+      // 1. Check existing polyline state
+      final currentPolylineState = context.read<GetPolylineCubit>().state;
+      if (currentPolylineState is GetPolylineUpdated &&
+          currentPolylineState.polylines != null &&
+          currentPolylineState.polylines!.isNotEmpty) {
+        _polylines = currentPolylineState.polylines!;
+        polylineFetched = true;
+      } else if (_polylines.isNotEmpty) {
+        polylineFetched = true;
+      }
+
+      // 2. Check existing distance state
+      final currentDistanceState = context.read<GetDistanceRouteCubit>().state;
+      if (currentDistanceState.error != null) {
+        _errorMessage = currentDistanceState.error;
+        setState(() {});
+      } else if (currentDistanceState.vehicleFares.isNotEmpty &&
+          currentDistanceState.distance != null) {
+        vehicleFares = currentDistanceState.vehicleFares;
+        distance = currentDistanceState.distance;
+        distanceFetched = true;
+      }
+
       int timeoutCounter = 0;
       const int timeoutMs = 20000;
 
-      final polylineSubscription = context.read<GetPolylineCubit>().stream.listen((state) {
-        if (state is GetPolylineUpdated && state.polylines != null) {
+      final polylineSubscription =
+          context.read<GetPolylineCubit>().stream.listen((state) {
+        if (state is GetPolylineUpdated && state.polylines != null && state.polylines!.isNotEmpty) {
           _polylines = state.polylines!;
           polylineFetched = true;
-
         } else if (state is GetPolylineUpdatedError) {
-          _errorMessage = "Unable to find the specified route.";
+          _errorMessage = state.error;
           setState(() {});
-
         }
       });
 
-
-      final distanceSubscription = context.read<GetDistanceRouteCubit>().stream.listen((state) {
-        if (state.vehicleFares.isNotEmpty && state.distance != null) {
+      final distanceSubscription =
+          context.read<GetDistanceRouteCubit>().stream.listen((state) {
+        if (state.error != null) {
+          _errorMessage = state.error;
+          setState(() {});
+        } else if (state.vehicleFares.isNotEmpty && state.distance != null) {
           vehicleFares = state.vehicleFares;
           distance = state.distance;
           distanceFetched = true;
-
         }
       });
 

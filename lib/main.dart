@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ride_on/app/app_localizations.dart';
 import 'package:ride_on/app/register_cubits.dart';
 import 'package:ride_on/presentation/cubits/localizations_cubit.dart';
@@ -18,12 +17,24 @@ import 'core/utils/theme/project_color.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await Hive.initFlutter();
-  await Hive.openBox('appBox');
-  await Hive.openBox('lanBox');
-  await initializeNotifications();
-  await setupOneSignal();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Firebase init error: $e");
+  }
+  try {
+    await Hive.initFlutter();
+    await Hive.openBox('appBox');
+    await Hive.openBox('lanBox');
+  } catch (e) {
+    debugPrint("Hive init error: $e");
+  }
+  try {
+    await initializeNotifications();
+    await setupOneSignal();
+  } catch (e) {
+    debugPrint("Notifications/OneSignal init error: $e");
+  }
 
   //   try {
   //   await FirebaseFirestore.instance

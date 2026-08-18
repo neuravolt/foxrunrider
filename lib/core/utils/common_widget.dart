@@ -1617,6 +1617,71 @@ Future<Uint8List> getBytesFromAsset(String path, int width) async {
       .asUint8List();
 }
 
+Future<Uint8List> createCustomPickupMarker({double size = 32.0}) async {
+  final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  final Canvas canvas = Canvas(pictureRecorder);
+
+  // Draw glowing halo
+  final Paint haloPaint = Paint()
+    ..color = const Color(0xFFFF9900).withValues(alpha: 0.25)
+    ..style = PaintingStyle.fill;
+  canvas.drawCircle(Offset(size / 2, size / 2), size / 2, haloPaint);
+
+  // Draw white border
+  final Paint whiteBorderPaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.fill;
+  canvas.drawCircle(Offset(size / 2, size / 2), size / 3.4, whiteBorderPaint);
+
+  // Draw orange core
+  final Paint orangeCorePaint = Paint()
+    ..color = const Color(0xFFFF9900)
+    ..style = PaintingStyle.fill;
+  canvas.drawCircle(Offset(size / 2, size / 2), size / 5.2, orangeCorePaint);
+
+  // Draw small white dot in center
+  final Paint whiteDotPaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.fill;
+  canvas.drawCircle(Offset(size / 2, size / 2), size / 14, whiteDotPaint);
+
+  final ui.Image image = await pictureRecorder.endRecording().toImage(size.toInt(), size.toInt());
+  final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  return byteData!.buffer.asUint8List();
+}
+
+Future<Uint8List> createCustomDropoffMarker({double width = 28.0, double height = 35.0}) async {
+  final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  final Canvas canvas = Canvas(pictureRecorder);
+
+  final Path path = Path();
+  final double radius = width / 2;
+  // Top semicircle
+  path.addArc(Rect.fromLTWH(0, 0, width, width), -3.14159, 3.14159);
+  // Bottom tip
+  path.lineTo(width / 2, height);
+  path.close();
+
+  // Shadow
+  canvas.drawShadow(path, Colors.black38, 2.0, true);
+
+  // Pin fill (Green)
+  final Paint pinPaint = Paint()
+    ..color = const Color(0xFF20BC3B)
+    ..style = PaintingStyle.fill;
+  canvas.drawPath(path, pinPaint);
+
+  // Inner white circle
+  final Paint whiteCirclePaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.fill;
+  canvas.drawCircle(Offset(width / 2, radius), radius * 0.42, whiteCirclePaint);
+
+  final ui.Image image = await pictureRecorder.endRecording().toImage(width.toInt(), height.toInt());
+  final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  return byteData!.buffer.asUint8List();
+}
+
 Widget languageButton({
   required VoidCallback onTap,
 

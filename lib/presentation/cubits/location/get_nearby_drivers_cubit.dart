@@ -17,6 +17,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../core/extensions/workspace.dart';
 import '../../../core/services/config.dart';
+import '../../../core/utils/common_widget.dart';
 import '../general_cubit.dart';
 
 abstract class DriverNearByState extends Equatable {
@@ -341,16 +342,15 @@ class DriverMapCubit extends Cubit<DriverMapState> {
   }) async {
 
     try {
-      final Uint8List markerIconDropOff =
-          await getBytesFromAsset(dropOffImage, 15);
-      final Uint8List markerIconPickUp =
-          await getBytesFromAsset(pickupImage, 15);
+      final Uint8List markerIconDropOff = await createCustomDropoffMarker();
+      final Uint8List markerIconPickUp = await createCustomPickupMarker();
 
       Set<Marker> markers = {};
       markers.add(Marker(
         markerId: const MarkerId('pickup'),
         position: LatLng(sourcelat, sourcelng),
         icon: BitmapDescriptor.bytes(markerIconPickUp),
+        anchor: const Offset(0.5, 0.5),
         infoWindow: const InfoWindow(title: 'Pickup Location'),
       ));
 
@@ -358,6 +358,7 @@ class DriverMapCubit extends Cubit<DriverMapState> {
         markerId: const MarkerId('dropoff'),
         position: LatLng(destinationlat, destinationlng),
         icon: BitmapDescriptor.bytes(markerIconDropOff),
+        anchor: const Offset(0.5, 1.0),
         infoWindow: const InfoWindow(title: 'Dropoff Location'),
       ));
 
@@ -461,9 +462,11 @@ class GetPolylineCubit extends Cubit<GetPolylineState> {
             ? const PolylineId("DriverDropoffToUser")
             : const PolylineId("DriverPickupToUser");
         _polylines.remove(oppositePolylineId);
+        _polylines.remove(PolylineId("${oppositePolylineId.value}_border"));
 
         // Remove the current polyline (if any) for the same route type
         _polylines.remove(polylineId);
+        _polylines.remove(PolylineId("${polylineId.value}_border"));
 
         _addPolyLine(
           coordinates: polylineCoordinates,
@@ -486,13 +489,20 @@ class GetPolylineCubit extends Cubit<GetPolylineState> {
     required PolylineId id,
     required Color color,
   }) {
-    final polyline = Polyline(
+    // Solid orange route line
+    final polylineCore = Polyline(
       polylineId: id,
-      color: color,
-      width: 4,
+      color: const Color(0xFFFF9900), // Vibrant orange
+      width: 5,
+      jointType: JointType.round,
+      startCap: Cap.roundCap,
+      endCap: Cap.roundCap,
       points: coordinates,
+      geodesic: true,
+      zIndex: 2, 
     );
-    _polylines[id] = polyline;
+
+    _polylines[id] = polylineCore;
   }
 
   Set<Polyline> get currentPolylines => _polylines.values.toSet();

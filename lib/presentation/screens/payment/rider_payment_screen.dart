@@ -1,3 +1,4 @@
+import 'payment_success_page.dart';
 import 'dart:convert';
 import 'package:ride_on/core/services/data_store.dart';
 import 'package:ride_on/core/extensions/workspace.dart';
@@ -129,14 +130,8 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                 showLoading();
               } else if (state is UpdatePaymentSuceess) {
                 closeLoading();
-                showToastMessage("Payment completed successfully from wallet!");
                 final rideId = (widget.rideId ?? "").trim();
-                if (rideId.isNotEmpty) {
-                  context.read<UpdateRideRequestParameterCubit>().updatePaymentStatus(
-                    rideId: rideId,
-                    paymentStatus: "collected",
-                  );
-                }
+                goTo(BookingSuccessScreen(rideId: rideId));
               } else if (state is UpdatePaymentFailure) {
                 closeLoading();
                 showErrorToastMessage(state.paymentMessage ?? "Payment failed");
@@ -191,10 +186,22 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                 );
               }
             },
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: BlocBuilder<PaymentCubit, PaymentMethod?>(
-                builder: (context, selectedMethod) {
+            child: Column(
+              children: [
+                Container(
+                  width: 30,
+                  height: 3,
+                  margin: const EdgeInsets.only(top: 0, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFB300),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: BlocBuilder<PaymentCubit, PaymentMethod?>(
+                      builder: (context, selectedMethod) {
                   return SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,39 +220,14 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                             _buildFareBreakdown(context),
                           ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildFareRow(
-                                "Total Amount".translate(context),
-                                discountedFare.toStringAsFixed(2),
-                                isTotal: true,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Select a payment method to pay".translate(
-                                  context,
-                                ),
-                                style: heading3Grey1(context).copyWith(
-                                  fontSize: 14,
-                                  color: blackColor.withValues(alpha: .6),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
+                        
 
                         // Payment Methods
                         _buildPaymentMethods(context, selectedMethod),
 
                         const SizedBox(height: 30),
 
-                        // Pay Now Button (for online payment) removed for auto-redirection
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 30),
                       ],
                     ),
                   );
@@ -253,8 +235,93 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
               ),
             ),
           ),
-        ),
+          _buildBottomPayButton(context),
+        ],
       ),
+    ),
+  ),
+  ),
+);
+}
+
+
+  Widget _buildBottomPayButton(BuildContext context) {
+    return BlocBuilder<PaymentCubit, PaymentMethod?>(
+      builder: (context, selectedMethod) {
+        return Container(
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24, top: 16),
+          decoration: BoxDecoration(
+            color: whiteColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  if (selectedMethod == PaymentMethod.online) {
+                    _redirectToOnlinePayment(context);
+                  } else if (selectedMethod == PaymentMethod.wallet) {
+                    _processWalletPayment(context);
+                  } else {
+                    _processCashPayment(context);
+                  }
+                },
+                child: Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFB800),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.security, color: Colors.black87, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Pay $currency ${discountedFare.toStringAsFixed(2)}",
+                        style: headingBlack(context).copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.lock_outline, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    "100% Secure Payments".translate(context),
+                    style: regular(context).copyWith(color: Colors.grey, fontSize: 12),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -262,30 +329,41 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
     return BlocBuilder<RideRequestCubit, RideRequestState>(
       builder: (context, state) {
         return Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           decoration: BoxDecoration(
-            color: notifires.getbgcolor,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
             boxShadow: [
               BoxShadow(
-                color: grey5.withValues(alpha: .3),
-                blurRadius: 8,
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
                 spreadRadius: 2,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Row(
             children: [
               Container(
-                height: 60,
-                width: 60,
+                height: 65,
+                width: 65,
+                padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: themeColor, width: 2),
+                  border: Border.all(color: const Color(0xFFFFB800), width: 2),
                 ),
-                child: ClipOval(
-                  child: myNetworkImage(state.acceptedDriverImageUrl),
-                ),
+                child: state.acceptedDriverImageUrl.isEmpty
+                    ? Container(
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFF9ED),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.person, color: Color(0xFFFFB800), size: 40),
+                      )
+                    : ClipOval(
+                        child: myNetworkImage(state.acceptedDriverImageUrl),
+                      ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -296,29 +374,29 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                       state.acceptedDriverName,
                       style: headingBlack(
                         context,
-                      ).copyWith(fontSize: 18, fontWeight: FontWeight.w600),
+                      ).copyWith(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
+                        horizontal: 10,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: greentext.withValues(alpha: .1),
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.green.shade50.withOpacity(0.5),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.check_circle, color: greentext, size: 16),
-                          const SizedBox(width: 6),
+                          Icon(Icons.check_circle, color: Colors.green.shade600, size: 14),
+                          const SizedBox(width: 4),
                           Text(
                             "RIDE COMPLETE".translate(context),
                             style: regular(context).copyWith(
-                              color: greentext,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              color: Colors.green.shade700,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
@@ -338,47 +416,47 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
     return BlocBuilder<RideRequestCubit, RideRequestState>(
       builder: (context, state) {
         return Container(
-          margin: const EdgeInsetsDirectional.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: themeColor.withValues(alpha: .1),
-            borderRadius: BorderRadius.circular(18),
+            color: const Color(0xFFF9FFF9),
+            borderRadius: BorderRadius.circular(16),
           ),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50,
+                      color: Colors.green.shade100.withOpacity(0.5),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.my_location,
-                      size: 20,
+                      size: 16,
                       color: Colors.green,
                     ),
                   ),
                   Container(
-                    width: 2,
+                    width: 1.5,
                     height: 40,
+                    margin: const EdgeInsets.symmetric(vertical: 2),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.green.shade200, Colors.red.shade200],
+                        colors: [Colors.green.shade300, Colors.red.shade300],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       color: Colors.red.shade50,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.flag, size: 20, color: Colors.red),
+                    child: const Icon(Icons.flag, size: 16, color: Colors.red),
                   ),
                 ],
               ),
@@ -392,8 +470,7 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.green.shade600,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: .5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -401,14 +478,15 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                       state.pickupAddress,
                       style: heading3Grey1(context).copyWith(fontSize: 12),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
+                    Divider(color: Colors.grey.withOpacity(0.1), height: 1),
+                    const SizedBox(height: 12),
                     Text(
                       "Drop".translate(context),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.red.shade600,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: .5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -430,43 +508,41 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: notifires.getbgcolor,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFF0B3), width: 1.5, style: BorderStyle.solid), 
         boxShadow: [
           BoxShadow(
-            color: grey6.withValues(alpha: 0.2),
-            blurRadius: 6,
-            spreadRadius: 2,
+            color: Colors.black.withOpacity(0.01),
+            blurRadius: 5,
+            spreadRadius: 1,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
           Row(
             children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF9ED),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.local_activity, color: Color(0xFFFFB800), size: 24),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: TextField(
-                  style: regular2(context).copyWith(color: grey1),
+                  style: headingBlack(context).copyWith(fontSize: 14, fontWeight: FontWeight.bold),
                   controller: couponController,
                   decoration: InputDecoration(
                     hintText: "Enter coupon code".translate(context),
-                    filled: true,
-                    fillColor: grey5,
-                    hintStyle: regular2(context),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
+                    hintStyle: regular(context).copyWith(fontSize: 12, color: Colors.grey.shade600),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
                     suffixIcon: couponApplied
                         ? IconButton(
                             icon: Icon(Icons.close, color: redColor),
@@ -476,7 +552,6 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
               BlocConsumer<CouponCubit, PaymentCouponState>(
                 listener: (context, state) {
                   if (state is CouponSuccessState) {
@@ -514,57 +589,48 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                   }
                 },
                 builder: (context, state) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        colors: [themeColor, themeColor.withValues(alpha: .8)],
-                      ),
-                    ),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: state is CouponLoadingState
-                          ? null
-                          : () {
-                              if (couponApplied) {
-                                return;
-                              }
-                              if (couponController.text.isEmpty) {
-                                showErrorToastMessage(
-                                  "Please enter coupon code",
-                                );
-                                return;
-                              }
-                              context.read<CouponCubit>().applyCoupon(
-                                postData: {
-                                  "item_type_id": vehicle["id"],
-                                  "booking_id": widget.bookingId,
-                                  "distance": vehicle["distance"],
-                                  "coupon_code": couponController.text,
-                                  "wallet_amount": "",
-                                  "selected_currency_code": currency,
-                                },
-                                context: context,
+                  return GestureDetector(
+                    onTap: state is CouponLoadingState
+                        ? null
+                        : () {
+                            if (couponApplied) {
+                              return;
+                            }
+                            if (couponController.text.isEmpty) {
+                              showErrorToastMessage(
+                                "Please enter coupon code",
                               );
-                            },
+                              return;
+                            }
+                            context.read<CouponCubit>().applyCoupon(
+                              postData: {
+                                "item_type_id": vehicle["id"],
+                                "booking_id": widget.bookingId,
+                                "distance": vehicle["distance"],
+                                "coupon_code": couponController.text,
+                                "wallet_amount": "",
+                                "selected_currency_code": currency,
+                              },
+                              context: context,
+                            );
+                          },
+                    child: Container(
+                      height: 32,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFFB800), width: 1),
+                      ),
+                      alignment: Alignment.center,
                       child: state is CouponLoadingState
                           ? const SizedBox(
-                              height: 18,
-                              width: 18,
+                              height: 16,
+                              width: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
+                                  Color(0xFFFFB800),
                                 ),
                               ),
                             )
@@ -572,10 +638,7 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                               couponApplied && discountAmount != 0
                                   ? "Applied".translate(context)
                                   : "Apply".translate(context),
-                              style: regular(context).copyWith(
-                                color: blackColor,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: regular(context).copyWith(color: const Color(0xFFFFB800), fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                     ),
                   );
@@ -583,26 +646,23 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
               ),
             ],
           ),
-
-          // Coupon Applied Message
+          
           if (couponApplied && discountAmount != 0) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: greentext.withValues(alpha: .1),
+                color: Colors.green.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: greentext.withValues(alpha: .3)),
+                border: Border.all(color: Colors.green.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle, color: greentext, size: 18),
+                  Icon(Icons.check_circle, color: Colors.green, size: 18),
                   const SizedBox(width: 8),
                   Text(
                     "Coupon applied successfully!".translate(context),
-                    style: regular(
-                      context,
-                    ).copyWith(color: greentext, fontWeight: FontWeight.w500),
+                    style: regular(context).copyWith(color: Colors.green, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -615,32 +675,48 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
 
   Widget _buildFareBreakdown(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: notifires.getbgcolor,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: grey5.withValues(alpha: .3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            spreadRadius: 2,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Fare Breakdown".translate(context),
-            style: headingBlack(
-              context,
-            ).copyWith(fontSize: 16, fontWeight: FontWeight.w600),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFB800),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "Fare Breakdown".translate(context),
+                style: headingBlack(
+                  context,
+                ).copyWith(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 12),
-
-          // Original Fare
+          const SizedBox(height: 16),
           _buildFareRow(
             "Original Fare".translate(context),
             originalFare.toStringAsFixed(2),
             isTotal: false,
           ),
-
-          // Discount (if applied)
           if (couponApplied && discountAmount != 0) ...[
             _buildFareRow(
               "Discount".translate(context),
@@ -649,12 +725,29 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
               isDiscount: true,
             ),
           ],
-
-          // Divider
-          const SizedBox(height: 8),
-          Divider(color: grey5.withValues(alpha: .5)),
-
-          // Total Fare
+          const SizedBox(height: 12),
+          Divider(color: Colors.grey.withOpacity(0.2), height: 1),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Total Amount".translate(context),
+                style: headingBlack(context).copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                "$currency ${discountedFare.toStringAsFixed(2)}",
+                style: headingBlack(context).copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFFFB800),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -701,17 +794,19 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
     PaymentMethod? selectedMethod,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: notifires.getbgcolor,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: grey5.withValues(alpha: 0.2),
-            blurRadius: 6,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
             spreadRadius: 2,
+            offset: const Offset(0, 2),
           ),
         ],
+        border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -854,6 +949,24 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
     );
   }
 
+
+  Future<void> _processCashPayment(BuildContext context) async {
+    final bookingId = (widget.bookingId ?? "").trim();
+    final rideId = (widget.rideId ?? "").trim();
+
+    if (bookingId.isNotEmpty) {
+      context.read<UpdatePaymentByUserCubit>().updatePaymentStatusByUser(
+            context: context,
+            bookingId: bookingId,
+            paymentMethod: "cash",
+          );
+    } else if (rideId.isNotEmpty) {
+      goTo(BookingSuccessScreen(rideId: rideId));
+    } else {
+      showErrorToastMessage("Invalid booking or ride details.");
+    }
+  }
+
   Future<void> _processWalletPayment(BuildContext context) async {
     showLoading();
     try {
@@ -968,12 +1081,7 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
     }
 
     final rideId = (widget.rideId ?? "").trim();
-    if (rideId.isNotEmpty) {
-      context.read<UpdateRideRequestParameterCubit>().updatePaymentStatus(
-        rideId: rideId,
-        paymentStatus: "collected",
-      );
-    }
+    goTo(BookingSuccessScreen(rideId: rideId));
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {

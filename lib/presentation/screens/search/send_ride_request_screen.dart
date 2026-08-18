@@ -446,6 +446,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                     if (normalizedStatus == "rejected" ||
                         normalizedStatus == "cancelled" ||
                         normalizedStatus == "canceled") {
+                      if (isManuallyCancelled) return;
                       if (_isDriverCancelDialogShown) return;
                       _isDriverCancelDialogShown = true;
                       box.delete("rideId");
@@ -968,18 +969,37 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "Finding your driver...\nWe’re looking for the best match for you!"
-              .translate(context),
-          textAlign: TextAlign.start,
-          style: heading3Grey1(context),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Finding your driver...".translate(context),
+                    textAlign: TextAlign.start,
+                    style: heading3Grey1(context).copyWith(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "We’re looking for the best match for you!".translate(context),
+                    textAlign: TextAlign.start,
+                    style: regular(context).copyWith(color: grey1, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            Image.asset("assets/images/search_loading.gif", height: 75, fit: BoxFit.contain),
+          ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 15),
         const CountdownSegmentedBar(),
-        const SizedBox(height: 10),
-        Divider(color: grey5),
-        const SizedBox(height: 10),
-      ],
+        const SizedBox(height: 15),
+      ]
     );
   }
 
@@ -997,65 +1017,110 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                   rideStatus == ""
                       ? "Driver on the way".translate(context)
                       : "Reaching".translate(context),
-                  style: heading3Grey1(context),
+                  style: heading3Grey1(context).copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.black87,
+                  ),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   fetchDistance.isEmpty
                       ? "Calculating...".translate(context)
                       : "$fetchDistance ${"away".translate(context)}",
-                  style: regular(context),
+                  style: regular(context).copyWith(color: grey1, fontSize: 13),
                 ),
               ],
             ),
             const Spacer(),
             Container(
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15), color: blackColor),
-              child: Text(
-                fetchDuration.isEmpty ? "..." : fetchDuration,
-                style: heading2(context)
-                    .copyWith(color: Colors.white, fontSize: 14),
+                  borderRadius: BorderRadius.circular(25), color: const Color(0xFFFCBB2C)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.access_time, size: 16, color: Colors.black87),
+                  const SizedBox(width: 6),
+                  Text(
+                    fetchDuration.isEmpty ? "..." : fetchDuration,
+                    style: heading2(context)
+                        .copyWith(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        Divider(color: grey5),
+        const SizedBox(height: 20),
         if (rideStatus != "ongoing") ...[
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Start your ride with PIN".translate(context),
-                style: regular(context).copyWith(fontWeight: FontWeight.bold),
-              ),
-              Directionality(
-                textDirection: ui.TextDirection.ltr,
-                child: Row(
-                  children: List.generate(otp.length, (index) {
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      padding: const EdgeInsets.all(4),
-                      width: 20,
-                      height: 30,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade100,
-                        borderRadius: BorderRadius.circular(4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFCBB2C).withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.lock_outline, size: 16, color: Color(0xFFE89A00)),
                       ),
-                      child: Text(
-                        otp[index],
-                        style: regular2(context)
-                            .copyWith(color: grey1, fontSize: 14),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "Start your ride with PIN".translate(context),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: regular(context).copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.black87,
+                          ),
+                        ),
                       ),
-                    );
-                  }),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Directionality(
+                  textDirection: ui.TextDirection.ltr,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(otp.length, (index) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        padding: const EdgeInsets.all(2),
+                        width: 24,
+                        height: 32,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF9ED),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          otp[index],
+                          style: regular2(context).copyWith(
+                            color: Colors.black87,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
         _buildDriverCard(context),
@@ -1065,85 +1130,152 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
   Widget _buildDriverCard(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 15),
+      margin: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: notifires.getBoxColor,
-        borderRadius: BorderRadius.circular(15),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFFFF9F2),
+            Color(0xFFFFF0D6),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            spreadRadius: 2,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.white, width: 1.5),
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: BlocBuilder<RideRequestCubit, RideRequestState>(
         builder: (context, state) {
           return Row(
             children: [
               state.acceptedDriverImageUrl.isEmpty
-                  ? Icon(CupertinoIcons.profile_circled,
-                      color: themeColor, size: 50)
-                  : Container(
-                      decoration: BoxDecoration(
-                        color: notifires.getBoxColor,
-                        borderRadius: BorderRadius.circular(40),
-                        boxShadow: [
-                          BoxShadow(
-                              color: grey6, blurRadius: 10, spreadRadius: 10)
-                        ],
-                      ),
+                  ? Container(
                       height: 65,
                       width: 65,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFCBB2C).withOpacity(0.2),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Icon(CupertinoIcons.profile_circled,
+                          color: themeColor, size: 50),
+                    )
+                  : Container(
+                      height: 65,
+                      width: 65,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFCBB2C).withOpacity(0.2),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
                       child: ClipOval(
-                          child: myNetworkImage(state.acceptedDriverImageUrl)),
+                        child: myNetworkImage(state.acceptedDriverImageUrl),
+                      ),
                     ),
-              const SizedBox(width: 15),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(state.acceptedDriverName,
-                        style: regularBlack(context).copyWith(fontSize: 14)),
-                    Text("${state.accepteDriverPhoneNumber} ",
-                        style: regularBlack(context).copyWith(fontSize: 14)),
-                    Text(state.acceptedDriverVechileNumber,
-                        style: regular(context).copyWith(fontSize: 14)),
+                    Text(
+                      state.acceptedDriverName,
+                      style: heading3Grey1(context).copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      state.accepteDriverPhoneNumber,
+                      style: regular(context).copyWith(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      state.acceptedDriverVechileNumber,
+                      style: regular(context).copyWith(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                    ),
                   ],
                 ),
               ),
               Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: yelloColor2.withValues(alpha: .1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.star, color: yelloColor2, size: 18),
+                        const Icon(Icons.star, color: Color(0xFFFCBB2C), size: 14),
                         const SizedBox(width: 4),
                         Text(
                           state.driverRating,
                           style: regularBlack(context).copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(
-                    height: 10,
-                  ),
+                  const SizedBox(height: 16),
                   InkWell(
                     onTap: () async {
                       final phone = state.accepteDriverPhoneNumber;
                       final Uri launchUri = Uri(scheme: 'tel', path: phone);
-
                       if (await canLaunchUrl(launchUri)) {
                         await launchUrl(launchUri);
-                      } else {}
+                      }
                     },
-                    child: SvgPicture.asset(
-                      "assets/images/call_img.svg",
-                      height: 30,
+                    child: Container(
+                      height: 40,
+                      width: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.phone, color: Color(0xFFFCBB2C), size: 20),
+                      ),
                     ),
                   ),
                 ],
@@ -1160,32 +1292,104 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Booking Details".translate(context),
-            style: heading3Grey1(context)),
-        const SizedBox(height: 10),
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(4)),
+              child: Icon(Icons.receipt_long_outlined, size: 16, color: yelloColor2),
+            ),
+            const SizedBox(width: 12),
+            Text("Booking Details".translate(context),
+                style: heading3Grey1(context).copyWith(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+          ],
+        ),
+        const SizedBox(height: 15),
         Container(
           decoration: BoxDecoration(
-            color: notifires.getBoxColor,
-            borderRadius: BorderRadius.circular(10),
+            color: const Color(0xFFF6F8F6),
+            borderRadius: BorderRadius.circular(16),
           ),
-          padding: const EdgeInsets.all(10),
-          child: Column(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              buildLocationRow(
-                icon: Icons.circle,
-                color: Colors.green,
-                bgColor: Colors.green.shade100,
-                text: stateData.pickupAddress,
-                context: context,
+              Column(
+                children: [
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 26,
+                    width: 26,
+                    decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
+                    child: Icon(Icons.circle, color: Colors.green.shade600, size: 10),
+                  ),
+                  const SizedBox(height: 4),
+                  Column(
+                    children: List.generate(4, (index) => Container(
+                      width: 1.5,
+                      height: 4,
+                      color: Colors.grey.withOpacity(0.4),
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                    )),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 26,
+                    width: 26,
+                    decoration: BoxDecoration(color: Colors.red.shade50, shape: BoxShape.circle),
+                    child: Icon(Icons.location_on, color: Colors.red.shade400, size: 14),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              buildLocationRow(
-                icon: Icons.location_on_outlined,
-                color: Colors.red,
-                bgColor: Colors.red.shade100,
-                text: stateData.dropoffAddress,
-                context: context,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            stateData.pickupAddress,
+                            style: regularBlack(context).copyWith(fontSize: 13),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(4)),
+                          child: Text("Pickup", style: TextStyle(color: Colors.green.shade700, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Divider(color: Colors.grey.withOpacity(0.2), height: 1),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            stateData.dropoffAddress,
+                            style: regularBlack(context).copyWith(fontSize: 13),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(4)),
+                          child: Text("Drop", style: TextStyle(color: Colors.red.shade700, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -1198,13 +1402,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 20),
-        Text(
-            rideStatus == "ongoing"
-                ? "Total Fare".translate(context)
-                : "Ride Details".translate(context),
-            style: heading3Grey1(context)),
-        const SizedBox(height: 10),
+        const SizedBox(height: 25),
         if (rideStatus == "ongoing")
           Row(
             children: [
@@ -1214,9 +1412,20 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                   style: heading2(context).copyWith(color: themeColor)),
             ],
           )
-        else
+        else ...[
+          Row(
+            children: [
+              const SizedBox(width: 4),
+              Icon(Icons.two_wheeler, size: 20, color: yelloColor2),
+              const SizedBox(width: 12),
+              Text("Ride Details".translate(context),
+                  style: heading3Grey1(context).copyWith(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+            ],
+          ),
+          const SizedBox(height: 15),
           _buildVehicleDetails(context),
-        const SizedBox(height: 20),
+        ],
+        const SizedBox(height: 25),
         if (rideStatus != "ongoing") _buildCancelRideButton(context),
       ],
     );
@@ -1224,47 +1433,74 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
   Widget _buildVehicleDetails(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFFFFF9ED),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFCBB2C).withOpacity(0.3), width: 1),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 110,
-                height: 55,
-                child: Image.network(
-                  widget.selectedVehicleData["image"] ?? "",
-                  headers: const {"ngrok-skip-browser-warning": "true"},
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) =>
-                      SvgPicture.asset("assets/images/car.svg"),
+          SizedBox(
+            width: 55,
+            height: 45,
+            child: Image.network(
+              widget.selectedVehicleData["image"] ?? "",
+              headers: const {"ngrok-skip-browser-warning": "true"},
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => SvgPicture.asset("assets/images/car.svg"),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.selectedVehicleData["vehicleName"] ?? "Unknown",
+                  style: heading3Grey1(context).copyWith(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.black87),
                 ),
-              ),
-              const SizedBox(width: 10),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.star, color: yelloColor2, size: 14),
+                    const SizedBox(width: 4),
+                    Text("1 Rider", style: regular(context).copyWith(fontSize: 11, color: grey1)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(width: 1, height: 30, color: Colors.grey.withOpacity(0.3)),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
               Text(
-                widget.selectedVehicleData["vehicleName"] ?? "Unknown",
-                style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black),
+                "${widget.selectedVehicleData["duration"] ?? "00"}",
+                style: heading3Grey1(context).copyWith(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.black87),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "ETA",
+                style: regular(context).copyWith(fontSize: 11, color: grey1),
               ),
             ],
           ),
+          const SizedBox(width: 12),
+          Container(width: 1, height: 30, color: Colors.grey.withOpacity(0.3)),
+          const SizedBox(width: 12),
           Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                "$currency ${widget.selectedVehicleData["fare"] ?? ""}",
-                style: const TextStyle(fontSize: 14, color: Colors.black),
+                "₹${widget.selectedVehicleData["fare"] ?? ""}",
+                style: heading3Grey1(context).copyWith(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.black87),
               ),
+              const SizedBox(height: 4),
               Text(
-                "${widget.selectedVehicleData["duration"] ?? "00"} (${widget.selectedVehicleData["distance"] ?? "00"} Km)",
-                style: TextStyle(fontSize: 13, color: grey2),
+                "(${widget.selectedVehicleData["distance"] ?? "00"} Km)",
+                style: regular(context).copyWith(fontSize: 11, color: grey1),
               ),
             ],
           ),
@@ -1274,25 +1510,25 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   }
 
   Widget _buildCancelRideButton(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        GestureDetector(
-          onTap: () => _showCancelRideBottomSheet(context),
-          child: Container(
-            alignment: Alignment.center,
-            height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-            decoration: BoxDecoration(
-              color: themeColor,
-              borderRadius: BorderRadius.circular(40),
-            ),
-            child: Text(
-              "Cancel Ride".translate(context),
-              style: regular2(context)
-                  .copyWith(color: Colors.black, fontWeight: FontWeight.bold),
-            ),
-          ),
+        SlideToCancelButton(
+          text: "Cancel Ride".translate(context),
+          onCancel: () => _showCancelRideBottomSheet(context),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Swipe right to cancel ride".translate(context),
+          style: regular(context).copyWith(fontSize: 11, color: grey1, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.verified_user, color: Colors.green, size: 16),
+            const SizedBox(width: 6),
+            Text("Your safety is our priority", style: regular(context).copyWith(fontSize: 12, color: grey1)),
+          ],
         ),
       ],
     );
@@ -1494,17 +1730,29 @@ class CountdownSegmentedBar extends StatefulWidget {
 class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
     with WidgetsBindingObserver {
   int totalSeconds = 60;
-  int segmentCount = 5;
-  late double segmentSeconds; //
-  late Timer _timer;
+  int segmentCount = 6;
+  Timer? _timer;
   DateTime? _startTime;
 
-  int get _elapsedSeconds {
-    if (_startTime == null) return 0;
-    return DateTime.now()
-        .difference(_startTime!)
-        .inSeconds
-        .clamp(0, totalSeconds);
+  double get _elapsedSecondsPrecise {
+    if (_startTime == null) return 0.0;
+    final ms = DateTime.now().difference(_startTime!).inMilliseconds;
+    return (ms / 1000.0).clamp(0.0, totalSeconds.toDouble());
+  }
+
+  int get remainingSeconds =>
+      (totalSeconds - _elapsedSecondsPrecise.floor()).clamp(0, totalSeconds);
+
+  double get totalRemainingProgress =>
+      (1.0 - _elapsedSecondsPrecise / totalSeconds).clamp(0.0, 1.0);
+
+  double getSegmentProgress(int index) {
+    final double segmentStart = index / segmentCount;
+    final double segmentEnd = (index + 1) / segmentCount;
+    final p = totalRemainingProgress;
+    if (p <= segmentStart) return 0.0;
+    if (p >= segmentEnd) return 1.0;
+    return (p - segmentStart) / (segmentEnd - segmentStart);
   }
 
   @override
@@ -1514,26 +1762,23 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
     final durationFromCubit =
         context.read<DriverSearchIntervalCubit>().state.value;
     totalSeconds = int.tryParse(durationFromCubit ?? "60") ?? 60;
-    // Fixed segment count
-    segmentCount = 5;
-    // Dynamic segment duration
-    segmentSeconds = totalSeconds / segmentCount;
+    segmentCount = 6;
     _startCountdown();
   }
 
   void _startCountdown() {
     _startTime = DateTime.now();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      final elapsed = _elapsedSeconds;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+      if (!mounted) return;
+      final elapsed = _elapsedSecondsPrecise;
 
-      if (elapsed > totalSeconds) {
-        _timer.cancel();
-      } else if (elapsed == totalSeconds) {
+      if (elapsed >= totalSeconds) {
+        _timer?.cancel();
         setState(() {});
-        Future.delayed(const Duration(milliseconds: 500), () {
+        Future.delayed(const Duration(milliseconds: 300), () {
           if (mounted) showBottomSheetMessage();
         });
-        _timer.cancel();
       } else {
         setState(() {});
       }
@@ -1541,7 +1786,7 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
   }
 
   void _resetCountdown() {
-    _timer.cancel();
+    _timer?.cancel();
     setState(() {
       _startTime = DateTime.now();
     });
@@ -1549,8 +1794,8 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
   }
 
   void _stopCountdown() {
-    if (_timer.isActive) {
-      _timer.cancel();
+    if (_timer != null && _timer!.isActive) {
+      _timer!.cancel();
     }
   }
 
@@ -1567,14 +1812,6 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
       setState(() {});
     }
   }
-
-  int get remainingSeconds =>
-      (totalSeconds - _elapsedSeconds).clamp(0, totalSeconds);
-
-  int get filledSegments => (_elapsedSeconds / segmentSeconds).floor();
-
-  double get currentSegmentProgress =>
-      (_elapsedSeconds % segmentSeconds) / segmentSeconds;
 
   void showBottomSheetMessage() {
     showModalBottomSheet(
@@ -1759,45 +1996,55 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
         children: [
           Row(
             children: List.generate(segmentCount, (index) {
-              int reversedIndex = segmentCount - 1 - index;
-              double progress;
-
-              if (reversedIndex < filledSegments) {
-                progress = 0.0;
-              } else if (reversedIndex == filledSegments) {
-                progress = 1.0 - currentSegmentProgress;
-              } else {
-                progress = 1.0;
-              }
-
+              final targetProgress = getSegmentProgress(index);
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(right: index != 5 ? 4.0 : 0.0),
+                  padding: EdgeInsets.only(
+                      right: index != segmentCount - 1 ? 6.0 : 0.0),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(5),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 8,
-                      backgroundColor: Colors.grey[300],
-                      valueColor:
-                          const AlwaysStoppedAnimation<Color>(Colors.green),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      height: 7,
+                      color: Colors.grey[200],
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 1.0, end: targetProgress),
+                        duration: const Duration(milliseconds: 100),
+                        curve: Curves.easeOut,
+                        builder: (context, value, child) {
+                          return FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: value.clamp(0.0, 1.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFCBB2C),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
               );
             }),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Row(
             children: [
+              Icon(Icons.access_time, color: const Color(0xFFFCBB2C), size: 16),
+              const SizedBox(width: 6),
               Text(
                 "${(remainingSeconds ~/ 60).toString().padLeft(2, '0')}:${(remainingSeconds % 60).toString().padLeft(2, '0')} ${"min".translate(context)}",
-                style: const TextStyle(color: Colors.grey, fontSize: 14),
+                style: regular(context).copyWith(
+                    color: Colors.black87,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500),
               ),
               const Spacer(),
               Text(
-                "Waiting...".translate(context),
-                style: regular(context),
+                "Searching nearby drivers...".translate(context),
+                style: regular(context).copyWith(color: grey1, fontSize: 12),
               ),
             ],
           ),
@@ -1817,24 +2064,14 @@ class PulsingCircle extends StatefulWidget {
 class _PulsingCircleState extends State<PulsingCircle>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> scaleAnimation;
-  late Animation<double> opacityAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 3000), // Slower, majestic feel
       vsync: this,
     )..repeat();
-
-    scaleAnimation = Tween<double>(begin: 1.0, end: 2.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
-
-    opacityAnimation = Tween<double>(begin: 0.4, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
   }
 
   @override
@@ -1846,44 +2083,116 @@ class _PulsingCircleState extends State<PulsingCircle>
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 300,
-      height: 300,
+      width: 320,
+      height: 320,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Outer pulse
+          // The radar waves
           AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
-              return Transform.scale(
-                scale: scaleAnimation.value,
-                child: Opacity(
-                  opacity: opacityAnimation.value,
-                  child: Container(
-                    width: 130,
-                    height: 130,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.green,
-                    ),
-                  ),
-                ),
+              return CustomPaint(
+                painter: RadarPainter(_controller.value),
+                size: const Size(320, 320),
               );
             },
           ),
-          // Inner static dot
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.green.shade700,
-              border: Border.all(color: Colors.white, width: 2),
-            ),
+          // Inner breathing, glowing dot
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              // Breathe: uses sin wave for smooth in-out pulse
+              final breath = math.sin(_controller.value * math.pi * 4); 
+              final scale = 1.0 + (breath * 0.05); // Toned down: 1.0 to 1.05
+              
+              return Transform.scale(
+                scale: scale,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.green.shade500,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withValues(alpha: 0.4),
+                        blurRadius: 4 + (breath * 2),
+                        spreadRadius: 1 + (breath * 1),
+                      ),
+                      const BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  ),
+                ),
+              );
+            }
           ),
         ],
       ),
     );
+  }
+}
+
+class RadarPainter extends CustomPainter {
+  final double animationValue;
+
+  RadarPainter(this.animationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final maxRadius = size.width / 2;
+
+    // 1. Draw expanding rings
+    for (int i = 0; i < 3; i++) {
+      double progress = animationValue - (i * 0.33);
+      if (progress < 0) {
+        progress += 1.0;
+      }
+      
+      // Use easeOut curve for expanding radius so it slows down near the edge
+      final double curveProgress = Curves.easeOut.transform(progress);
+      final double radius = maxRadius * curveProgress;
+      
+      // Fade out heavily towards the end
+      final double opacity = (1.0 - progress).clamp(0.0, 1.0);
+
+      // Radial gradient for the shockwave fill
+      final ringPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Colors.green.withValues(alpha: 0.0),
+            Colors.green.withValues(alpha: opacity * 0.1),
+            Colors.green.withValues(alpha: opacity * 0.4),
+          ],
+          stops: const [0.0, 0.8, 1.0],
+        ).createShader(Rect.fromCircle(center: center, radius: radius > 0 ? radius : 1))
+        ..style = PaintingStyle.fill;
+
+      if (radius > 0) {
+         canvas.drawCircle(center, radius, ringPaint);
+      }
+
+      // Crisp outer ring border
+      final borderPaint = Paint()
+        ..color = Colors.green.withValues(alpha: opacity * 0.8)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+        
+      if (radius > 0) {
+        canvas.drawCircle(center, radius, borderPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant RadarPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
   }
 }
 
@@ -2001,5 +2310,90 @@ class ScreenTracker {
 
   static bool isScreenActive(String screenName) {
     return currentScreen == screenName;
+  }
+}
+
+class SlideToCancelButton extends StatefulWidget {
+  final VoidCallback onCancel;
+  final String text;
+
+  const SlideToCancelButton({super.key, required this.onCancel, required this.text});
+
+  @override
+  State<SlideToCancelButton> createState() => _SlideToCancelButtonState();
+}
+
+class _SlideToCancelButtonState extends State<SlideToCancelButton> {
+  double _dragPosition = 0;
+  bool _isCancelled = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double maxDrag = constraints.maxWidth - 55;
+
+        return Container(
+          width: double.infinity,
+          height: 55,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFCBB2C),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Stack(
+            children: [
+              Center(
+                child: Text(
+                  widget.text,
+                  style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: Icon(Icons.arrow_forward, color: Colors.black.withOpacity(0.3), size: 20),
+                ),
+              ),
+              Positioned(
+                left: _dragPosition,
+                top: 5.5,
+                child: GestureDetector(
+                  onHorizontalDragUpdate: (details) {
+                    if (_isCancelled) return;
+                    setState(() {
+                      _dragPosition += details.delta.dx;
+                      if (_dragPosition < 0) _dragPosition = 0;
+                      if (_dragPosition > maxDrag) _dragPosition = maxDrag;
+                    });
+                  },
+                  onHorizontalDragEnd: (details) {
+                    if (_isCancelled) return;
+                    if (_dragPosition > maxDrag * 0.8) {
+                      setState(() {
+                        _dragPosition = maxDrag;
+                        _isCancelled = true;
+                      });
+                      widget.onCancel();
+                    } else {
+                      setState(() {
+                        _dragPosition = 0;
+                      });
+                    }
+                  },
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(left: 5.5),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.close, color: Colors.black, size: 20),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
