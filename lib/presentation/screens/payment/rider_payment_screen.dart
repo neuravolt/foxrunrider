@@ -569,7 +569,17 @@ class _RiderPaymentScreenState extends State<RiderPaymentScreen> {
                         );
                     context.read<CouponCubit>().resetCoupon();
                   } else if (state is CouponFailedState) {
-                    showErrorToastMessage(state.message);
+                    String errorMsg = state.message.trim();
+                    if (errorMsg == "global.invalid_coupon_code" ||
+                        errorMsg.contains("invalid_coupon_code")) {
+                      errorMsg = "Invalid coupon code".translate(context);
+                    } else if (errorMsg.startsWith("global.")) {
+                      errorMsg = errorMsg
+                          .replaceAll("global.", "")
+                          .replaceAll("_", " ")
+                          .translate(context);
+                    }
+                    showErrorToastMessage(errorMsg);
                     context.read<CouponCubit>().resetCoupon();
                   } else if (state is CouponRemoveState) {
                     couponController.clear();

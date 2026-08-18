@@ -178,5 +178,7 @@
     "Payment Method": "भुगतान विधि",
     "Pay with cash to driver": "ड्राइवर को नकद भुगतान करें",
     "Pay securely online": "सुरक्षित ऑनलाइन भुगतान",
-    "Total Amount": "कुल राशि"
+    "Total Amount": "कुल राशि",
+    "global.invalid_coupon_code": "अमान्य कूपन कोड",
+    "Invalid coupon code": "अमान्य कूपन कोड"
 }
