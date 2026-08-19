@@ -18,9 +18,35 @@ class ChangeLanguage extends StatefulWidget {
 }
 
 class _ChangeLanguageState extends State<ChangeLanguage> {
-  int selectedRadio = 0;
   int _value = 0;
-  int currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final savedCode = lanBox.get('lCode') ?? 'en';
+    final savedVal = lanBox.get('lanValue');
+    if (savedVal != null && savedVal is int && savedVal >= 0 && savedVal < locale.length) {
+      _value = savedVal;
+    } else {
+      final idx = locale.indexWhere((element) => element['locale'] == savedCode);
+      _value = idx >= 0 ? idx : 0;
+    }
+  }
+
+  void _selectLanguage(int index) {
+    final selectedLocale = locale[index]['locale'];
+    context.read<LanguageCubit>().changeLanguage(selectedLocale);
+    try {
+      context.read<LCodeCubit>().changeLanguage(selectedLocale);
+    } catch (_) {}
+
+    lanBox.put('lCode', selectedLocale);
+    lanBox.put('lanValue', index);
+
+    setState(() {
+      _value = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,63 +59,46 @@ class _ChangeLanguageState extends State<ChangeLanguage> {
         iconColor: notifires.getwhiteblackColor,
         titleColor: notifires.getwhiteblackColor,
       ),
-      body:
-          BlocBuilder<LanguageCubit, LanguageState>(builder: (context, state) {
-        return SingleChildScrollView(
-          // physics: BouncingScrollPhysics(),
-          child: SizedBox(
-            height: double.maxFinite,
-            width: double.maxFinite,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: locale.length,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      return InkWell(
-                        onTap: () {
-                          context
-                              .read<LanguageCubit>()
-                              .changeLanguage(locale[index]["locale"]);
-
-                          lanBox.put('lCode', locale[index]['locale']);
-
-                          setState(() {
-                            _value = index;
-                            box.put("lanValue", _value);
-                          });
-                        },
-                        child: languageWidget(
-                          name: locale[index]['name'],
-                          value: index,
-                          radio: Radio(
+      body: BlocBuilder<LanguageCubit, LanguageState>(
+        builder: (context, state) {
+          return SingleChildScrollView(
+            child: SizedBox(
+              height: double.maxFinite,
+              width: double.maxFinite,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: locale.length,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        return InkWell(
+                          onTap: () => _selectLanguage(index),
+                          child: languageWidget(
+                            name: locale[index]['name'],
                             value: index,
-                            groupValue: lanBox.get("lanValue") ?? _value,
-                            hoverColor: blueColor,
-                            onChanged: (value4) {
-                              context
-                                  .read<LanguageCubit>()
-                                  .changeLanguage(locale[index]['locale']);
-                              lanBox.put('lCode', locale[index]['locale']);
-                              // Navigator.pop(context);
-                              setState(() {
-                                _value = index;
-                                lanBox.put("lanValue", _value);
-                              });
-                            },
+                            radio: Radio<int>(
+                              value: index,
+                              groupValue: _value,
+                              activeColor: themeColor,
+                              onChanged: (val) {
+                                if (val != null) {
+                                  _selectLanguage(val);
+                                }
+                              },
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                )
-              ],
+                        );
+                      },
+                    ),
+                  )
+                ],
+              ),
             ),
-          ),
-        );
-      }),
+          );
+        },
+      ),
     );
   }
 }

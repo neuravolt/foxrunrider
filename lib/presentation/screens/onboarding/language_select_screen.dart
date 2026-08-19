@@ -21,12 +21,25 @@ class SelectLanguageScreen extends StatefulWidget {
 
 class _SelectLanguageScreenState extends State<SelectLanguageScreen>
     with SingleTickerProviderStateMixin {
-  int _selectedValue = lanBox.get("lanValue") ?? -1;
+  late int _selectedValue;
 
-final List<Map<String, dynamic>> localeList = [
-  {"name": "English", "locale": "en", "flag": "🇬🇧"},
-  {"name": "हिन्दी (Hindi)", "locale": "hi", "flag": "🇮🇳"},
-];
+  final List<Map<String, dynamic>> localeList = [
+    {"name": "English", "locale": "en", "flag": "🇬🇧"},
+    {"name": "हिन्दी (Hindi)", "locale": "hi", "flag": "🇮🇳"},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final savedCode = lanBox.get('lCode') ?? 'en';
+    final savedVal = lanBox.get('lanValue');
+    if (savedVal != null && savedVal is int && savedVal >= 0 && savedVal < localeList.length) {
+      _selectedValue = savedVal;
+    } else {
+      final idx = localeList.indexWhere((element) => element['locale'] == savedCode);
+      _selectedValue = idx >= 0 ? idx : 0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

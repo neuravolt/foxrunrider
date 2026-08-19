@@ -114,7 +114,10 @@ class Data {
 
   Data.fromJson(dynamic json) {
     //avr_guest_rate
-    _userRating = json["avr_guest_rate"];
+    _userRating = json["avr_guest_rate"]?.toString() ??
+        json["user_rating"]?.toString() ??
+        json["rating"]?.toString() ??
+        json["avg_rating"]?.toString();
     _id = json['id'];
     _firstName = json['first_name'];
     _middle = json['middle'];

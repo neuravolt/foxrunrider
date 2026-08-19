@@ -32,6 +32,8 @@ class HistoryError extends HistoryState {
 
 class HistoryCubit extends Cubit<HistoryState> {
   HistoryRepository historyRepository;
+  List<Bookings> cachedBookings = [];
+
   HistoryCubit(this.historyRepository) : super(HistoryInitial());
 
   Future<void> getHistoryData({
@@ -44,9 +46,15 @@ class HistoryCubit extends Cubit<HistoryState> {
           context: context, bookingKeyMap: bookingKeyMap);
       if (response["status"]?.toString() == "200") {
         HistoryModel historyModel = HistoryModel.fromJson(response);
-
+        final fetched = historyModel.data?.bookings ?? [];
+        final isFirstPage = bookingKeyMap["offset"] == "0" || bookingKeyMap["offset"] == 0;
+        if (isFirstPage) {
+          cachedBookings = List.from(fetched);
+        } else {
+          cachedBookings.addAll(fetched);
+        }
         emit(HistorySuccess(
-            bookings: historyModel.data!.bookings, historyModel: historyModel));
+            bookings: List.from(cachedBookings), historyModel: historyModel));
       } else {
         emit(HistoryError(errorMessage: response["error"]));
       }
@@ -56,6 +64,7 @@ class HistoryCubit extends Cubit<HistoryState> {
   }
 
   void resetHistoryData() {
+    cachedBookings.clear();
     emit(HistoryInitial());
   }
 }
