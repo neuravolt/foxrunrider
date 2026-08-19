@@ -501,54 +501,6 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
 
                               const SizedBox(height: 16),
 
-                              // Vehicle Selection Pills Row (Bike highlighted, Car, Taxi)
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  // Highlighted Bike Pill
-                                  Container(
-                                    padding: const EdgeInsets.all(9),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFF3CD),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: const Color(0xFFFFE599),
-                                        width: 1.5,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFFF5A623)
-                                              .withValues(alpha: 0.25),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.two_wheeler_rounded,
-                                      size: 22,
-                                      color: Color(0xFFD98A00),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  // Car Icon
-                                  const Icon(
-                                    Icons.directions_car_filled_rounded,
-                                    size: 30,
-                                    color: Color(0xFF2C2C2C),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  // Taxi Icon
-                                  const Icon(
-                                    Icons.local_taxi_rounded,
-                                    size: 32,
-                                    color: Color(0xFF2C2C2C),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 12),
-
                               // Center Hero Artwork (Collapses smoothly when field is focused without triggering full screen rebuilds)
                               ValueListenableBuilder<bool>(
                                 valueListenable: isFieldFocusedNotifier,

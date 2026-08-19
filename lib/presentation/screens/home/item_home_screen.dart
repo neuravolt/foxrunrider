@@ -1064,62 +1064,6 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                             color: themeColor, size: 20),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        _checkProfileAndProceed(() async {
-                          context
-                              .read<VehicleDataUpdateCubit>()
-                              .updateVehicleTypeSelectedId(1);
-                          context
-                              .read<SelectedAddressCubit>()
-                              .pickupAddressController
-                              .text = _currentAddress;
-                          context
-                              .read<GetSuggestionAddressCubit>()
-                              .getSuggestions("");
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => UserSearchLocation(
-                                currentAddress: _currentAddress,
-                              ),
-                            ),
-                          );
-                          _loadRecentDropLocations();
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.fullscreen, color: themeColor, size: 18),
-                            const SizedBox(width: 4),
-                            Text(
-                              "View Map".translate(context),
-                              style: regular2(context).copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),

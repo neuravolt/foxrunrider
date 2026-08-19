@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ride_on/core/utils/translate.dart';
 
 import '../../core/services/config.dart';
+import '../../core/services/data_store.dart';
 
 class ProfileRepository {
   Future<Map<String, dynamic>> editProfile(
@@ -52,22 +53,33 @@ class ProfileRepository {
       BuildContext context, String data) async {
     try {
       dynamic response;
-      if (data == "About Us".translate(context) || data == "About Us") {
-        response = await httpGet(Config.staticPage, {"id": "2"},
-            context: context);
-      } else if (data == "Help and Support".translate(context) || data == "Help and Support") {
-        response = await httpGet(Config.staticPage, {"id": "4"},
-            context: context);
-      } else if (data == "Give us feedback".translate(context) || data == "Give us feedback") {
-        response = await httpGet(Config.staticPage, {"id": "25"},
-            context: context);
-      } else if (data == "Terms and Conditions" || data == "Privacy Policy") {
-        response = await httpGet(Config.staticPage, {"id": "11"},
-            context: context);
-      } else if (data == "Support") {
-        response = await httpGet(Config.staticPage, {"id": "26"},
-            context: context);
+      final lower = data.toLowerCase();
+      String pageId = "4"; // Default to Help & Support
+
+      if (lower.contains("about") || lower.contains("हमारे बारे")) {
+        pageId = "2";
+      } else if (lower.contains("help") ||
+          lower.contains("support") ||
+          lower.contains("सहायता") ||
+          lower.contains("समर्थन")) {
+        pageId = "4";
+      } else if (lower.contains("feedback") || lower.contains("प्रतिक्रिया")) {
+        pageId = "25";
+      } else if (lower.contains("terms") ||
+          lower.contains("privacy") ||
+          lower.contains("condition") ||
+          lower.contains("नियम") ||
+          lower.contains("शर्त")) {
+        pageId = "11";
       }
+
+      final langCode = lanBox.get('lCode') ?? 'en';
+      response = await httpGet(
+        Config.staticPage,
+        {"id": pageId, "lang": langCode, "lang_code": langCode},
+        context: context,
+      );
+
       return response;
     } catch (e) {
       rethrow;

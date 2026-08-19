@@ -50,7 +50,11 @@ class LogoutCubit extends Cubit<LogoutState> {
       emit(LogoutLoading());
 
       final box = await Hive.openBox('appBox');
+      final recentSearches = box.get('recent_drop_locations');
       await box.clear();
+      if (recentSearches != null) {
+        await box.put('recent_drop_locations', recentSearches);
+      }
       clearData(context);
 
       appLocale = const Locale('en');
@@ -73,7 +77,11 @@ class LogoutCubit extends Cubit<LogoutState> {
 Future<void> clearData(BuildContext context) async {
 
       final box = await Hive.openBox('appBox');
+      final recentSearches = box.get('recent_drop_locations');
       await box.clear();
+      if (recentSearches != null) {
+        await box.put('recent_drop_locations', recentSearches);
+      }
    appLocale = const Locale('en');
       bool defaultDarkMode = false;
       box.put("getDarkValue", defaultDarkMode);
