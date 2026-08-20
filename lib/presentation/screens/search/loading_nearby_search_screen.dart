@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -109,79 +110,74 @@ class _LoadingNearbySearchScreenState extends State<LoadingNearbySearchScreen> {
       int timeoutCounter = 0;
       const int timeoutMs = 20000;
 
-      final polylineSubscription =
-          context.read<GetPolylineCubit>().stream.listen((state) {
-        if (state is GetPolylineUpdated && state.polylines != null && state.polylines!.isNotEmpty) {
-          _polylines = state.polylines!;
-          polylineFetched = true;
-        } else if (state is GetPolylineUpdatedError) {
-          _errorMessage = state.error;
-          setState(() {});
-        }
-      });
+      StreamSubscription? polylineSubscription;
+      StreamSubscription? distanceSubscription;
 
-      final distanceSubscription =
-          context.read<GetDistanceRouteCubit>().stream.listen((state) {
-        if (state.error != null) {
-          _errorMessage = state.error;
-          setState(() {});
-        } else if (state.vehicleFares.isNotEmpty && state.distance != null) {
-          vehicleFares = state.vehicleFares;
-          distance = state.distance;
-          distanceFetched = true;
-        }
-      });
+      try {
+        polylineSubscription =
+            context.read<GetPolylineCubit>().stream.listen((state) {
+          if (state is GetPolylineUpdated && state.polylines != null && state.polylines!.isNotEmpty) {
+            _polylines = state.polylines!;
+            polylineFetched = true;
+          } else if (state is GetPolylineUpdatedError) {
+            _errorMessage = state.error;
+            if (mounted) setState(() {});
+          }
+        });
 
+        distanceSubscription =
+            context.read<GetDistanceRouteCubit>().stream.listen((state) {
+          if (state.error != null) {
+            _errorMessage = state.error;
+            if (mounted) setState(() {});
+          } else if (state.vehicleFares.isNotEmpty && state.distance != null) {
+            vehicleFares = state.vehicleFares;
+            distance = state.distance;
+            distanceFetched = true;
+          }
+        });
 
-      await Future.doWhile(() async {
-        if (_errorMessage != null || (polylineFetched && distanceFetched)) {
-          return false; // Exit loop
-        }
-        await Future.delayed(const Duration(milliseconds: 100));
-        timeoutCounter += 100;
-        if (timeoutCounter >= timeoutMs) {
-          _errorMessage = 'Request timed out';
-          setState(() {});
+        await Future.doWhile(() async {
+          if (_errorMessage != null || (polylineFetched && distanceFetched) || !mounted) {
+            return false; // Exit loop
+          }
+          await Future.delayed(const Duration(milliseconds: 100));
+          timeoutCounter += 100;
+          if (timeoutCounter >= timeoutMs) {
+            _errorMessage = 'Request timed out';
+            if (mounted) setState(() {});
+            return false;
+          }
+          return true;
+        });
+      } finally {
+        await polylineSubscription?.cancel();
+        await distanceSubscription?.cancel();
+      }
 
-          return false;
-        }
-        return true;
-      });
-
-      await polylineSubscription.cancel();
-
-      await distanceSubscription.cancel();
-
-      if (_errorMessage != null) {
+      if (_errorMessage != null || !mounted) {
         return;
       }
 
-
-     if (distance != null) {
-  // Too short distance (≤ 0.1 km)
-  if (distance! <= 0.1) {
-    setState(() {
-      _errorMessage =
-          'Distance is too short (≤ 0.1 km). Please select a farther drop-off location.';
-    });
-    return;
-  }
-
- 
-}
-
+      if (distance != null && distance! <= 0.1) {
+        if (mounted) {
+          setState(() {
+            _errorMessage =
+                'Distance is too short (≤ 0.1 km). Please select a farther drop-off location.';
+          });
+        }
+        return;
+      }
 
       if (mounted) {
         goToWithReplacement(SelectionVehicleScreen(
-
           polylines: _polylines,
           fareList: vehicleFares, // Pass vehicle fares to next screen
         ));
       }
     } catch (e) {
       _errorMessage = 'Failed to load data: $e';
-      setState(() {});
-
+      if (mounted) setState(() {});
     }
   }
 

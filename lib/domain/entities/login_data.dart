@@ -117,7 +117,10 @@ class Data {
     _userRating = json["avr_guest_rate"]?.toString() ??
         json["user_rating"]?.toString() ??
         json["rating"]?.toString() ??
-        json["avg_rating"]?.toString();
+        json["avg_rating"]?.toString() ??
+        json["avg_guest_rating"]?.toString() ??
+        json["user_rate"]?.toString() ??
+        json["guest_rating"]?.toString();
     _id = json['id'];
     _firstName = json['first_name'];
     _middle = json['middle'];

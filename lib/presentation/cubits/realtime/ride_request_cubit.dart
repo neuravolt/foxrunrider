@@ -268,7 +268,9 @@ class RideRequestCubit extends Cubit<RideRequestState> {
         'userName': userName,
         'userPhone': userPhoneNumber,
         'userPhoto': userImageUrl,
-        'userRating': loginModel?.data?.userRating ?? "",
+        'userRating': (loginModel?.data?.userRating != null && loginModel!.data!.userRating!.isNotEmpty && loginModel!.data!.userRating! != "0")
+            ? loginModel!.data!.userRating!
+            : "5.0",
       },
       'travelCharges': travelCharges,
       'status': 'pending',
@@ -673,7 +675,9 @@ class RideRequestCubit extends Cubit<RideRequestState> {
           'userName': userName,
           'userPhone': userPhoneNumber,
           'userPhoto': userImageUrl ?? "defaultImageUrl",
-          'userRating': loginModel?.data?.userRating ?? "",
+          'userRating': (loginModel?.data?.userRating != null && loginModel!.data!.userRating!.isNotEmpty && loginModel!.data!.userRating! != "0")
+              ? loginModel!.data!.userRating!
+              : "5.0",
           'userPhoneCountry': loginModel?.data?.phoneCountry ?? "",
         },
         'driverLocation': {'lat': "", 'lng': ""},

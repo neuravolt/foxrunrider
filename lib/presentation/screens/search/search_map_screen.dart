@@ -33,14 +33,16 @@ class _SearchMapScreenState extends State<SearchMapScreen> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      selectedMapLat = double.parse(context
-          .read<BookRideRealTimeDataBaseCubit>()
-          .state
-          .pickupAddressLatitude);
-      selectedMapLng = double.parse(context
-          .read<BookRideRealTimeDataBaseCubit>()
-          .state
-          .pickupAddressLongitude);
+      selectedMapLat = double.tryParse(context
+              .read<BookRideRealTimeDataBaseCubit>()
+              .state
+              .pickupAddressLatitude) ??
+          28.5865;
+      selectedMapLng = double.tryParse(context
+              .read<BookRideRealTimeDataBaseCubit>()
+              .state
+              .pickupAddressLongitude) ??
+          77.3152;
 
       textEditingAddressSearchController.clear();
     });
@@ -170,11 +172,11 @@ class _SearchMapScreenState extends State<SearchMapScreen> {
                           hintText: "Search Address".translate(context),
                           border: InputBorder.none),
                       getPlaceDetailWithLatLng: (Prediction prediction) {
-                        if (prediction.lat != null && prediction.lng != null) {
+                        final lat = double.tryParse(prediction.lat ?? '');
+                        final lng = double.tryParse(prediction.lng ?? '');
+                        if (lat != null && lng != null) {
                           _moveToCurrentLocation(
-                              currentLocation: LatLng(
-                                  double.parse(prediction.lat!),
-                                  double.parse(prediction.lng!)));
+                              currentLocation: LatLng(lat, lng));
                         }
                       },
                       itemClick: (Prediction prediction) {},

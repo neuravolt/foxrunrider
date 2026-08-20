@@ -113,11 +113,12 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     final stateData = context.read<BookRideRealTimeDataBaseCubit>().state;
     await context.read<DriverNearByCubit>().getNearbyDrivers(
         checkRestart: false,
-        pickupLat: double.parse(stateData.pickupAddressLatitude),
-        pickupLng: double.parse(stateData.pickupAddressLongitude),
+        pickupLat: double.tryParse(stateData.pickupAddressLatitude) ?? 0.0,
+        pickupLng: double.tryParse(stateData.pickupAddressLongitude) ?? 0.0,
         vehicleTypeId: widget.selectedVehicleData["id"].toString(),
-        distance: double.parse(
-            context.read<LocationAccuracyThresholdCubit>().state.value ?? "3"));
+        distance: double.tryParse(
+                context.read<LocationAccuracyThresholdCubit>().state.value ?? "3") ??
+            3.0);
   }
 
   bool isInilize = false;
@@ -145,22 +146,22 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           nearbyDrivers: nearbyDrivers,
           userId: stateData.userId.toString(),
           userName: stateData.userName,
-          pickupLat: double.parse(stateData.pickupAddressLatitude),
-          pickupLng: double.parse(stateData.pickupAddressLongitude),
+          pickupLat: double.tryParse(stateData.pickupAddressLatitude) ?? 0.0,
+          pickupLng: double.tryParse(stateData.pickupAddressLongitude) ?? 0.0,
           pickupAddress: stateData.pickupAddress,
-          dropoffLat: double.parse(stateData.dropoffAddressLatitude),
-          dropoffLng: double.parse(stateData.dropoffAddressLongitude),
-          userPhoneNumber: loginModel!.data!.phone!,
+          dropoffLat: double.tryParse(stateData.dropoffAddressLatitude) ?? 0.0,
+          dropoffLng: double.tryParse(stateData.dropoffAddressLongitude) ?? 0.0,
+          userPhoneNumber: loginModel?.data?.phone ?? "",
           dropoffAddress: stateData.dropoffAddress,
           travelCharges: widget.selectedVehicleData["fare"].toString(),
           routeStatus: "pending",
           userImageUrl: myImage,
           totalTime: widget.selectedVehicleData["duration"].toString());
       setState(() {
-        pickLat = double.parse(stateData.pickupAddressLatitude);
-        pickLng = double.parse(stateData.pickupAddressLongitude);
-        dropLat = double.parse(stateData.dropoffAddressLatitude);
-        dropLng = double.parse(stateData.dropoffAddressLongitude);
+        pickLat = double.tryParse(stateData.pickupAddressLatitude) ?? 0.0;
+        pickLng = double.tryParse(stateData.pickupAddressLongitude) ?? 0.0;
+        dropLat = double.tryParse(stateData.dropoffAddressLatitude) ?? 0.0;
+        dropLng = double.tryParse(stateData.dropoffAddressLongitude) ?? 0.0;
         driverLat = stateData.acceptedDriverLat;
         driverLng = stateData.acceptedDriverLng;
       });
@@ -173,10 +174,10 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   void setAllLatLang() {
     final stateData = context.read<BookRideRealTimeDataBaseCubit>().state;
     setState(() {
-      pickLat = double.parse(stateData.pickupAddressLatitude);
-      pickLng = double.parse(stateData.pickupAddressLongitude);
-      dropLat = double.parse(stateData.dropoffAddressLatitude);
-      dropLng = double.parse(stateData.dropoffAddressLongitude);
+      pickLat = double.tryParse(stateData.pickupAddressLatitude) ?? 0.0;
+      pickLng = double.tryParse(stateData.pickupAddressLongitude) ?? 0.0;
+      dropLat = double.tryParse(stateData.dropoffAddressLatitude) ?? 0.0;
+      dropLng = double.tryParse(stateData.dropoffAddressLongitude) ?? 0.0;
       driverLat = context.read<RideRequestCubit>().state.acceptedDriverLat;
       driverLng = context.read<RideRequestCubit>().state.acceptedDriverLng;
     });
@@ -316,14 +317,16 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
         return;
       }
       _fetchDistanceAndTime(
-          fromLat: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .pickupAddressLatitude),
-          fromLng: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .pickupAddressLongitude),
+          fromLat: double.tryParse(context
+                  .read<BookRideRealTimeDataBaseCubit>()
+                  .state
+                  .pickupAddressLatitude) ??
+              0.0,
+          fromLng: double.tryParse(context
+                  .read<BookRideRealTimeDataBaseCubit>()
+                  .state
+                  .pickupAddressLongitude) ??
+              0.0,
           toLat: updatedDriverLat,
           toLng: updatedDriverLng,
           beforePickUp: true);
@@ -346,14 +349,16 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
       _fetchDistanceAndTime(
           fromLat: updatedDriverLat,
           fromLng: updatedDriverLng,
-          toLat: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .dropoffAddressLatitude),
-          toLng: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .dropoffAddressLongitude),
+          toLat: double.tryParse(context
+                  .read<BookRideRealTimeDataBaseCubit>()
+                  .state
+                  .dropoffAddressLatitude) ??
+              0.0,
+          toLng: double.tryParse(context
+                  .read<BookRideRealTimeDataBaseCubit>()
+                  .state
+                  .dropoffAddressLongitude) ??
+              0.0,
           beforePickUp: false);
 
       setState(() {});
@@ -657,14 +662,16 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     _addUserMarker();
     _addDriverMarker();
     _fetchDistanceAndTime(
-        fromLat: double.parse(context
-            .read<BookRideRealTimeDataBaseCubit>()
-            .state
-            .pickupAddressLatitude),
-        fromLng: double.parse(context
-            .read<BookRideRealTimeDataBaseCubit>()
-            .state
-            .pickupAddressLongitude),
+        fromLat: double.tryParse(context
+                .read<BookRideRealTimeDataBaseCubit>()
+                .state
+                .pickupAddressLatitude) ??
+            0.0,
+        fromLng: double.tryParse(context
+                .read<BookRideRealTimeDataBaseCubit>()
+                .state
+                .pickupAddressLongitude) ??
+            0.0,
         toLat: context.read<RideRequestCubit>().state.acceptedDriverLat,
         toLng: context.read<RideRequestCubit>().state.acceptedDriverLng,
         beforePickUp: true);
@@ -690,16 +697,16 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     _fetchDistanceAndTime(
         fromLat: context.read<RideRequestCubit>().state.acceptedDriverLat,
         fromLng: context.read<RideRequestCubit>().state.acceptedDriverLng,
-        toLat: double.parse(context
-            .read<BookRideRealTimeDataBaseCubit>()
-            .state
-            .dropoffAddressLatitude),
-        toLng: double.parse(
-          context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .dropoffAddressLongitude,
-        ),
+        toLat: double.tryParse(context
+                .read<BookRideRealTimeDataBaseCubit>()
+                .state
+                .dropoffAddressLatitude) ??
+            0.0,
+        toLng: double.tryParse(context
+                .read<BookRideRealTimeDataBaseCubit>()
+                .state
+                .dropoffAddressLongitude) ??
+            0.0,
         beforePickUp: false);
     context.read<GetPolylineCubit>().resetPolylines();
 
@@ -707,14 +714,16 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           sourcelat: context.read<RideRequestCubit>().state.acceptedDriverLat,
           sourcelng: context.read<RideRequestCubit>().state.acceptedDriverLng,
           isPickupRoute: false,
-          destinationlat: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .dropoffAddressLatitude),
-          destinationlng: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .dropoffAddressLongitude),
+          destinationlat: double.tryParse(context
+                  .read<BookRideRealTimeDataBaseCubit>()
+                  .state
+                  .dropoffAddressLatitude) ??
+              0.0,
+          destinationlng: double.tryParse(context
+                  .read<BookRideRealTimeDataBaseCubit>()
+                  .state
+                  .dropoffAddressLongitude) ??
+              0.0,
         );
     startAutoDistanceTimerForDropOff();
   }

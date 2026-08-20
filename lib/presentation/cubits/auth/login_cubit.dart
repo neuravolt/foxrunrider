@@ -62,19 +62,23 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
         if (loginModel != null && loginModel!.data != null) {
           token = loginModel!.data!.token ?? '';
         }
-        final firebaseOtpResponse = await FirebasePhoneAuthService.instance.sendOtp(
+
+        // Trigger backend SMS gateway to send real SMS OTP to the phone number
+        try {
+          await authRepository.resendOtp(
+            phone: phoneNumber,
+            phoneCountry: phoneCountry,
+          );
+        } catch (e) {
+          debugPrint("Backend SMS resendOtp info: $e");
+        }
+
+        // Also attempt Firebase Phone Auth in background
+        FirebasePhoneAuthService.instance.sendOtp(
           phoneCountry: phoneCountry,
           phoneNumber: phoneNumber,
         );
-        if (firebaseOtpResponse["status"] != 200) {
-          final hasBackendOtp = loginModel?.data?.resetToken != null || loginModel?.data?.otpValue != null;
-          if (!hasBackendOtp) {
-            emit(LoginFailure(
-                firebaseOtpResponse["error"] ?? "Unable to send OTP."));
-            return;
-          }
-          debugPrint("Firebase Phone Auth info: ${firebaseOtpResponse["error"]}. Proceeding with backend OTP flow.");
-        }
+
         context.read<SetCountryCubit>().reset();
 
         emit(LoginSuccess(LoginModel.fromJson(response)));

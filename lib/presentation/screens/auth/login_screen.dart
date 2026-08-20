@@ -276,227 +276,239 @@ class _LoginScreenState extends State<LoginScreen> with WidgetsBindingObserver {
                               const SizedBox(height: 8),
 
                               // Header: Foxrun Logo & Action Pills
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Back Navigation Button & Logo
-                                  Row(
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: SizedBox(
+                                  width: MediaQuery.of(context).size.width - 48,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      InkWell(
-                                        onTap: () {
-                                          if (token.isNotEmpty &&
-                                              Navigator.canPop(context)) {
-                                            Navigator.pop(context);
-                                          } else {
-                                            Navigator.pushAndRemoveUntil(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const Onboardingscreen(),
-                                              ),
-                                              (route) => false,
-                                            );
-                                          }
-                                        },
-                                        borderRadius:
-                                            BorderRadius.circular(14),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
+                                      // Back Navigation Button & Logo
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          InkWell(
+                                            onTap: () {
+                                              if (token.isNotEmpty &&
+                                                  Navigator.canPop(context)) {
+                                                Navigator.pop(context);
+                                              } else {
+                                                Navigator.pushAndRemoveUntil(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const Onboardingscreen(),
+                                                  ),
+                                                  (route) => false,
+                                                );
+                                              }
+                                            },
                                             borderRadius:
                                                 BorderRadius.circular(14),
-                                            border: Border.all(
-                                              color: const Color(0xFFF2EAD6),
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black
-                                                    .withValues(alpha: 0.04),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 2),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                                border: Border.all(
+                                                  color: const Color(0xFFF2EAD6),
+                                                ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withValues(alpha: 0.04),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
+                                              child: const Icon(
+                                                Icons.arrow_back_rounded,
+                                                size: 20,
+                                                color: Color(0xFF1A1A1A),
+                                              ),
+                                            ),
                                           ),
-                                          child: const Icon(
-                                            Icons.arrow_back_rounded,
-                                            size: 20,
-                                            color: Color(0xFF1A1A1A),
+                                          const SizedBox(width: 6),
+                                          // Foxrun Logo Icon
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: Image.asset(
+                                              'assets/images/appIcon.png',
+                                              height: 30,
+                                              width: 30,
+                                              fit: BoxFit.contain,
+                                            ),
                                           ),
-                                        ),
+                                          const SizedBox(width: 5),
+                                          // Foxrun Text & Small TM Sign
+                                          Text.rich(
+                                            TextSpan(
+                                              text: "foxrun",
+                                              style: heading1(context).copyWith(
+                                                color: const Color(0xFF1A1A1A),
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.w900,
+                                                letterSpacing: -0.6,
+                                              ),
+                                              children: const [
+                                                WidgetSpan(
+                                                  alignment:
+                                                      PlaceholderAlignment.top,
+                                                  child: Padding(
+                                                    padding: EdgeInsets.only(
+                                                        left: 2, top: 2),
+                                                    child: Text(
+                                                      "TM",
+                                                      style: TextStyle(
+                                                        fontSize: 8,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        color: Color(0xFFD98A00),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                       const SizedBox(width: 8),
-                                       // Foxrun Logo Icon
-                                       ClipRRect(
-                                         borderRadius:
-                                             BorderRadius.circular(8),
-                                         child: Image.asset(
-                                           'assets/images/appIcon.png',
-                                           height: 32,
-                                           width: 32,
-                                           fit: BoxFit.contain,
-                                         ),
-                                       ),
-                                       const SizedBox(width: 6),
-                                       // Foxrun Text & Small TM Sign
-                                       Text.rich(
-                                         TextSpan(
-                                           text: "foxrun",
-                                           style: heading1(context).copyWith(
-                                             color: const Color(0xFF1A1A1A),
-                                             fontSize: 24,
-                                             fontWeight: FontWeight.w900,
-                                             letterSpacing: -0.6,
-                                           ),
-                                           children: const [
-                                             WidgetSpan(
-                                               alignment:
-                                                   PlaceholderAlignment.top,
-                                               child: Padding(
-                                                 padding: EdgeInsets.only(
-                                                     left: 2, top: 2),
-                                                 child: Text(
-                                                   "TM",
-                                                   style: TextStyle(
-                                                     fontSize: 9,
-                                                     fontWeight:
-                                                         FontWeight.w800,
-                                                     color: Color(0xFFD98A00),
-                                                   ),
-                                                 ),
-                                               ),
-                                             ),
-                                           ],
-                                         ),
-                                       ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      // Language Button Pill
-                                      InkWell(
-                                        onTap: () {
-                                          goTo(const SelectLanguageScreen(
-                                              isBack: true));
-                                        },
-                                        borderRadius:
-                                            BorderRadius.circular(20),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 7,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
+                                      const SizedBox(width: 6),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // Language Button Pill
+                                          InkWell(
+                                            onTap: () {
+                                              goTo(const SelectLanguageScreen(
+                                                  isBack: true));
+                                            },
                                             borderRadius:
                                                 BorderRadius.circular(20),
-                                            border: Border.all(
-                                              color: const Color(0xFFF2EAD6),
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black
-                                                    .withValues(alpha: 0.04),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 2),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 9,
+                                                vertical: 6,
                                               ),
-                                            ],
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.language_rounded,
-                                                size: 16,
-                                                color: Color(0xFFE5A000),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                "EN",
-                                                style: regular2(context)
-                                                    .copyWith(
-                                                  color:
-                                                      const Color(0xFF2C3E50),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 13,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                                border: Border.all(
+                                                  color: const Color(0xFFF2EAD6),
                                                 ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withValues(alpha: 0.04),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
-                                              const Icon(
-                                                Icons
-                                                    .keyboard_arrow_down_rounded,
-                                                size: 16,
-                                                color: Color(0xFF7F8C8D),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.language_rounded,
+                                                    size: 15,
+                                                    color: Color(0xFFE5A000),
+                                                  ),
+                                                  const SizedBox(width: 3),
+                                                  Text(
+                                                    "EN",
+                                                    style: regular2(context)
+                                                        .copyWith(
+                                                      color:
+                                                          const Color(0xFF2C3E50),
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  const Icon(
+                                                    Icons
+                                                        .keyboard_arrow_down_rounded,
+                                                    size: 15,
+                                                    color: Color(0xFF7F8C8D),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      // Help Button Pill
-                                      InkWell(
-                                        onTap: () {
-                                          showModalBottomSheet(
-                                            useRootNavigator: true,
-                                            backgroundColor:
-                                                notifires.getbgcolor,
-                                            isScrollControlled: true,
-                                            useSafeArea: true,
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return const StaticScreen(
-                                                data: "Help & Support",
+                                          const SizedBox(width: 6),
+                                          // Help Button Pill
+                                          InkWell(
+                                            onTap: () {
+                                              showModalBottomSheet(
+                                                useRootNavigator: true,
+                                                backgroundColor:
+                                                    notifires.getbgcolor,
+                                                isScrollControlled: true,
+                                                useSafeArea: true,
+                                                context: context,
+                                                builder: (BuildContext context) {
+                                                  return const StaticScreen(
+                                                    data: "Help & Support",
+                                                  );
+                                                },
                                               );
                                             },
-                                          );
-                                        },
-                                        borderRadius:
-                                            BorderRadius.circular(20),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 7,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
                                             borderRadius:
                                                 BorderRadius.circular(20),
-                                            border: Border.all(
-                                              color: const Color(0xFFF2EAD6),
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black
-                                                    .withValues(alpha: 0.04),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 2),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 9,
+                                                vertical: 6,
                                               ),
-                                            ],
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.help_outline_rounded,
-                                                size: 16,
-                                                color: Color(0xFF2C3E50),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                "Help".translate(context),
-                                                style: regular2(context)
-                                                    .copyWith(
-                                                  color:
-                                                      const Color(0xFF2C3E50),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 13,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                                border: Border.all(
+                                                  color: const Color(0xFFF2EAD6),
                                                 ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withValues(alpha: 0.04),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.help_outline_rounded,
+                                                    size: 15,
+                                                    color: Color(0xFF2C3E50),
+                                                  ),
+                                                  const SizedBox(width: 3),
+                                                  Text(
+                                                    "Help".translate(context),
+                                                    style: regular2(context)
+                                                        .copyWith(
+                                                      color:
+                                                          const Color(0xFF2C3E50),
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
                               ),
 
                               const SizedBox(height: 16),

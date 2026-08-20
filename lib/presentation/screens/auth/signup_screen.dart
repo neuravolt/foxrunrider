@@ -278,85 +278,93 @@ class _SignUpState extends State<SignUp> {
                                 const SizedBox(height: 8),
 
                                 // Top Navigation Header
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    if (isCompletingProfile &&
-                                        Navigator.canPop(context))
-                                      IconButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        icon: const Icon(
-                                          Icons.arrow_back_ios_new_rounded,
-                                          color: Color(0xFF1A1A1A),
-                                          size: 20,
-                                        ),
-                                      )
-                                    else
-                                      Text(
-                                        "foxrun",
-                                        style: heading1(context).copyWith(
-                                          color: const Color(0xFF1A1A1A),
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: -0.8,
-                                        ),
-                                      ),
-
-                                    // Language Pill Button
-                                    InkWell(
-                                      onTap: () {
-                                        goTo(const SelectLanguageScreen(
-                                            isBack: true));
-                                      },
-                                      borderRadius: BorderRadius.circular(20),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 7,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          border: Border.all(
-                                            color: const Color(0xFFF2EAD6),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: SizedBox(
+                                    width: MediaQuery.of(context).size.width - 48,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        if (isCompletingProfile &&
+                                            Navigator.canPop(context))
+                                          IconButton(
+                                            onPressed: () => Navigator.pop(context),
+                                            icon: const Icon(
+                                              Icons.arrow_back_ios_new_rounded,
+                                              color: Color(0xFF1A1A1A),
+                                              size: 20,
+                                            ),
+                                          )
+                                        else
+                                          Text(
+                                            "foxrun",
+                                            style: heading1(context).copyWith(
+                                              color: const Color(0xFF1A1A1A),
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: -0.8,
+                                            ),
                                           ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black
-                                                  .withValues(alpha: 0.04),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 2),
+
+                                        // Language Pill Button
+                                        InkWell(
+                                          onTap: () {
+                                            goTo(const SelectLanguageScreen(
+                                                isBack: true));
+                                          },
+                                          borderRadius: BorderRadius.circular(20),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
                                             ),
-                                          ],
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.language_rounded,
-                                              size: 16,
-                                              color: Color(0xFFE5A000),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              "EN",
-                                              style: regular2(context).copyWith(
-                                                color: const Color(0xFF2C3E50),
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 13,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: const Color(0xFFF2EAD6),
                                               ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.04),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
                                             ),
-                                            const Icon(
-                                              Icons.keyboard_arrow_down_rounded,
-                                              size: 16,
-                                              color: Color(0xFF7F8C8D),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(
+                                                  Icons.language_rounded,
+                                                  size: 15,
+                                                  color: Color(0xFFE5A000),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  "EN",
+                                                  style: regular2(context).copyWith(
+                                                    color: const Color(0xFF2C3E50),
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                const Icon(
+                                                  Icons.keyboard_arrow_down_rounded,
+                                                  size: 15,
+                                                  color: Color(0xFF7F8C8D),
+                                                ),
+                                              ],
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
 
                                 const SizedBox(height: 20),

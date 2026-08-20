@@ -65,9 +65,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     bookings.clear();
     offset = 0;
     isShimmer = true;
+    context.read<HistoryCubit>().resetHistoryData();
     context.read<HistoryCubit>().getHistoryData(
         context: context,
-        bookingKeyMap: {"booking_status": "Completed", "offset": "$offset"});
+        bookingKeyMap: {"booking_status": "Completed", "offset": "0"});
     refreshController.loadComplete();
   }
 
@@ -156,7 +157,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               }
               if (state is HistorySuccess) {
                 isShimmer = true;
-                bookings.addAll(state.bookings ?? []);
+                bookings = List.from(state.bookings ?? []);
                 offset = state.historyModel?.data?.offset ?? 0;
               }
               return SmartRefresher(

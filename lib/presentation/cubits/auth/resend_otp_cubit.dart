@@ -36,13 +36,28 @@ class AuthResendOtpCubit extends Cubit<ResendOtpState> {
   }) async {
     try {
       emit(ResendOtpLoading());
+
+      // Primary: Firebase Phone Auth resend
       var response = await FirebasePhoneAuthService.instance.resendOtp(
         phoneNumber: phone ?? "",
         phoneCountry: phoneCountry ?? "",
       );
 
+      // Fallback: Backend SMS resend if Firebase fails
+      if (response["status"] != 200) {
+        try {
+          var backendRes = await authRepository.resendOtp(
+            phone: phone,
+            phoneCountry: phoneCountry,
+          );
+          if (backendRes["status"] == 200) {
+            response = {"status": 200, "message": "OTP resent successfully"};
+          }
+        } catch (_) {}
+      }
+
       if (response["status"] == 200) {
-        emit(ResendOtpSuccess(""));
+        emit(ResendOtpSuccess("OTP resent successfully"));
       } else {
         emit(ResendOtpFailure(
             response['error'] ?? "Unable to resend OTP."));

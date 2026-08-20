@@ -14,7 +14,7 @@ class AuthRepository {
       final data = {
         "phone": phoneNumber,
         "phone_country": phoneCountry,
-        "firebase_auth": true,
+        "firebase_auth": false,
       };
       var response = await httpPost(Config.sendMobileLoginOtp, data,
           context: navigatorKey.currentContext!);
@@ -38,7 +38,7 @@ class AuthRepository {
             "phone": phoneNumber,
             "phone_country": phoneCountry,
             "otp_value": otpValue,
-            "firebase_auth": true,
+            "firebase_auth": false,
           },
           context: navigatorKey.currentContext!);
       return response;
@@ -74,7 +74,7 @@ class AuthRepository {
           "phone_country": phoneCountry,
           "default_country": defaultCountry ?? "IN",
           "first_name": finalFirstName,
-          "firebase_auth": true,
+          "firebase_auth": false,
         },
         context: navigatorKey.currentContext!);
     return response;
@@ -131,7 +131,7 @@ class AuthRepository {
     try {
 
    var   response = await httpPost(Config.otpVerification,
-          {"phone": phone, "otp_value": otpValue, "phone_country": countryCode, "firebase_auth": true},
+          {"phone": phone, "otp_value": otpValue, "phone_country": countryCode, "firebase_auth": false},
           context: navigatorKey.currentContext!);
 
       return response;
@@ -227,7 +227,7 @@ class AuthRepository {
         "phone_country": cuntryCode,
         "otp_value": otp,
         "default_country": defaultCountry,
-        "firebase_auth": true,
+        "firebase_auth": false,
       };
 
       var response = await httpPost(

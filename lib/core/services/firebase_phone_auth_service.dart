@@ -58,10 +58,10 @@ class FirebasePhoneAuthService {
       );
 
       return await completer.future.timeout(
-        const Duration(seconds: 65),
+        const Duration(seconds: 60),
         onTimeout: () => {
           "status": 408,
-          "error": "OTP request timed out. Please try again.",
+          "error": "Firebase OTP request timed out. Please try again.",
         },
       );
     } catch (e) {

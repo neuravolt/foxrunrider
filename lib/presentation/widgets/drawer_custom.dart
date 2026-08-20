@@ -1,6 +1,5 @@
-// ignore: file_names
+import 'dart:convert';
 import 'package:ride_on/core/extensions/workspace.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -13,7 +12,6 @@ import 'package:ride_on/presentation/screens/account/wallet_screen.dart';
 import 'package:ride_on/presentation/screens/auth/login_screen.dart';
 
 import '../../core/utils/common_widget.dart';
-import '../../core/utils/theme/project_color.dart';
 import '../../core/utils/theme/theme_style.dart';
 import '../cubits/book_ride_cubit.dart';
 import '../cubits/history/history_cubit.dart';
@@ -419,19 +417,23 @@ class _MyDrawerState extends State<MyDrawer> {
                               if (parsed != null && parsed > 0) {
                                 rating = parsed.toStringAsFixed(1);
                               }
-                            }
-
-                            if (rating == "5.0" && bookingsList.isNotEmpty) {
+                            } else if (bookingsList.isNotEmpty) {
                               double sum = 0;
                               int validRatings = 0;
                               for (var b in bookingsList) {
-                                final r = b.rating ?? b.reviewRating;
-                                if (r != null && r.isNotEmpty) {
-                                  final val = double.tryParse(r);
-                                  if (val != null && val > 0) {
-                                    sum += val;
-                                    validRatings++;
-                                  }
+                                if (b.rideData != null && b.rideData!.isNotEmpty) {
+                                  try {
+                                    final Map<String, dynamic> rideJson = jsonDecode(b.rideData!);
+                                    final driverFeedback = rideJson['driverFeeback'] ?? rideJson['driverFeedback'];
+                                    final r = driverFeedback?['rating']?.toString() ?? rideJson['customer']?['userRating']?.toString();
+                                    if (r != null && r.isNotEmpty && r != "0" && r != "0.0") {
+                                      final val = double.tryParse(r);
+                                      if (val != null && val > 0) {
+                                        sum += val;
+                                        validRatings++;
+                                      }
+                                    }
+                                  } catch (_) {}
                                 }
                               }
                               if (validRatings > 0) {

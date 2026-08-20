@@ -71,12 +71,13 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
     // ignore: use_build_context_synchronously
     final bookRideState = context.read<BookRideRealTimeDataBaseCubit>().state;
 
-    LatLng pickupPos = LatLng(
-        double.parse(bookRideState.pickupAddressLatitude),
-        double.parse(bookRideState.pickupAddressLongitude));
-    LatLng dropoffPos = LatLng(
-        double.parse(bookRideState.dropoffAddressLatitude),
-        double.parse(bookRideState.dropoffAddressLongitude));
+    final pickLat = double.tryParse(bookRideState.pickupAddressLatitude) ?? 0.0;
+    final pickLng = double.tryParse(bookRideState.pickupAddressLongitude) ?? 0.0;
+    final dropLat = double.tryParse(bookRideState.dropoffAddressLatitude) ?? 0.0;
+    final dropLng = double.tryParse(bookRideState.dropoffAddressLongitude) ?? 0.0;
+
+    LatLng pickupPos = LatLng(pickLat, pickLng);
+    LatLng dropoffPos = LatLng(dropLat, dropLng);
 
     if (_polylines.isNotEmpty && _polylines.first.points.isNotEmpty) {
       pickupPos = _polylines.first.points.first;
@@ -175,14 +176,16 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                     key: const ValueKey('google_map'),
                     initialCameraPosition: CameraPosition(
                       target: LatLng(
-                        double.parse(context
-                            .read<BookRideRealTimeDataBaseCubit>()
-                            .state
-                            .pickupAddressLatitude),
-                        double.parse(context
-                            .read<BookRideRealTimeDataBaseCubit>()
-                            .state
-                            .pickupAddressLongitude),
+                        double.tryParse(context
+                                .read<BookRideRealTimeDataBaseCubit>()
+                                .state
+                                .pickupAddressLatitude) ??
+                            0.0,
+                        double.tryParse(context
+                                .read<BookRideRealTimeDataBaseCubit>()
+                                .state
+                                .pickupAddressLongitude) ??
+                            0.0,
                       ),
                       zoom: 12,
                     ),
@@ -590,12 +593,21 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                     isEnabled: selectedIdIndex != -1 && 
                         widget.fareList.any((element) => element["id"] == selectedIdIndex),
                     onTap: () {
+                      final selectedIndex = widget.fareList.indexWhere(
+                          (element) => element["id"] == selectedIdIndex);
+                      if (selectedIndex < 0 || selectedIndex >= widget.fareList.length) {
+                        setState(() {
+                          showSelectionError = true;
+                        });
+                        showErrorToastMessage("Please select a vehicle type.".translate(context));
+                        return;
+                      }
                       context.read<BookRideUserCubit>().removeBookRideState();
                       context.read<DriverNearByCubit>().resetNearByDriverState();
                       context.read<RideRequestCubit>().resetState();
                       box.delete("rideId");
 
-                      goTo(SendRideRequestScreen(selectedVehicleData: widget.fareList[setIndex], statusOfRide: "",));
+                      goTo(SendRideRequestScreen(selectedVehicleData: widget.fareList[selectedIndex], statusOfRide: "",));
                     },
                   ),
                   const SizedBox(height: 16),

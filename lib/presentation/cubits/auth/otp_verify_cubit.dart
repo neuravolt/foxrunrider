@@ -58,8 +58,7 @@ class AuthOtpVerifyCubit extends Cubit<OtpVerifyState> {
         debugPrint("Firebase verifyOtp info: ${firebaseResponse["error"]}. Proceeding with backend OTP verification.");
       }
 
-      final otpForBackend =
-          (backendOtpValue?.isNotEmpty ?? false) ? backendOtpValue : otpValue;
+      final otpForBackend = otpValue ?? "";
 
       if (changeMobile == true || loginWithGoogle == true) {
         final response = await authRepository.forChangePhoneNumber(

@@ -232,7 +232,15 @@ class _OtpScreenState extends State<OtpScreen> {
                                         controller: textEditingOtpController,
                                         textAlign: TextAlign.center,
                                         keyboardType: TextInputType.number,
-                                        onChanged: ((value) {}),
+                                        validator: (value) {
+                                          if (value == null || value.trim().isEmpty) {
+                                            return "Please enter OTP".translate(context);
+                                          }
+                                          if (value.trim().length < 4) {
+                                            return "Please enter a valid OTP".translate(context);
+                                          }
+                                          return null;
+                                        },
                                         decoration: InputDecoration(
                                           // prefixIcon: Icon(Icons.call_outlined),
                                           filled: true,

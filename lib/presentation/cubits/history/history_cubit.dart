@@ -51,7 +51,11 @@ class HistoryCubit extends Cubit<HistoryState> {
         if (isFirstPage) {
           cachedBookings = List.from(fetched);
         } else {
-          cachedBookings.addAll(fetched);
+          for (var item in fetched) {
+            if (!cachedBookings.any((b) => (b.id != null && b.id == item.id) || (b.token != null && b.token == item.token))) {
+              cachedBookings.add(item);
+            }
+          }
         }
         emit(HistorySuccess(
             bookings: List.from(cachedBookings), historyModel: historyModel));

@@ -58,8 +58,7 @@ class AuthUserAuthenticateCubit extends Cubit<AuthUserAuthenticateState> {
       var response = await authRepository.userAuthenticateLogin(
           phoneNumber: phoneNumber,
           phoneCountry: phoneCountry,
-          otpValue:
-              (backendOtpValue?.isNotEmpty ?? false) ? backendOtpValue! : otpValue);
+          otpValue: otpValue);
 
       if (response["status"] == 200) {
         box.put('Remember', true);

@@ -85,7 +85,7 @@ getUserDataLocallyToHandleTheState(BuildContext context) async {
         if (loginModel?.data != null) {
           final userData = loginModel!.data!;
           token = userData.token ?? "";
-          myName = loginModel!.data!.firstName!;
+          myName = userData.firstName ?? "";
           socialEmail = userData.email ?? "";
           if (userData.profileImage != null &&
               userData.profileImage["url"] != null &&
@@ -97,10 +97,10 @@ getUserDataLocallyToHandleTheState(BuildContext context) async {
           }
 
           context.read<BookRideRealTimeDataBaseCubit>().updateUserDetails(
-              userName: loginModel!.data!.firstName,
+              userName: userData.firstName ?? "",
               userPhoneNumber:
-                  "${loginModel!.data!.phoneCountry} ${loginModel!.data!.phone}",
-              userId: loginModel!.data!.id!.toInt());
+                  "${userData.phoneCountry ?? ''} ${userData.phone ?? ''}".trim(),
+              userId: userData.id?.toInt() ?? 0);
         }
       } catch (e) {
   //
