@@ -667,10 +667,18 @@ class _SignUpState extends State<SignUp> {
                                           postData: {
                                             "first_name":
                                                 textEditingSignUpControllerFirstName
-                                                    .text,
+                                                    .text.trim(),
+                                            "name":
+                                                textEditingSignUpControllerFirstName
+                                                    .text.trim(),
                                             "email":
                                                 textEditingSignUpControllerEmail
-                                                    .text,
+                                                    .text.trim(),
+                                            "user_email":
+                                                textEditingSignUpControllerEmail
+                                                    .text.trim(),
+                                            "phone": loginModel?.data?.phone ?? "",
+                                            "phone_country": loginModel?.data?.phoneCountry ?? "+91",
                                           },
                                         );
                                         return;

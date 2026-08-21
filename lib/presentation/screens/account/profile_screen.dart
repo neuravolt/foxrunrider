@@ -312,7 +312,12 @@ class _EditProfileState extends State<EditProfile> {
                 context
                     .read<UpdateProfileCubit>()
                     .updateProfileMethod(postData: {
-                  "first_name": textEditingEditProfileNameController.text,
+                  "first_name": textEditingEditProfileNameController.text.trim(),
+                  "name": textEditingEditProfileNameController.text.trim(),
+                  "email": textEditingEditProfileEmailController.text.trim(),
+                  "user_email": textEditingEditProfileEmailController.text.trim(),
+                  "phone": loginModel?.data?.phone ?? "",
+                  "phone_country": loginModel?.data?.phoneCountry ?? "+91",
                 });
               },
               child: Container(

@@ -14,7 +14,7 @@ class AuthRepository {
       final data = {
         "phone": phoneNumber,
         "phone_country": phoneCountry,
-        "firebase_auth": false,
+        "firebase_auth": true,
       };
       var response = await httpPost(Config.sendMobileLoginOtp, data,
           context: navigatorKey.currentContext!);
@@ -38,7 +38,7 @@ class AuthRepository {
             "phone": phoneNumber,
             "phone_country": phoneCountry,
             "otp_value": otpValue,
-            "firebase_auth": false,
+            "firebase_auth": true,
           },
           context: navigatorKey.currentContext!);
       return response;

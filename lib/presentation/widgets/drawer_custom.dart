@@ -410,34 +410,67 @@ class _MyDrawerState extends State<MyDrawer> {
                             final count = bookingsList.length;
 
                             String rating = "5.0";
+                            double sum = 0;
+                            int validRatings = 0;
 
-                            final rawRating = loginModel?.data?.userRating;
-                            if (rawRating != null && rawRating.isNotEmpty && rawRating != "0" && rawRating != "0.0") {
-                              final parsed = double.tryParse(rawRating);
-                              if (parsed != null && parsed > 0) {
-                                rating = parsed.toStringAsFixed(1);
-                              }
-                            } else if (bookingsList.isNotEmpty) {
-                              double sum = 0;
-                              int validRatings = 0;
+                            if (bookingsList.isNotEmpty) {
                               for (var b in bookingsList) {
-                                if (b.rideData != null && b.rideData!.isNotEmpty) {
+                                String? r;
+                                // 1. Check direct booking rating fields (reviewRating / rating)
+                                if (b.reviewRating != null &&
+                                    b.reviewRating.toString().isNotEmpty &&
+                                    b.reviewRating.toString() != "0" &&
+                                    b.reviewRating.toString() != "0.0") {
+                                  r = b.reviewRating.toString();
+                                } else if (b.rating != null &&
+                                    b.rating.toString().isNotEmpty &&
+                                    b.rating.toString() != "0" &&
+                                    b.rating.toString() != "0.0") {
+                                  r = b.rating.toString();
+                                }
+
+                                // 2. Check rideData JSON for driver feedback (captain rating given to user)
+                                if ((r == null || r.isEmpty) &&
+                                    b.rideData != null &&
+                                    b.rideData!.isNotEmpty) {
                                   try {
-                                    final Map<String, dynamic> rideJson = jsonDecode(b.rideData!);
-                                    final driverFeedback = rideJson['driverFeeback'] ?? rideJson['driverFeedback'];
-                                    final r = driverFeedback?['rating']?.toString() ?? rideJson['customer']?['userRating']?.toString();
-                                    if (r != null && r.isNotEmpty && r != "0" && r != "0.0") {
-                                      final val = double.tryParse(r);
-                                      if (val != null && val > 0) {
-                                        sum += val;
-                                        validRatings++;
-                                      }
-                                    }
+                                    final Map<String, dynamic> rideJson =
+                                        jsonDecode(b.rideData!);
+                                    final driverFeedback =
+                                        rideJson['driverFeeback'] ??
+                                            rideJson['driverFeedback'];
+                                    r = driverFeedback?['rating']?.toString() ??
+                                        rideJson['customer']?['userRating']
+                                            ?.toString() ??
+                                        rideJson['rating']?.toString();
                                   } catch (_) {}
                                 }
+
+                                if (r != null &&
+                                    r.isNotEmpty &&
+                                    r != "0" &&
+                                    r != "0.0") {
+                                  final val = double.tryParse(r);
+                                  if (val != null && val > 0) {
+                                    sum += val;
+                                    validRatings++;
+                                  }
+                                }
                               }
-                              if (validRatings > 0) {
-                                rating = (sum / validRatings).toStringAsFixed(1);
+                            }
+
+                            if (validRatings > 0) {
+                              rating = (sum / validRatings).toStringAsFixed(1);
+                            } else {
+                              final rawRating = loginModel?.data?.userRating;
+                              if (rawRating != null &&
+                                  rawRating.isNotEmpty &&
+                                  rawRating != "0" &&
+                                  rawRating != "0.0") {
+                                final parsed = double.tryParse(rawRating);
+                                if (parsed != null && parsed > 0) {
+                                  rating = parsed.toStringAsFixed(1);
+                                }
                               }
                             }
 

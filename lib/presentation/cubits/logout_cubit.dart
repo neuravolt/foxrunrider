@@ -10,6 +10,8 @@ import 'package:ride_on/presentation/cubits/realtime/ride_request_cubit.dart';
 import 'package:ride_on/presentation/cubits/realtime/update_ride_request_parameter.dart';
 import 'package:ride_on/presentation/cubits/review/review_cubit.dart';
 import 'package:ride_on/presentation/cubits/vehicle_data/get_vehicle_cetgegory_cubit.dart';
+import 'package:ride_on/presentation/cubits/history/history_cubit.dart';
+import 'package:ride_on/presentation/cubits/wallet/wallet_cubit.dart';
 
 import '../../core/utils/theme/project_color.dart';
 import 'auth/google_login_cubit.dart';
@@ -63,6 +65,7 @@ class LogoutCubit extends Cubit<LogoutState> {
       box.put("driver_status", false);
       notifires.setIsDark = defaultDarkMode;
       token = "";
+      bearerToken = "";
       loginModel = null;
       latitudeGlobal = "";
       longitudeGlobal = "";
@@ -77,17 +80,14 @@ class LogoutCubit extends Cubit<LogoutState> {
 Future<void> clearData(BuildContext context) async {
 
       final box = await Hive.openBox('appBox');
-      final recentSearches = box.get('recent_drop_locations');
       await box.clear();
-      if (recentSearches != null) {
-        await box.put('recent_drop_locations', recentSearches);
-      }
-   appLocale = const Locale('en');
+      appLocale = const Locale('en');
       bool defaultDarkMode = false;
       box.put("getDarkValue", defaultDarkMode);
       box.put("driver_status", false);
       notifires.setIsDark = defaultDarkMode;
       token = "";
+      bearerToken = "";
       loginModel = null;
       latitudeGlobal = "";
       longitudeGlobal = "";
@@ -126,5 +126,12 @@ Future<void> clearData(BuildContext context) async {
   context.read<MyImageCubit>().updateMyImage("");
   context.read<NameCubit>().updateName("");
   context.read<EmailCubit>().updateEmail("");
+  try {
+    context.read<HistoryCubit>().resetHistoryData();
+  } catch (_) {}
+  try {
+    context.read<WalletCubit>().resetWallet();
+  } catch (_) {}
   myImage="";
+  myName="";
 }

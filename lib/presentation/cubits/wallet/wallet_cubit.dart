@@ -102,6 +102,14 @@ class WalletCubit extends Cubit<WalletState> {
   String currentStatus = 'active';
   List<dynamic> currentTransactions = [];
 
+  void resetWallet() {
+    currentBalance = 0.0;
+    currentCurrency = 'INR';
+    currentStatus = 'active';
+    currentTransactions.clear();
+    emit(WalletInitial());
+  }
+
   Future<void> fetchWallet({required BuildContext context}) async {
     try {
       emit(WalletLoading());

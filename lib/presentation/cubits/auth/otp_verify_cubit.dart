@@ -52,13 +52,9 @@ class AuthOtpVerifyCubit extends Cubit<OtpVerifyState> {
       String? backendOtpValue}) async {
     try {
       emit(OtpLoading());
-      final firebaseResponse =
-          await FirebasePhoneAuthService.instance.verifyOtp(otpValue ?? "");
-      if (firebaseResponse["status"] != 200) {
-        debugPrint("Firebase verifyOtp info: ${firebaseResponse["error"]}. Proceeding with backend OTP verification.");
-      }
 
-      final otpForBackend = otpValue ?? "";
+      // Send user-typed OTP directly to backend for verification
+      final String otpForBackend = otpValue ?? "";
 
       if (changeMobile == true || loginWithGoogle == true) {
         final response = await authRepository.forChangePhoneNumber(
@@ -76,7 +72,7 @@ class AuthOtpVerifyCubit extends Cubit<OtpVerifyState> {
           emit(OtpFailure(response['error']));
         }
       } else {
-        final response = await authRepository.otpVerify(
+        var response = await authRepository.otpVerify(
             phone: phone,
             otpValue: otpForBackend,
             countryCode: countryCode,

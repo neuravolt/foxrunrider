@@ -63,21 +63,18 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
           token = loginModel!.data!.token ?? '';
         }
 
-        // Trigger backend SMS gateway to send real SMS OTP to the phone number
+        // Attempt Firebase Phone Auth to capture verification ID and send SMS
         try {
-          await authRepository.resendOtp(
-            phone: phoneNumber,
+          await FirebasePhoneAuthService.instance.sendOtp(
             phoneCountry: phoneCountry,
+            phoneNumber: phoneNumber,
           );
         } catch (e) {
-          debugPrint("Backend SMS resendOtp info: $e");
+          debugPrint("Firebase Phone Auth sendOtp info: $e");
         }
 
-        // Also attempt Firebase Phone Auth in background
-        FirebasePhoneAuthService.instance.sendOtp(
-          phoneCountry: phoneCountry,
-          phoneNumber: phoneNumber,
-        );
+        // Note: Do NOT call resendOtp here — it regenerates the backend OTP
+        // and invalidates the reset_token we need for userMobileLogin
 
         context.read<SetCountryCubit>().reset();
 

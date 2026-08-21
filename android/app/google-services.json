@@ -137,6 +137,14 @@
           }
         },
         {
+          "client_id": "1022696865208-o4ej5lt5c8j70ph36r6d5a4snnlkh1q5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.foxrunmobility.rider",
+            "certificate_hash": "3103efb1695e32e3722d6e6158b830ba90d36c32"
+          }
+        },
+        {
           "client_id": "1022696865208-unr2lldhap8egv8a7i2jlb8l7v1n0vli.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

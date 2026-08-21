@@ -50,38 +50,58 @@ class AuthUserAuthenticateCubit extends Cubit<AuthUserAuthenticateState> {
     try {
       clearData(context);
       emit(UserLoading());
+
+      debugPrint("=== OTP DEBUG ===");
+      debugPrint("otpValue (user typed): $otpValue");
+      debugPrint("backendOtpValue (reset_token): $backendOtpValue");
+
+      // Step 1: Verify user-typed SMS code with Firebase Auth
       final firebaseResponse =
           await FirebasePhoneAuthService.instance.verifyOtp(otpValue);
-      if (firebaseResponse["status"] != 200) {
-        debugPrint("Firebase verifyOtp info: ${firebaseResponse["error"]}. Proceeding with backend OTP verification.");
-      }
-      var response = await authRepository.userAuthenticateLogin(
-          phoneNumber: phoneNumber,
-          phoneCountry: phoneCountry,
-          otpValue: otpValue);
 
-      if (response["status"] == 200) {
-        box.put('Remember', true);
-        box.put('Firstuser', true);
-        UserData userObj = UserData();
-        loginModel = LoginModel.fromJson(response);
-        context.read<BookRideRealTimeDataBaseCubit>().updateUserDetails(
-            userName: loginModel!.data!.firstName,
-            userPhoneNumber:
-                "${loginModel!.data!.phoneCountry} ${loginModel!.data!.phone}",
-            userId: loginModel!.data!.id!.toInt());
-        userObj.saveLoginData("UserData", jsonEncode(response));
-        if (loginModel != null && loginModel!.data != null) {
-          token = loginModel!.data!.token ?? '';
+      if (firebaseResponse["status"] == 200) {
+        // Step 2: Firebase confirmed the SMS code is correct.
+        // Send the backend's reset_token to authorize the session.
+        final String tokenForBackend = (backendOtpValue?.isNotEmpty ?? false)
+            ? backendOtpValue!
+            : otpValue;
+
+        var response = await authRepository.userAuthenticateLogin(
+            phoneNumber: phoneNumber,
+            phoneCountry: phoneCountry,
+            otpValue: tokenForBackend);
+
+        if (response["status"] == 200) {
+          _saveUserDataAndEmit(context, response);
+          return;
+        } else {
+          emit(UserFailure(response["error"] ?? "Wrong OTP"));
         }
-
-        emit(UserSucesss(LoginModel.fromJson(response)));
       } else {
-        emit(UserFailure(response["error"]));
+        final errorMsg = firebaseResponse["error"]?.toString() ?? "Wrong OTP";
+        emit(UserFailure(errorMsg));
       }
     } catch (e) {
       emit(UserFailure("Something went wrong $e "));
     }
+  }
+
+  void _saveUserDataAndEmit(BuildContext context, Map<String, dynamic> response) {
+    box.put('Remember', true);
+    box.put('Firstuser', true);
+    UserData userObj = UserData();
+    loginModel = LoginModel.fromJson(response);
+    context.read<BookRideRealTimeDataBaseCubit>().updateUserDetails(
+        userName: loginModel!.data!.firstName,
+        userPhoneNumber:
+            "${loginModel!.data!.phoneCountry} ${loginModel!.data!.phone}",
+        userId: loginModel!.data!.id!.toInt());
+    userObj.saveLoginData("UserData", jsonEncode(response));
+    if (loginModel != null && loginModel!.data != null) {
+      token = loginModel!.data!.token ?? '';
+    }
+
+    emit(UserSucesss(LoginModel.fromJson(response)));
   }
 
   void resetState() {
