@@ -53,6 +53,12 @@ class UpdateProfileCubit extends Cubit<UpdateProfileState> {
       final response = await repository.editProfile(postData: postData);
 
       if (response["status"] == 200) {
+        // Also update email on admin backend via dedicated changeEmail flow
+        final email = postData["email"]?.toString().trim() ?? "";
+        if (email.isNotEmpty && !email.endsWith("@foxrun.com")) {
+          await repository.updateEmailDirectly(email: email);
+        }
+
         LoginModel loginModel = LoginModel.fromJson(response);
         emit(UpdateProfileSuccess(loginModel));
       } else {

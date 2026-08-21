@@ -47,14 +47,23 @@ class AuthLoginCubit extends Cubit<AuthLoginState> {
       var response = await authRepository.login(
           phoneCountry: phoneCountry, phoneNumber: phoneNumber);
 
-      // If phone number is not found (new user), auto-fallback to signUp API
+      // If phone number is not found (new/deleted user), auto-fallback to signUp API
       if (response['status'] != 200) {
-        response = await authRepository.signUp(
+        var signUpRes = await authRepository.signUp(
           phoneNumber: phoneNumber,
           phoneCountry: phoneCountry,
           name: "",
           email: "",
         );
+        if (signUpRes['status'] == 200) {
+          // Re-fetch login session to obtain a valid reset_token for the new user
+          response = await authRepository.login(
+            phoneCountry: phoneCountry,
+            phoneNumber: phoneNumber,
+          );
+        } else {
+          response = signUpRes;
+        }
       }
 
       if (response['status'] == 200) {

@@ -74,7 +74,7 @@ class AuthRepository {
           "phone_country": phoneCountry,
           "default_country": defaultCountry ?? "IN",
           "first_name": finalFirstName,
-          "firebase_auth": false,
+          "firebase_auth": true,
         },
         context: navigatorKey.currentContext!);
     return response;

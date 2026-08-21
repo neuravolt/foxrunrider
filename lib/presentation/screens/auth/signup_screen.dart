@@ -679,6 +679,8 @@ class _SignUpState extends State<SignUp> {
                                                     .text.trim(),
                                             "phone": loginModel?.data?.phone ?? "",
                                             "phone_country": loginModel?.data?.phoneCountry ?? "+91",
+                                            "id": loginModel?.data?.id ?? "",
+                                            "user_id": loginModel?.data?.id ?? "",
                                           },
                                         );
                                         return;

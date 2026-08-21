@@ -92,13 +92,23 @@ class _EditProfileState extends State<EditProfile> {
           Widgets.hideLoder(context);
           loginModel = logmod.LoginModel(
               data: logmod.Data.fromJson(state.loginModel.data!.toJson()));
-          loginModel = loginModel;
+          if (loginModel?.data != null) {
+            if (textEditingEditProfileNameController.text.trim().isNotEmpty) {
+              loginModel!.data!.firstNameSetter = textEditingEditProfileNameController.text.trim();
+            }
+            if (textEditingEditProfileEmailController.text.trim().isNotEmpty) {
+              loginModel!.data!.emailSetter = textEditingEditProfileEmailController.text.trim();
+            }
+          }
           UserData userObj = UserData();
           userObj.saveLoginData("UserData", jsonEncode(loginModel!.toJson()));
           context.read<UpdateProfileCubit>().clear();
           context
               .read<NameCubit>()
-              .updateName("${state.loginModel.data!.firstName}");
+              .updateName("${loginModel?.data?.firstName}");
+          context
+              .read<EmailCubit>()
+              .updateEmail("${loginModel?.data?.email}");
 
           showToastMessage(state.loginModel.message ?? "");
         } else if (state is UpdateProfileImageSuccess) {
@@ -318,6 +328,8 @@ class _EditProfileState extends State<EditProfile> {
                   "user_email": textEditingEditProfileEmailController.text.trim(),
                   "phone": loginModel?.data?.phone ?? "",
                   "phone_country": loginModel?.data?.phoneCountry ?? "+91",
+                  "id": loginModel?.data?.id ?? "",
+                  "user_id": loginModel?.data?.id ?? "",
                 });
               },
               child: Container(
