@@ -307,10 +307,10 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                         height: 28,
                                         width: 28,
                                         decoration: BoxDecoration(
-                                          color: Colors.deepOrange.shade50,
+                                          color: Colors.red.shade50,
                                           shape: BoxShape.circle,
                                         ),
-                                        child: Icon(Icons.location_on, color: Colors.deepOrange.shade500, size: 16),
+                                        child: Icon(Icons.location_on, color: Colors.red.shade600, size: 16),
                                       ),
                                     ],
                                   ),

@@ -1617,13 +1617,13 @@ Future<Uint8List> getBytesFromAsset(String path, int width) async {
       .asUint8List();
 }
 
-Future<Uint8List> createCustomPickupMarker({double size = 32.0}) async {
+Future<Uint8List> createCustomPickupMarker({double size = 32.0, Color color = const Color(0xFFFF9900)}) async {
   final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
 
   // Draw glowing halo
   final Paint haloPaint = Paint()
-    ..color = const Color(0xFFFF9900).withValues(alpha: 0.25)
+    ..color = color.withValues(alpha: 0.25)
     ..style = PaintingStyle.fill;
   canvas.drawCircle(Offset(size / 2, size / 2), size / 2, haloPaint);
 
@@ -1633,11 +1633,11 @@ Future<Uint8List> createCustomPickupMarker({double size = 32.0}) async {
     ..style = PaintingStyle.fill;
   canvas.drawCircle(Offset(size / 2, size / 2), size / 3.4, whiteBorderPaint);
 
-  // Draw orange core
-  final Paint orangeCorePaint = Paint()
-    ..color = const Color(0xFFFF9900)
+  // Draw core
+  final Paint corePaint = Paint()
+    ..color = color
     ..style = PaintingStyle.fill;
-  canvas.drawCircle(Offset(size / 2, size / 2), size / 5.2, orangeCorePaint);
+  canvas.drawCircle(Offset(size / 2, size / 2), size / 5.2, corePaint);
 
   // Draw small white dot in center
   final Paint whiteDotPaint = Paint()
@@ -1650,7 +1650,11 @@ Future<Uint8List> createCustomPickupMarker({double size = 32.0}) async {
   return byteData!.buffer.asUint8List();
 }
 
-Future<Uint8List> createCustomDropoffMarker({double width = 28.0, double height = 35.0}) async {
+Future<Uint8List> createCustomDropoffMarker({
+  double width = 28.0,
+  double height = 35.0,
+  Color color = const Color(0xFFE53935),
+}) async {
   final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
 
@@ -1665,9 +1669,9 @@ Future<Uint8List> createCustomDropoffMarker({double width = 28.0, double height 
   // Shadow
   canvas.drawShadow(path, Colors.black38, 2.0, true);
 
-  // Pin fill (Green)
+  // Pin fill (Red)
   final Paint pinPaint = Paint()
-    ..color = const Color(0xFF20BC3B)
+    ..color = color
     ..style = PaintingStyle.fill;
   canvas.drawPath(path, pinPaint);
 
