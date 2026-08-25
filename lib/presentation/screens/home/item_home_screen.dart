@@ -611,54 +611,112 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
       },
       canPop: false,
       child: Scaffold(
-        backgroundColor: const Color(0xFFFFFDF5),
+        backgroundColor: Colors.white,
         drawer: const MyDrawer(),
         key: _scaffoldKey,
         body: Stack(
           fit: StackFit.expand,
           children: [
-            // Layer 1: Fixed decorative background wallpaper
-            Positioned.fill(
-              child: RepaintBoundary(
-                child: Image.asset(
-                  "assets/images/home_background_ui.png",
-                  fit: BoxFit.cover,
-                  alignment: Alignment.topCenter,
-                ),
-              ),
-            ),
-            // Layer 2: Independent scrollable foreground content
-            SafeArea(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 5),
-                    _buildLocationInput(),
-                    const SizedBox(height: 15),
-                    _buildMapWidget(),
-                    const SizedBox(height: 20),
-                    RepaintBoundary(child: _buildExploreSection()),
-                    const SizedBox(height: 20),
-                    if (recentDropLocations.isNotEmpty) ...[
-                      _buildRecentSearches(),
-                      const SizedBox(height: 20),
+            Column(
+              children: [
+                // Top Section (Map + Header + Location Input)
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.50,
+                  child: Stack(
+                    children: [
+                      _buildFullScreenMapWidget(),
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 140,
+                        child: IgnorePointer(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.9),
+                                  Colors.white.withValues(alpha: 0.0),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SafeArea(
+                        bottom: false,
+                        child: _buildHeader(),
+                      ),
                     ],
-                    if (_promoBanners.isNotEmpty) ...[
-                      RepaintBoundary(child: _buildPromoBanner()),
-                      const SizedBox(height: 20),
-                    ],
-                    RepaintBoundary(child: _buildFixedOfferBannerCard()),
-                    const SizedBox(height: 20),
-                    const SizedBox(
-                        height:
-                            70), // Bottom padding so content scrolls above fixed footer
-                  ],
+                  ),
                 ),
-              ),
+                
+                // Bottom Section (Scrollable Content)
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white,
+                          const Color(0xFFFFF8E7).withValues(alpha: 0.6), // Subtle elegant warm tint
+                          Colors.white,
+                        ],
+                        stops: const [0.0, 0.5, 1.0],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                          offset: const Offset(0, -5),
+                        )
+                      ],
+                    ),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 12),
+                          Center(
+                            child: Container(
+                              width: 40,
+                              height: 5,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          _buildLocationInput(),
+                          const SizedBox(height: 20),
+                          RepaintBoundary(child: _buildExploreSection()),
+                          const SizedBox(height: 20),
+                          if (recentDropLocations.isNotEmpty) ...[
+                            _buildRecentSearches(),
+                            const SizedBox(height: 20),
+                          ],
+                          if (_promoBanners.isNotEmpty) ...[
+                            RepaintBoundary(child: _buildPromoBanner()),
+                            const SizedBox(height: 20),
+                          ],
+                          RepaintBoundary(child: _buildFixedOfferBannerCard()),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+            
             // Layer 3: Persistent Footer anchored at bottom of screen
             Positioned(
               left: 16,
@@ -720,55 +778,60 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          BlocBuilder<MyImageCubit, dynamic>(builder: (context, state) {
-            return InkWell(
-              onTap: () => _scaffoldKey.currentState?.openDrawer(),
-              child: myImage.isEmpty
-                  ? Icon(
-                      CupertinoIcons.profile_circled,
-                      size: 60,
-                      color: blackColor,
-                    )
-                  : ClipOval(
-                      child: Container(
-                        color: Colors.white,
-                        height: 60,
-                        width: 60,
-                        child: ClipOval(
-                          child: myNetworkImage(
-                              context.read<MyImageCubit>().state),
-                        ),
-                      ),
-                    ),
-            );
-          }),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                BlocBuilder<NameCubit, dynamic>(builder: (context, state) {
-                  return Row(
-                    children: [
-                      Text("Hi".translate(context),
-                          style: heading2Grey1(context)),
-                      const SizedBox(
-                        width: 7,
-                      ),
-                      Text(context.read<NameCubit>().state,
-                          style: heading2Grey1(context))
-                    ],
-                  );
-                }),
-                Text(
-                  "Where do you want to go today?".translate(context),
-                  style: heading3Grey1(context).copyWith(color: grey2),
-                ),
-              ],
+          InkWell(
+            onTap: () => _scaffoldKey.currentState?.openDrawer(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.menu_outlined, color: Colors.black),
             ),
+          ),
+          const SizedBox(width: 15),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              BlocBuilder<NameCubit, dynamic>(builder: (context, state) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Hi".translate(context),
+                        style: heading2Grey1(context).copyWith(
+                          shadows: [
+                            const Shadow(
+                              color: Colors.white,
+                              blurRadius: 10.0,
+                            ),
+                          ],
+                        )),
+                    const SizedBox(width: 7),
+                    Text(context.read<NameCubit>().state,
+                        style: heading2Grey1(context).copyWith(
+                          shadows: [
+                            const Shadow(
+                              color: Colors.white,
+                              blurRadius: 10.0,
+                            ),
+                          ],
+                        ))
+                  ],
+                );
+              }),
+            ],
           ),
         ],
       ),
@@ -799,128 +862,85 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
               );
           context.read<UpdateCurrentAddressCubit>().removeAddress();
         }
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InkWell(
-                    onTap: () => _scaffoldKey.currentState?.openDrawer(),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child:
-                          const Icon(Icons.menu_outlined, color: Colors.black),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20), // increased width
+          child: InkWell(
+            onTap: () {
+              _checkProfileAndProceed(() async {
+                context
+                    .read<VehicleDataUpdateCubit>()
+                    .updateVehicleTypeSelectedId(1);
+
+                context
+                    .read<SelectedAddressCubit>()
+                    .pickupAddressController
+                    .text = _currentAddress;
+                context
+                    .read<GetSuggestionAddressCubit>()
+                    .getSuggestions("");
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserSearchLocation(
+                      currentAddress: _currentAddress,
                     ),
                   ),
-                  const SizedBox(width: 20),
-                  Flexible(
-                    child: InkWell(
-                      onTap: () {
-                        _checkProfileAndProceed(() async {
-                          context
-                              .read<VehicleDataUpdateCubit>()
-                              .updateVehicleTypeSelectedId(1);
-
-                          context
-                              .read<SelectedAddressCubit>()
-                              .pickupAddressController
-                              .text = _currentAddress;
-                          context
-                              .read<GetSuggestionAddressCubit>()
-                              .getSuggestions("");
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => UserSearchLocation(
-                                currentAddress: _currentAddress,
-                              ),
-                            ),
-                          );
-                          _loadRecentDropLocations();
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.location_on, color: Colors.green),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                _currentAddress.isEmpty
-                                    ? "Your Current Location".translate(context)
-                                    : _currentAddress,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
-                                    ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                );
+                _loadRecentDropLocations();
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 20, vertical: 8), // decreased thickness
+              decoration: BoxDecoration(
+                color: Colors.white, 
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: themeColor.withValues(alpha: 0.3), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: themeColor.withValues(alpha: 0.15), // warm glowing shadow
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6), // smaller padding
+                    decoration: BoxDecoration(
+                      color: themeColor.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.search_rounded, color: themeColor, size: 20), // smaller icon
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      "Where are you going?".translate(context),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildMapWidget() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Container(
-        height: 250,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            children: [
+  Widget _buildFullScreenMapWidget() {
+    return Stack(
+      children: [
               ValueListenableBuilder<LatLng>(
                 valueListenable: _selectedLocation,
                 builder: (context, latLng, _) {
@@ -1027,10 +1047,10 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                 ),
               ),
 
-              // Top Right Controls (Re-center & Search Screen)
+              // Bottom Right Re-center Button
               Positioned(
-                top: 10,
-                right: 10,
+                bottom: 60,
+                right: 12,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1164,10 +1184,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
+          );
   }
 
   Widget _buildPromoBanner() {
@@ -1717,9 +1734,9 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
     }
 
     return SizedBox(
-      height: 104,
+      height: 88,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: isLoading ? 8 : items.length,
@@ -1728,10 +1745,10 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
           final item = items[index];
 
           return Container(
-            width: 86,
-            margin: const EdgeInsets.only(right: 12),
+            width: 72,
+            margin: const EdgeInsets.only(right: 10),
             child: InkWell(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               onTap: () {
                 _checkProfileAndProceed(() async {
                   context
@@ -1759,10 +1776,10 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
               },
               child: Container(
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.06),
@@ -1777,11 +1794,11 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                     Image.network(
                       item.image ?? "",
                       headers: const {"ngrok-skip-browser-warning": "true"},
-                      width: 44,
-                      height: 44,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.image),
+                      width: 32,
+                      height: 32,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 24),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       item.name ?? "",
                       maxLines: 1,
@@ -1789,7 +1806,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                       textAlign: TextAlign.center,
                       style: heading3(context).copyWith(
                         color: blackColor,
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

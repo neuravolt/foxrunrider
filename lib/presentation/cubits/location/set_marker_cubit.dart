@@ -36,6 +36,11 @@ class MarkerCubit extends Cubit<MarkerState> {
       String image, int size, {double rotation = 0.0}) async {
     final Uint8List markerIcon = await getBytesFromAsset(image, size);
 
+    final Offset anchor = (markerId.toLowerCase().contains('driver') ||
+            title.toLowerCase().contains('driver'))
+        ? const Offset(0.5, 0.5)
+        : const Offset(0.5, 1.0);
+
     Marker marker = Marker(
       markerId: MarkerId(markerId),
       position: position,
@@ -43,6 +48,7 @@ class MarkerCubit extends Cubit<MarkerState> {
       zIndex: 2,
       flat: true,
       rotation: rotation,
+      anchor: anchor,
       infoWindow: InfoWindow(title: title),
       icon: BitmapDescriptor.fromBytes(markerIcon),
     );
@@ -53,10 +59,14 @@ class MarkerCubit extends Cubit<MarkerState> {
     emit(MarkerUpdated(markers: _markers));
   }
 
-  Future<Uint8List> getBytesFromAsset(String path, int width) async {
+  Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
+    final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker');
+    final int? targetH = height ?? (isPin ? 42 : null);
+    final int? targetW = targetH != null ? null : (width > 0 ? width : null);
+
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
-        targetWidth: width);
+        targetWidth: targetW, targetHeight: targetH);
     ui.FrameInfo fi = await codec.getNextFrame();
     return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
         .buffer
@@ -180,6 +190,12 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
     } else {
       markerIcon = await getBytesFromAsset(iconPath, size);
     }
+
+    final Offset anchor = (markerId.toLowerCase().contains('driver') ||
+            title.toLowerCase().contains('driver'))
+        ? const Offset(0.5, 0.5)
+        : const Offset(0.5, 1.0);
+
     _markers.removeWhere((marker) => marker.markerId.value == markerId);
     _markers.add(
       Marker(
@@ -187,6 +203,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
         position: position,
         infoWindow: InfoWindow(title: title),
         rotation: rotation,
+        anchor: anchor,
         icon: BitmapDescriptor.fromBytes(markerIcon),
       ),
     );
@@ -198,10 +215,14 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
     emit(UserMarkerUpdated(markers: _markers));
   }
 
-  Future<Uint8List> getBytesFromAsset(String path, int width) async {
+  Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
+    final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker');
+    final int? targetH = height ?? (isPin ? 42 : null);
+    final int? targetW = targetH != null ? null : (width > 0 ? width : null);
+
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
-        targetWidth: width);
+        targetWidth: targetW, targetHeight: targetH);
     ui.FrameInfo fi = await codec.getNextFrame();
     return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
         .buffer

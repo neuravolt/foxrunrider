@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:ride_on/core/utils/translate.dart';
 import 'package:ride_on/presentation/screens/home/item_home_screen.dart';
-import 'package:ride_on/presentation/widgets/thanku_screen.dart';
 import '../../core/utils/common_widget.dart';
 import '../../core/utils/theme/project_color.dart';
 import '../../core/utils/theme/theme_style.dart';
@@ -394,12 +393,8 @@ class _CustomReviewWidgetState extends State<CustomReviewWidget> {
                   }
                   if (state is ReviewSuceess) {
                     Widgets.hideLoder(context);
-
-
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => ThankuScreen(rating: int.parse(ratingData),msg: textEditingReviewController.text,)));
+                    clearAllRiderData(context);
+                    goToWithClear(const ItemHomeScreen());
                   }
                   if (state is ReviewFailure) {
                     Widgets.hideLoder(context);

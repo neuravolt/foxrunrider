@@ -30,6 +30,7 @@ import '../../cubits/location/set_marker_cubit.dart';
 import '../../cubits/realtime/get_ride_request_status_cubit.dart';
 import '../../cubits/realtime/ride_request_cubit.dart';
 import '../../cubits/vehicle_data/get_vehicle_cetgegory_cubit.dart';
+import '../../cubits/location/user_current_location_cubit.dart';
 import '../../widgets/sos_widget.dart';
 import '../payment/rider_payment_screen.dart';
 
@@ -379,7 +380,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
             'User Location',
             'User_marker',
             'assets/images/pickupmarker.png',
-            50,
+            85,
           );
     } else {
       debugPrint('Invalid pickup coordinates');
@@ -393,7 +394,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
             'Drop Location',
             'drop_marker',
             "assets/images/dropmarker.png",
-            50,
+            85,
           );
     } else {
       debugPrint('Invalid pickup coordinates');
@@ -974,7 +975,83 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     );
   }
 
+  String _getSelectedVehicleImage(BuildContext context) {
+    if (widget.selectedVehicleData.isNotEmpty) {
+      final img = widget.selectedVehicleData["image"] ??
+          widget.selectedVehicleData["vehicleImage"] ??
+          widget.selectedVehicleData["icon"];
+      if (img != null && img.toString().isNotEmpty) {
+        return img.toString();
+      }
+    }
+    try {
+      final selectedId =
+          context.read<VehicleDataUpdateCubit>().state.vehicleSelectedId;
+      final categoryState = context.read<SetVehicleCategoryCubit>().state;
+      if (categoryState.itemList.isNotEmpty) {
+        final match = categoryState.itemList.firstWhere(
+          (item) => item.id == selectedId,
+          orElse: () => categoryState.itemList.first,
+        );
+        if (match.image != null && match.image!.isNotEmpty) {
+          return match.image!;
+        }
+      }
+    } catch (_) {}
+    return "";
+  }
+
+  Widget _buildVehicleImageWidget(String imagePath) {
+    if (imagePath.isEmpty) {
+      return Image.asset(
+        "assets/images/search_loading.gif",
+        height: 70,
+        fit: BoxFit.contain,
+      );
+    }
+
+    if (imagePath.endsWith('.svg')) {
+      if (imagePath.startsWith('http')) {
+        return SvgPicture.network(
+          imagePath,
+          fit: BoxFit.contain,
+          placeholderBuilder: (_) => const Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator.adaptive(strokeWidth: 2),
+            ),
+          ),
+        );
+      }
+      return SvgPicture.asset(imagePath, fit: BoxFit.contain);
+    }
+
+    if (imagePath.startsWith('http')) {
+      return Image.network(
+        imagePath,
+        headers: const {"ngrok-skip-browser-warning": "true"},
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => Image.asset(
+          "assets/images/search_loading.gif",
+          fit: BoxFit.contain,
+        ),
+      );
+    }
+
+    return Image.asset(
+      imagePath,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => Image.asset(
+        "assets/images/search_loading.gif",
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+
   Widget _buildFindingDriverSection(BuildContext context) {
+    final vehicleImage = _getSelectedVehicleImage(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1002,7 +1079,24 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                 ],
               ),
             ),
-            Image.asset("assets/images/search_loading.gif", height: 75, fit: BoxFit.contain),
+            const SizedBox(width: 12),
+            Container(
+              width: 72,
+              height: 72,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F5F4),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: _buildVehicleImageWidget(vehicleImage),
+            ),
           ],
         ),
         const SizedBox(height: 15),
@@ -1408,33 +1502,168 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   }
 
   Widget _buildRideDetails(BuildContext context) {
+    final fare = widget.selectedVehicleData["fare"]?.toString() ?? "0";
+    final distance = widget.selectedVehicleData["distance"]?.toString() ?? "";
+    final duration = widget.selectedVehicleData["duration"]?.toString() ?? "";
+    final vehicleName = widget.selectedVehicleData["vehicleName"]?.toString() ?? "Ride";
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 25),
-        if (rideStatus == "ongoing")
-          Row(
+        const SizedBox(height: 20),
+        
+        // Header: Price Breakdown
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Icon(Icons.receipt_long_rounded, size: 16, color: yelloColor2),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              "Price Breakdown".translate(context),
+              style: heading3Grey1(context).copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 15),
+
+        // Price Breakdown Card
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF6F8F6),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
             children: [
-              Image.asset("assets/images/cashIcon.png", height: 50),
-              const Spacer(),
-              Text("$currency ${widget.selectedVehicleData["fare"]}",
-                  style: heading2(context).copyWith(color: themeColor)),
-            ],
-          )
-        else ...[
-          Row(
-            children: [
-              const SizedBox(width: 4),
-              Icon(Icons.two_wheeler, size: 20, color: yelloColor2),
-              const SizedBox(width: 12),
-              Text("Ride Details".translate(context),
-                  style: heading3Grey1(context).copyWith(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+              // Trip Fare / Base Fare
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "$vehicleName Trip Fare".translate(context),
+                        style: regular(context).copyWith(
+                          fontSize: 13,
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (distance.isNotEmpty) ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          "($distance km)",
+                          style: regular(context).copyWith(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  Text(
+                    "$currency $fare",
+                    style: regular(context).copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Estimated Duration
+              if (duration.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Estimated Time".translate(context),
+                      style: regular(context).copyWith(
+                        fontSize: 13,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      duration,
+                      style: regular(context).copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+              ],
+
+              // Taxes and Fees
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Taxes & Fees".translate(context),
+                    style: regular(context).copyWith(
+                      fontSize: 13,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    "Included".translate(context),
+                    style: regular(context).copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green.shade700,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+              Divider(color: Colors.grey.withValues(alpha: 0.2), height: 1),
+              const SizedBox(height: 12),
+
+              // Total Amount Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Total Fare".translate(context),
+                    style: heading3Grey1(context).copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    "$currency $fare",
+                    style: heading2(context).copyWith(
+                      color: themeColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 15),
-          _buildVehicleDetails(context),
-        ],
-        const SizedBox(height: 25),
+        ),
+
+        const SizedBox(height: 20),
         if (rideStatus != "ongoing") _buildCancelRideButton(context),
       ],
     );

@@ -369,10 +369,14 @@ class DriverMapCubit extends Cubit<DriverMapState> {
     }
   }
 
-  Future<Uint8List> getBytesFromAsset(String path, int width) async {
+  Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
+    final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker');
+    final int? targetH = height ?? (isPin ? 42 : null);
+    final int? targetW = targetH != null ? null : (width > 0 ? width : null);
+
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
-        targetWidth: width);
+        targetWidth: targetW, targetHeight: targetH);
     ui.FrameInfo fi = await codec.getNextFrame();
     return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
         .buffer
@@ -489,10 +493,10 @@ class GetPolylineCubit extends Cubit<GetPolylineState> {
     required PolylineId id,
     required Color color,
   }) {
-    // Solid orange route line
+    // Solid black route line
     final polylineCore = Polyline(
       polylineId: id,
-      color: const Color(0xFFFF9900), // Vibrant orange
+      color: color,
       width: 5,
       jointType: JointType.round,
       startCap: Cap.roundCap,

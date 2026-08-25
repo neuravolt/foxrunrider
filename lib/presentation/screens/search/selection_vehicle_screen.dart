@@ -360,7 +360,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                   ),
                                   const SizedBox(width: 12),
                                   Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.all(6),
@@ -370,16 +370,6 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                           color: Colors.orange.shade50,
                                         ),
                                         child: Icon(Icons.my_location, size: 16, color: Colors.orange.shade700),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle, 
-                                          border: Border.all(color: Colors.orange.shade200),
-                                          color: Colors.orange.shade50,
-                                        ),
-                                        child: Icon(Icons.swap_vert, size: 16, color: Colors.orange.shade700),
                                       ),
                                     ],
                                   )

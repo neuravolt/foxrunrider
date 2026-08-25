@@ -1607,10 +1607,13 @@ class MapShimmerScreen extends StatelessWidget {
     );
   }
 }
-Future<Uint8List> getBytesFromAsset(String path, int width) async {
+Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
   ByteData data = await rootBundle.load(path);
-  ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
-      targetWidth: width);
+  ui.Codec codec = await ui.instantiateImageCodec(
+    data.buffer.asUint8List(),
+    targetWidth: height != null ? null : (width > 0 ? width : null),
+    targetHeight: height,
+  );
   ui.FrameInfo fi = await codec.getNextFrame();
   return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
       .buffer
@@ -1651,39 +1654,11 @@ Future<Uint8List> createCustomPickupMarker({double size = 32.0, Color color = co
 }
 
 Future<Uint8List> createCustomDropoffMarker({
-  double width = 28.0,
-  double height = 35.0,
+  double width = 36.0,
+  double height = 42.0,
   Color color = const Color(0xFFE53935),
 }) async {
-  final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
-  final Canvas canvas = Canvas(pictureRecorder);
-
-  final Path path = Path();
-  final double radius = width / 2;
-  // Top semicircle
-  path.addArc(Rect.fromLTWH(0, 0, width, width), -3.14159, 3.14159);
-  // Bottom tip
-  path.lineTo(width / 2, height);
-  path.close();
-
-  // Shadow
-  canvas.drawShadow(path, Colors.black38, 2.0, true);
-
-  // Pin fill (Red)
-  final Paint pinPaint = Paint()
-    ..color = color
-    ..style = PaintingStyle.fill;
-  canvas.drawPath(path, pinPaint);
-
-  // Inner white circle
-  final Paint whiteCirclePaint = Paint()
-    ..color = Colors.white
-    ..style = PaintingStyle.fill;
-  canvas.drawCircle(Offset(width / 2, radius), radius * 0.42, whiteCirclePaint);
-
-  final ui.Image image = await pictureRecorder.endRecording().toImage(width.toInt(), height.toInt());
-  final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-  return byteData!.buffer.asUint8List();
+  return await getBytesFromAsset("assets/images/dropmarker.png", 0, height: 42);
 }
 
 Widget languageButton({
