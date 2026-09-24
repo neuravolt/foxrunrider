@@ -76,6 +76,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   int currentPolylineIndex = 0;
   Timer? locationUpdateTimer;
   Timer? fetchTimer;
+  StreamSubscription? _driverLocationSubscription;
   bool _isDriverCancelDialogShown = false;
   @override
   void initState() {
@@ -493,6 +494,11 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                         return;
                       }
 
+                      context.read<UserMarkerCubit>().addNearbyDrivers(
+                            state.nearbyDrivers!,
+                            _vehicleMarkerAsset(),
+                          );
+
                       context.read<RideRequestCubit>().updateNearByDrivers(
                           nearbyDrivers: state.nearbyDrivers);
                       _initializeRideRequest(
@@ -645,9 +651,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     if (isSuccessFirst) return;
 
     isSuccessFirst = true;
-    fetchTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      _fetchDriverLocationFromRealtimeDB(rideID);
-    });
+    _subscribeToDriverLocationRealtime(rideID);
     _updateRide(updatedRideId: rideID, upDatedBookingId: bookingID.toString());
 
     box.put("PickOtp", pikupOtp);
@@ -660,6 +664,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     otp = pikupOtp;
     bookingId = bookingID.toString();
     rideId = rideID.toString();
+    context.read<UserMarkerCubit>().removeNearbyMarkers();
     _addUserMarker();
     _addDriverMarker();
     _fetchDistanceAndTime(
@@ -688,10 +693,9 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     _fetchDriverLocationFromRealtimeDB(rideId);
 
     if (isLiveRide) return;
-    fetchTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      _fetchDriverLocationFromRealtimeDB(rideId);
-    });
+    _subscribeToDriverLocationRealtime(rideId);
     isLiveRide = true;
+    context.read<UserMarkerCubit>().removeNearbyMarkers();
     context.read<UserMarkerCubit>().removeMarker("User_marker");
     _addDropMarker();
     _addDriverMarker();
@@ -740,6 +744,41 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   }
 
   ///fro live tracking
+
+  void _subscribeToDriverLocationRealtime(String targetRideId) {
+    if (targetRideId.isEmpty) return;
+    _driverLocationSubscription?.cancel();
+    _driverLocationSubscription = FirebaseDatabase.instance
+        .ref()
+        .child('ride_requests')
+        .child(targetRideId)
+        .child('driverLocation')
+        .onValue
+        .listen((event) {
+      if (!mounted) return;
+      final locationData = event.snapshot.value as Map?;
+      if (locationData == null) return;
+
+      final newLat = locationData['lat']?.toDouble();
+      final newLng = locationData['lng']?.toDouble();
+      updatedDriverLat = newLat;
+      updatedDriverLng = newLng;
+      if (newLat == null || newLng == null) return;
+      if (newLat == driverLat && newLng == driverLng) return;
+
+      if (driverLat == 0.0 || driverLng == 0.0) {
+        driverLat = newLat;
+        driverLng = newLng;
+        _updateDriverMarkerPosition(newLat, newLng);
+        return;
+      }
+
+      final nextPosition = LatLng(newLat, newLng);
+      final currentPosition = LatLng(driverLat, driverLng);
+
+      _animateMarkerToNextPosition(currentPosition, nextPosition);
+    });
+  }
 
   void _fetchDriverLocationFromRealtimeDB(String rideId) async {
     try {
@@ -805,6 +844,8 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
   @override
   void dispose() {
+    _driverLocationSubscription?.cancel();
+    _driverLocationSubscription = null;
     fetchTimer?.cancel();
     locationUpdateTimer?.cancel();
     locationUpdateTimer = null;
@@ -813,14 +854,17 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     super.dispose();
   }
 
-// Animate marker to the next position
+// Animate marker to the next position with 60 FPS fast updates
   void _animateMarkerToNextPosition(LatLng current, LatLng next) {
     const int animationDurationMs = 1000;
     const int steps = 20;
 
     final double latStep = (next.latitude - current.latitude) / steps;
     final double lngStep = (next.longitude - current.longitude) / steps;
-    _driverMarkerRotation = _bearingBetween(current, next);
+
+    // Smooth angle difference to prevent 360 degree spin flips
+    final double targetBearing = _bearingBetween(current, next);
+    final angleDiff = ((targetBearing - _driverMarkerRotation + 540) % 360) - 180;
 
     int currentStep = 0;
     locationUpdateTimer?.cancel();
@@ -828,26 +872,35 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     locationUpdateTimer = Timer.periodic(
       const Duration(milliseconds: animationDurationMs ~/ steps),
       (timer) {
-        if (currentStep >= steps) {
+        if (!mounted) {
           timer.cancel();
-          setState(() {
-            driverLat = next.latitude;
-            driverLng = next.longitude;
-          });
-          _updateDriverMarkerPosition(driverLat, driverLng);
-
           return;
         }
 
+        if (currentStep >= steps) {
+          timer.cancel();
+          driverLat = next.latitude;
+          driverLng = next.longitude;
+          _driverMarkerRotation = targetBearing;
+          context.read<UserMarkerCubit>().updateDriverMarkerFast(
+            next,
+            _driverMarkerRotation,
+          );
+          return;
+        }
+
+        final double t = currentStep / steps;
         final interpolatedLat = current.latitude + latStep * currentStep;
         final interpolatedLng = current.longitude + lngStep * currentStep;
+        final currentRotation = (_driverMarkerRotation + angleDiff * t + 360) % 360;
 
-        setState(() {
-          driverLat = interpolatedLat;
-          driverLng = interpolatedLng;
-        });
+        driverLat = interpolatedLat;
+        driverLng = interpolatedLng;
 
-        _updateDriverMarkerPosition(interpolatedLat, interpolatedLng);
+        context.read<UserMarkerCubit>().updateDriverMarkerFast(
+          LatLng(interpolatedLat, interpolatedLng),
+          currentRotation,
+        );
         currentStep++;
       },
     );
@@ -2223,6 +2276,7 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
         if (state is DriverUpdated) {
           if (state.nearbyDrivers!.isEmpty) {
             _stopCountdown();
+            context.read<UserMarkerCubit>().removeNearbyMarkers();
             showNoDriverFoundBottomSheet();
 
             context.read<DriverNearByCubit>().resetNearByDriverState();

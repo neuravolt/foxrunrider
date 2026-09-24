@@ -1,5 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
+import 'package:geoflutterfire_plus/geoflutterfire_plus.dart';
 import 'package:ride_on/core/extensions/workspace.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -38,11 +42,13 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
   bool isLoadingOnMap = false;
   int selectedIdIndex = -1;
   double traveCharge = 0.0;
-  int setIndex=-1;
+  int setIndex = -1;
   bool showSelectionError = false;
 
+  final Map<String, Uint8List> _vehicleIconCache = {};
+  int _currentQueryVehicleId = -1;
 
-  Map<String,dynamic> selectedVehicleData={};
+  Map<String, dynamic> selectedVehicleData = {};
 
   Set<Polyline> _polylines = {};
   final Completer<GoogleMapController> _controller = Completer();
@@ -57,10 +63,27 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
         context.read<VehicleDataUpdateCubit>().state.vehicleSelectedId;
     if (widget.fareList.any((element) => element["id"] == cubitSelectedId)) {
       selectedIdIndex = cubitSelectedId;
+    } else if (widget.fareList.isNotEmpty) {
+      selectedIdIndex = widget.fareList.first["id"] ?? -1;
+      if (selectedIdIndex != -1) {
+        context.read<VehicleDataUpdateCubit>().updateVehicleTypeSelectedId(selectedIdIndex);
+      }
     } else {
       selectedIdIndex = -1;
     }
     addMarkers();
+    if (selectedIdIndex != -1) {
+      final initialItem = widget.fareList.firstWhere(
+        (e) => e["id"] == selectedIdIndex,
+        orElse: () => <String, dynamic>{},
+      );
+      if (initialItem.isNotEmpty) {
+        _fetchNearbyDriversForVehicle(
+          initialItem["id"],
+          initialItem["vehicleName"] ?? "Bike",
+        );
+      }
+    }
   }
 
 
@@ -84,7 +107,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
       dropoffPos = _polylines.first.points.last;
     }
 
-    markers.clear();
+    markers.removeWhere((m) => m.markerId.value == 'pickup' || m.markerId.value == 'dropoff');
 
     markers.add(Marker(
       markerId: const MarkerId('pickup'),
@@ -104,6 +127,159 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
     moveMapAccordingPoline();
 
     setState(() {});
+  }
+
+  Future<Uint8List> _getVehicleIcon(String vehicleName) async {
+    final name = vehicleName.toLowerCase();
+    String assetPath;
+    if (name.contains('bike') || name.contains('moto')) {
+      assetPath = 'assets/images/BIKE.png';
+    } else if (name.contains('auto') || name.contains('rickshaw')) {
+      assetPath = 'assets/images/AUTO.png';
+    } else {
+      assetPath = 'assets/images/CAB.png';
+    }
+
+    if (_vehicleIconCache.containsKey(assetPath)) {
+      return _vehicleIconCache[assetPath]!;
+    }
+
+    final ByteData data = await rootBundle.load(assetPath);
+    final ui.Codec codec = await ui.instantiateImageCodec(
+      data.buffer.asUint8List(),
+      targetWidth: 80,
+    );
+    final ui.FrameInfo fi = await codec.getNextFrame();
+    final bytes = (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
+        .buffer
+        .asUint8List();
+    _vehicleIconCache[assetPath] = bytes;
+    return bytes;
+  }
+
+  Future<void> _fetchNearbyDriversForVehicle(dynamic vehicleTypeId, String vehicleName) async {
+    final vIdInt = int.tryParse(vehicleTypeId.toString()) ?? -1;
+    _currentQueryVehicleId = vIdInt;
+
+    try {
+      final bookRideState = context.read<BookRideRealTimeDataBaseCubit>().state;
+      final pickLat = double.tryParse(bookRideState.pickupAddressLatitude) ?? 0.0;
+      final pickLng = double.tryParse(bookRideState.pickupAddressLongitude) ?? 0.0;
+
+      if (pickLat == 0.0 || pickLng == 0.0) return;
+
+      final iconBytes = await _getVehicleIcon(vehicleName);
+
+      final collectionRef = FirebaseFirestore.instance.collection('drivers');
+      final center = GeoFirePoint(GeoPoint(pickLat, pickLng));
+      final geoCollection = GeoCollectionReference(collectionRef);
+
+      List<DocumentSnapshot<Map<String, dynamic>>> docs = [];
+      try {
+        docs = await geoCollection.fetchWithin(
+          center: center,
+          radiusInKm: 15.0,
+          field: 'geo',
+          geopointFrom: (data) {
+            final geo = data['geo'] as Map<String, dynamic>?;
+            return geo?['geopoint'] as GeoPoint;
+          },
+          strictMode: true,
+          queryBuilder: (query) => query
+              .where('driverStatus', isEqualTo: 'active')
+              .where('docApprovedStatus', isEqualTo: 'approved')
+              .where('itemTypeId', isEqualTo: vehicleTypeId.toString())
+              .where('rideStatus', isEqualTo: 'available'),
+        );
+      } catch (e) {
+        debugPrint("Geo query fallback: $e");
+      }
+
+      if (!mounted || _currentQueryVehicleId != vIdInt) return;
+
+      List<Map<String, dynamic>> driverList = [];
+
+      for (final doc in docs) {
+        final data = doc.data();
+        if (data == null) continue;
+        final geo = data['geo'] as Map<String, dynamic>?;
+        final geopoint = geo?['geopoint'] as GeoPoint?;
+        if (geopoint == null) continue;
+
+        driverList.add({
+          'id': doc.id,
+          'latitude': geopoint.latitude,
+          'longitude': geopoint.longitude,
+          'heading': (data['heading'] as num?)?.toDouble() ??
+              (data['bearing'] as num?)?.toDouble() ??
+              0.0,
+        });
+      }
+
+      if (driverList.isEmpty) {
+        try {
+          final querySnap = await collectionRef
+              .where('driverStatus', isEqualTo: 'active')
+              .where('docApprovedStatus', isEqualTo: 'approved')
+              .where('rideStatus', isEqualTo: 'available')
+              .limit(30)
+              .get();
+
+          for (final doc in querySnap.docs) {
+            final data = doc.data();
+            final docItemTypeId = data['itemTypeId']?.toString() ?? '';
+            if (docItemTypeId != vehicleTypeId.toString()) continue;
+
+            double? lat;
+            double? lng;
+            final geo = data['geo'] as Map<String, dynamic>?;
+            if (geo?['geopoint'] is GeoPoint) {
+              final gp = geo!['geopoint'] as GeoPoint;
+              lat = gp.latitude;
+              lng = gp.longitude;
+            } else if (data['latitude'] != null && data['longitude'] != null) {
+              lat = (data['latitude'] as num).toDouble();
+              lng = (data['longitude'] as num).toDouble();
+            }
+
+            if (lat != null && lng != null) {
+              driverList.add({
+                'id': doc.id,
+                'latitude': lat,
+                'longitude': lng,
+                'heading': (data['heading'] as num?)?.toDouble() ??
+                    (data['bearing'] as num?)?.toDouble() ??
+                    0.0,
+              });
+            }
+          }
+        } catch (e) {
+          debugPrint("Fallback driver fetch error: $e");
+        }
+      }
+
+      if (!mounted || _currentQueryVehicleId != vIdInt) return;
+
+      setState(() {
+        markers.removeWhere((m) => m.markerId.value.startsWith('nearby_'));
+        for (final d in driverList) {
+          markers.add(
+            Marker(
+              markerId: MarkerId('nearby_${d['id']}'),
+              position: LatLng(d['latitude'], d['longitude']),
+              icon: BitmapDescriptor.bytes(iconBytes),
+              rotation: d['heading'],
+              flat: true,
+              anchor: const Offset(0.5, 0.5),
+              zIndex: 1,
+              infoWindow: InfoWindow(title: vehicleName),
+            ),
+          );
+        }
+      });
+    } catch (e) {
+      debugPrint("Error fetching nearby drivers in selection screen: $e");
+    }
   }
 
   void moveMapAccordingPoline()async{
@@ -426,7 +602,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                 if (!isSelected) {
                                   setState(() {
                                     showSelectionError = false;
-                                    setIndex=index;
+                                    setIndex = index;
                                     selectedIdIndex = data["id"]!;
                                     context
                                         .read<VehicleDataUpdateCubit>()
@@ -434,6 +610,10 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                       data["id"],
                                     );
                                   });
+                                  _fetchNearbyDriversForVehicle(
+                                    data["id"],
+                                    data["vehicleName"] ?? "",
+                                  );
                                 }
                               },
                               child: Container(

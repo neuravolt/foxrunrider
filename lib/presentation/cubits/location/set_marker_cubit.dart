@@ -185,14 +185,17 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
   ) async {
     Uint8List markerIcon;
 
-    if (title.toString() == "Driver Location") {
+    if (iconPath.endsWith('.png') && (iconPath.contains('BIKE') || iconPath.contains('AUTO') || iconPath.contains('CAB'))) {
+      markerIcon = await getBytesFromAsset(iconPath, 85);
+    } else if (title.toString() == "Driver Location") {
       markerIcon = await createCustomMarkerImage(iconPath);
     } else {
       markerIcon = await getBytesFromAsset(iconPath, size);
     }
 
     final Offset anchor = (markerId.toLowerCase().contains('driver') ||
-            title.toLowerCase().contains('driver'))
+            title.toLowerCase().contains('driver') ||
+            markerId.startsWith('nearby_'))
         ? const Offset(0.5, 0.5)
         : const Offset(0.5, 1.0);
 
@@ -203,8 +206,9 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
         position: position,
         infoWindow: InfoWindow(title: title),
         rotation: rotation,
+        flat: true,
         anchor: anchor,
-        icon: BitmapDescriptor.fromBytes(markerIcon),
+        icon: BitmapDescriptor.bytes(markerIcon),
       ),
     );
     emit(UserMarkerUpdated(markers: _markers));
@@ -213,6 +217,60 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
   void removeMarker(String markerId) {
     _markers.removeWhere((marker) => marker.markerId.value == markerId);
     emit(UserMarkerUpdated(markers: _markers));
+  }
+
+  void removeNearbyMarkers() {
+    final before = _markers.length;
+    _markers.removeWhere((marker) => marker.markerId.value.startsWith('nearby_'));
+    if (_markers.length != before) {
+      emit(UserMarkerUpdated(markers: Set.from(_markers)));
+    }
+  }
+
+  Future<void> addNearbyDrivers(
+    List<Map<String, dynamic>> drivers,
+    String iconAsset,
+  ) async {
+    final Uint8List iconBytes = await getBytesFromAsset(iconAsset, 85);
+    _markers.removeWhere((m) => m.markerId.value.startsWith('nearby_'));
+
+    for (final driver in drivers) {
+      final lat = (driver['latitude'] as num?)?.toDouble();
+      final lng = (driver['longitude'] as num?)?.toDouble();
+      final id = driver['id']?.toString() ?? '';
+      if (lat != null && lng != null && id.isNotEmpty) {
+        final heading = (driver['heading'] as num?)?.toDouble() ??
+            (driver['bearing'] as num?)?.toDouble() ??
+            0.0;
+
+        _markers.add(
+          Marker(
+            markerId: MarkerId('nearby_$id'),
+            position: LatLng(lat, lng),
+            flat: true,
+            rotation: heading,
+            anchor: const Offset(0.5, 0.5),
+            zIndex: 1,
+            icon: BitmapDescriptor.bytes(iconBytes),
+          ),
+        );
+      }
+    }
+    emit(UserMarkerUpdated(markers: Set.from(_markers)));
+  }
+
+  void updateDriverMarkerFast(LatLng position, double rotation, {String markerId = 'driver_marker'}) {
+    final existingList = _markers.where((m) => m.markerId.value == markerId).toList();
+    if (existingList.isNotEmpty) {
+      final existing = existingList.first;
+      final updated = existing.copyWith(
+        positionParam: position,
+        rotationParam: rotation,
+      );
+      _markers.removeWhere((m) => m.markerId.value == markerId);
+      _markers.add(updated);
+      emit(UserMarkerUpdated(markers: Set.from(_markers)));
+    }
   }
 
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
@@ -234,5 +292,6 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
     removeMarker("User_marker");
     removeMarker("drop_marker");
     removeMarker("driver_marker");
+    removeNearbyMarkers();
   }
 }
