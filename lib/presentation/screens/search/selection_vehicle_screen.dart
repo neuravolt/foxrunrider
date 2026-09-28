@@ -12,6 +12,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:ride_on/core/utils/translate.dart';
 import 'package:ride_on/presentation/screens/search/send_ride_request_screen.dart';
+import '../../widgets/parcel_coming_soon_sheet.dart';
 import '../../../core/services/data_store.dart';
 import '../../../core/utils/common_widget.dart';
 import '../../../core/utils/theme/project_color.dart';
@@ -710,6 +711,98 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                               ),
                             );
                           },
+                        ),
+
+                        // FoxRun Parcel Coming Soon Option
+                        GestureDetector(
+                          onTap: () {
+                            showParcelComingSoonSheet(context);
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF9F0),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFFFCC80),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFECB3).withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.all(6),
+                                  child: Image.asset(
+                                    'assets/images/parcel_box.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "FoxRun Parcel".translate(context),
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                              color: notifires.getwhiteblackColor,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                colors: [
+                                                  Color(0xFFFF9800),
+                                                  Color(0xFFFF5722)
+                                                ],
+                                              ),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              "SOON".translate(context),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "Send packages & gifts • Launches 16 Oct"
+                                            .translate(context),
+                                        style: TextStyle(
+                                            fontSize: 11.5,
+                                            color: Colors.grey.shade600),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 14,
+                                  color: Color(0xFFFF9800),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
 
                         // Book Now Button

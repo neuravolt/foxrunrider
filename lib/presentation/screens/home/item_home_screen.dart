@@ -20,6 +20,7 @@ import 'package:ride_on/core/extensions/workspace.dart';
 import 'package:ride_on/presentation/screens/search/loading_nearby_search_screen.dart';
 import 'package:ride_on/presentation/screens/search/route_location_screen.dart';
 import 'package:ride_on/presentation/widgets/drawer_custom.dart';
+import 'package:ride_on/presentation/widgets/parcel_coming_soon_sheet.dart';
 import '../auth/signup_screen.dart';
 import '../../../core/services/data_store.dart';
 import '../../cubits/book_ride_cubit.dart';
@@ -698,6 +699,8 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                           _buildLocationInput(),
                           const SizedBox(height: 20),
                           RepaintBoundary(child: _buildExploreSection()),
+                          const SizedBox(height: 16),
+                          RepaintBoundary(child: _buildParcelComingSoonBanner()),
                           const SizedBox(height: 20),
                           if (recentDropLocations.isNotEmpty) ...[
                             _buildRecentSearches(),
@@ -1739,9 +1742,100 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
         padding: const EdgeInsets.symmetric(vertical: 4),
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: isLoading ? 8 : items.length,
+        itemCount: isLoading ? 8 : items.length + 1,
         itemBuilder: (_, index) {
           if (isLoading) return ShimmerLoader();
+
+          if (index == items.length) {
+            return Container(
+              width: 72,
+              margin: const EdgeInsets.only(right: 10),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  showParcelComingSoonSheet(context);
+                },
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFFFB74D).withValues(alpha: 0.6),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF9800).withValues(alpha: 0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/parcel_box.png',
+                            width: 32,
+                            height: 32,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            "Parcel".translate(context),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: heading3(context).copyWith(
+                              color: const Color(0xFFE65100),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      top: -3,
+                      right: -2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF5722).withValues(alpha: 0.35),
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          "SOON".translate(context),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 7,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           final item = items[index];
 
           return Container(
@@ -1816,6 +1910,137 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildParcelComingSoonBanner() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => showParcelComingSoonSheet(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF212529),
+                Color(0xFF2C3238),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(
+              color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFFFFB300).withValues(alpha: 0.25),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/parcel_box.png',
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          "FoxRun Parcel".translate(context),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            "COMING SOON".translate(context),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Doorstep package delivery launching 16 Oct 2026"
+                          .translate(context),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: themeColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  "Notify Me".translate(context),
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

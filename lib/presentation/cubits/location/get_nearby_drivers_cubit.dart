@@ -271,6 +271,18 @@ class DriverNearByCubit extends Cubit<DriverNearByState> {
           finalFilteredDrivers.addAll(list);
         }
 
+        if (finalFilteredDrivers.isEmpty && nearestDrivers.isNotEmpty) {
+          debugPrint("⚠️ Google API filtered all drivers (${nearestDrivers.length} found by geo). Checking straight-line fallback within $distance km");
+          final fallbackDrivers = nearestDrivers.where((d) {
+            final double dKm = (d['distance'] as num?)?.toDouble() ?? 999.0;
+            return dKm <= distance;
+          }).toList();
+          if (fallbackDrivers.isNotEmpty) {
+            debugPrint("✅ Using straight-line fallback drivers: ${fallbackDrivers.length}");
+            finalFilteredDrivers.addAll(fallbackDrivers);
+          }
+        }
+
         emit(DriverUpdated(
             nearbyDrivers: finalFilteredDrivers, checkRestart: checkRestart));
 
