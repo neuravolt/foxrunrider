@@ -1,0 +1,21 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "ride_requests": {
+      "$rideId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "acceptedBy": {
+          ".validate": "!data.exists() || data.val() === newData.val()"
+        }
+      }
+    },
+    "drivers": {
+      "$driverId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}

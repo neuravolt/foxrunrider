@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher.dart' show launchUrl, LaunchMode;
 import 'package:ride_on/core/services/http.dart';
 import 'package:ride_on/core/extensions/workspace.dart';
 import 'package:flutter/material.dart';
@@ -117,9 +118,46 @@ class ProfileRepository {
     try {
       var response = await httpGet(Config.getgeneralSettings, postData,
           context: navigatorKey.currentContext!);
+      _enforceMinimumBuild(response);
       return response;
     } catch (e) {
       rethrow;
     }
   }
+}
+
+bool _updateDialogShown = false;
+
+/// Blocks the app when the admin raises the minimum build (Admin → App Settings). Needed
+/// because some backend changes only work with the new app, and old builds must not keep
+/// running against them.
+void _enforceMinimumBuild(dynamic response) {
+  final data = response is Map ? response['data'] : null;
+  final meta = data is Map ? data['metaData'] : null;
+  final minBuild =
+      int.tryParse(meta is Map ? '${meta['min_build_rider'] ?? ''}' : '') ?? 0;
+  final context = navigatorKey.currentContext;
+  if (minBuild <= Config.appBuild || context == null || _updateDialogShown) {
+    return;
+  }
+  _updateDialogShown = true;
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => PopScope(
+      canPop: false,
+      child: AlertDialog(
+        title: const Text('Update required'),
+        content: const Text(
+            'A new version of FoxRun is available. Please update the app to continue.'),
+        actions: [
+          TextButton(
+            onPressed: () => launchUrl(Uri.parse(Config.playStoreUrl),
+                mode: LaunchMode.externalApplication),
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    ),
+  );
 }

@@ -5,6 +5,7 @@ import 'package:ride_on/core/extensions/workspace.dart';
 import 'package:flutter/material.dart' show BuildContext;
 // ignore: depend_on_referenced_packages
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:ride_on/presentation/screens/auth/login_screen.dart';
 import '../../app/route_settings.dart';
 import '../../presentation/cubits/logout_cubit.dart';
@@ -16,6 +17,32 @@ bool connectionLost = false;
 String latitudeGlobal = '';
 String longitudeGlobal = '';
 bool shouldLogout = false;
+
+// Sign-in calls also carry the Firebase ID token of the user who just signed in with Firebase
+// (phone OTP or Google), so the backend can verify who is signing in.
+const Set<String> _ownershipProofPaths = {
+  Config.userMobileLogin,
+  Config.otpVerification,
+  Config.changeMobileNumber,
+  Config.socialLogin,
+};
+
+Future<void> _attachFirebaseIdToken(String path, Map data) async {
+  if (!_ownershipProofPaths.contains(path)) return;
+  try {
+    final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (idToken != null && idToken.isNotEmpty) data['firebase_id_token'] = idToken;
+  } catch (_) {}
+}
+
+// After a successful login, drop the pre-login bearer so the next call mints one for the user.
+void _dropGuestBearerAfterLogin(String path, dynamic responseData) {
+  if (!_ownershipProofPaths.contains(path) || path == Config.changeMobileNumber) return;
+  if (responseData is Map && responseData['status'] == 200) {
+    bearerToken = "";
+    box.delete("bearerToken");
+  }
+}
 
 void _hydrateUserTokenFromStorage() {
   if (token.trim().isNotEmpty) return;
@@ -48,6 +75,7 @@ Future<dynamic> httpPost(path, data, {required BuildContext context}) async {
     data['latitude'] = latitudeGlobal;
     data['longitude'] = longitudeGlobal;
     data['token'] = token;
+    await _attachFirebaseIdToken(path.toString(), data);
     var response = await http.post(
       Uri.parse(url),
       headers: headers,
@@ -83,6 +111,7 @@ Future<dynamic> httpPost(path, data, {required BuildContext context}) async {
       });
     }
 
+    _dropGuestBearerAfterLogin(path.toString(), responseData);
     return responseData;
   } catch (err) {
     log("httpPost error: $err");

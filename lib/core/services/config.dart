@@ -1,8 +1,11 @@
 class Config {
+  // Must equal the +build number in pubspec.yaml. The admin's "minimum rider build"
+  // setting is compared against this to force an update.
+  static const int appBuild = 27;
+  static const String playStoreUrl =
+      'https://play.google.com/store/apps/details?id=com.foxrunmobility.rider';
   static const googleKey = "AIzaSyA216snpD1X6FG_CPwwoo0qyeb097cmt1k";
   static const String oneSiginalAppid = '660f7d98-f9fa-44a3-b429-0e45a5a580af';
-  static const String oneSiginalApiKey =
-      'os_v2_app_myhx3ghz7jckhnbjbzc2ljmav4ucalfzvg4uy3uln7vqu5jwpch4mn7gdbkmtgptq5ugqlb2ouprzso2llwmcw642bt4w34xecttkgy';
 
 // Temporary base domain URL for setup (please add your final URL here)
 // static const String baseDomain ='https://sleep-utensil-afternoon.ngrok-free.dev';

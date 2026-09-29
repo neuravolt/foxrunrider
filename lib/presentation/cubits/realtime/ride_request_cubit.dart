@@ -186,6 +186,51 @@ class RideRequestInitial extends RideRequestState {}
 class RideRequestCubit extends Cubit<RideRequestState> {
   RideRequestCubit() : super(const RideRequestState());
 
+  // Firestore listeners on the offered drivers' docs. They used to live forever (one set per
+  // search), so every later write to those drivers still ran this cubit's accept logic.
+  final List<StreamSubscription> _driverSubscriptions = [];
+
+  void _cancelDriverSubscriptions() {
+    for (final sub in _driverSubscriptions) {
+      sub.cancel();
+    }
+    _driverSubscriptions.clear();
+  }
+
+  /// Offer the ride only if the driver is still free. Two riders searching at once both saw
+  /// the driver as 'available'; the blind merge let the second overwrite the first's request.
+  Future<bool> _assignIfAvailable(
+      String driverDocId, Map<String, dynamic> driverData) async {
+    final ref = FirebaseFirestore.instance.collection('drivers').doc(driverDocId);
+    try {
+      return await FirebaseFirestore.instance.runTransaction<bool>((tx) async {
+        final current = (await tx.get(ref)).data();
+        final rideStatus = current?['rideStatus'];
+        if (rideStatus != null && rideStatus != 'available') return false;
+        tx.set(ref, driverData, SetOptions(merge: true));
+        return true;
+      });
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Free a driver only while they still hold *this* ride's request; blind resets wiped a
+  /// request another rider had meanwhile sent to the same driver.
+  Future<void> _releaseDriver(String driverDocId, String rideId) async {
+    final ref = FirebaseFirestore.instance.collection('drivers').doc(driverDocId);
+    try {
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final request = (await tx.get(ref)).data()?['ride_request'];
+        if (request is Map && request['rideId']?.toString() == rideId) {
+          tx.update(ref, {'ride_request': {}, 'rideStatus': 'available'});
+        }
+      });
+    } catch (e) {
+      //
+    }
+  }
+
   void updateNearByDrivers({List<Map<String, dynamic>>? nearbyDrivers}) {
     emit(state.copyWith(nearbyDrivers: nearbyDrivers));
   }
@@ -241,7 +286,7 @@ class RideRequestCubit extends Cubit<RideRequestState> {
     activeRideRequestId = currentRequestId;
 
     if (checkRestart == false) {
-      createRealTimeInstance(
+      await createRealTimeInstance(
           dropoffAddress: dropoffAddress,
           dropoffLat: dropoffLat,
           dropoffLng: dropoffLng,
@@ -294,14 +339,8 @@ class RideRequestCubit extends Cubit<RideRequestState> {
         'ride_request': rideRequestData,
       };
 
-      try {
-        await FirebaseFirestore.instance
-            .collection('drivers')
-            .doc(fireStoreToken)
-            .set(driverData, SetOptions(merge: true));
+      if (await _assignIfAvailable(fireStoreToken, driverData)) {
         driverIds.add(fireStoreToken);
-      } catch (e) {
-        //
       }
     }
     // ignore_for_file: use_build_context_synchronously
@@ -339,6 +378,7 @@ class RideRequestCubit extends Cubit<RideRequestState> {
     required List<Map<String, dynamic>> nearbyDrivers,
   }) {
     bool hasAccepted = false;
+    _cancelDriverSubscriptions();
 
     try {
       emit(state.copyWith(
@@ -351,18 +391,9 @@ class RideRequestCubit extends Cubit<RideRequestState> {
         if (activeRideRequestId == currentRequestId &&
             !hasAccepted &&
             !isManuallyCancelled) {
+          _cancelDriverSubscriptions();
           for (var driverFireStoreId in driverIds) {
-            try {
-              await FirebaseFirestore.instance
-                  .collection('drivers')
-                  .doc(driverFireStoreId)
-                  .update({
-                'ride_request': {},
-                'rideStatus': 'available',
-              });
-            } catch (e) {
-              //
-            }
+            await _releaseDriver(driverFireStoreId, rideId);
           }
 
           emit(state.copyWith(
@@ -374,7 +405,7 @@ class RideRequestCubit extends Cubit<RideRequestState> {
       });
 
       for (var driverFireStoreId in driverIds) {
-        FirebaseFirestore.instance
+        _driverSubscriptions.add(FirebaseFirestore.instance
             .collection('drivers')
             .doc(driverFireStoreId)
             .snapshots()
@@ -404,6 +435,7 @@ class RideRequestCubit extends Cubit<RideRequestState> {
                 rideRequest['status'].toString() == 'accepted' &&
                 !hasAccepted) {
               hasAccepted = true;
+              _cancelDriverSubscriptions();
 
               if (driverFireStoreId.isNotEmpty) {
                 try {
@@ -452,20 +484,12 @@ class RideRequestCubit extends Cubit<RideRequestState> {
 
               for (var otherDriverId in driverIds) {
                 if (otherDriverId != driverFireStoreId) {
-                  try {
-                    await FirebaseFirestore.instance
-                        .collection('drivers')
-                        .doc(otherDriverId)
-                        .update(
-                            {'ride_request': {}, 'rideStatus': "available"});
-                  } catch (e) {
-                    //
-                  }
+                  await _releaseDriver(otherDriverId, rideId);
                 }
               }
             }
           }
-        }, onError: (error) {});
+        }, onError: (error) {}));
       }
     } catch (error) {
       emit(state.copyWith(
@@ -742,6 +766,7 @@ class RideRequestCubit extends Cubit<RideRequestState> {
   }
 
   void resetState() {
+    _cancelDriverSubscriptions();
     emit(RideRequestInitial());
     emit(const RideRequestState(
       farePrice: "",
@@ -759,5 +784,11 @@ class RideRequestCubit extends Cubit<RideRequestState> {
       rideMessage: "",
       selectedDriverId: "",
     ));
+  }
+
+  @override
+  Future<void> close() {
+    _cancelDriverSubscriptions();
+    return super.close();
   }
 }

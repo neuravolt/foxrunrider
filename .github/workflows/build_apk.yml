@@ -2,7 +2,7 @@ name: Build Rider APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'fix/**' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -44,7 +44,12 @@ jobs:
         run: flutter pub get
 
       - name: Analyze Project
-        run: flutter analyze || true
+        # Non-fatal (the build step below is the compile gate), but every analyzer error is
+        # surfaced as a GitHub annotation so it shows on the run page and in the checks API.
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings --format=machine > analyze.txt 2>&1 || true
+          echo "::notice::analyzer: $(grep -c '^ERROR|' analyze.txt || true) errors, $(grep -c '^WARNING|' analyze.txt || true) warnings"
+          grep '^ERROR|' analyze.txt | awk -F'|' '{f=$4; sub(/.*\/lib\//,"lib/",f); print "::error file="f",line="$5",col="$6"::"f":"$5" "$8}' || true
 
       - name: Build Debug APK
         run: flutter build apk --debug --android-skip-build-dependency-validation

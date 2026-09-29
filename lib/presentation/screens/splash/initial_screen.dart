@@ -57,10 +57,11 @@ class _InitialScreenState extends State<InitialScreen> {
             goToWithReplacement(const ItemHomeScreen());
           } else {
             String rideId = data["rideId"].toString();
+            // Slow network must not wipe an active ride: keep ride_data so the next launch
+            // (or the late response) can still restore it.
             context.read<CheckStatusCubit>().checkStatus(rideId).timeout(
-              const Duration(seconds: 2),
+              const Duration(seconds: 10),
               onTimeout: () {
-                box.delete('ride_data');
                 goToWithReplacement(const ItemHomeScreen());
               },
             );
@@ -103,7 +104,9 @@ class _InitialScreenState extends State<InitialScreen> {
                   vehicle = jsonDecode(rawVehicle.toString());
                 }
 
-                if (state.status == "accepted") {
+                if (state.status == "accepted" ||
+                    state.status == "pick_up" ||
+                    state.status == "confirmed") {
                   goToWithReplacement(SendRideRequestScreen(
                     selectedVehicleData: vehicle,
                     statusOfRide: "accepted",
@@ -151,6 +154,11 @@ class _InitialScreenState extends State<InitialScreen> {
                 goToWithReplacement(const ItemHomeScreen());
               }
             } else if (state is CheckRideFailed) {
+              if (state.error != "Ride not found.") {
+                // network/permission error: keep the ride for the next attempt
+                goToWithReplacement(const ItemHomeScreen());
+                return;
+              }
               box.delete("ride_data");
               box.delete("payment_url");
               box.delete("PickOtp");

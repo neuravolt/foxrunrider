@@ -140,32 +140,13 @@ class DriverNearByCubit extends Cubit<DriverNearByState> {
           return null;
         }
 
-        // 🔥 Check timestamp validity
-        final context = navigatorKey.currentContext;
-        if (context != null) {
-          final lastActiveState = context.read<LastActiveApp>().state.value;
-
-          if (lastActiveState != null && lastActiveState.toString() != "0" && lastActiveState.toString().isNotEmpty) {
-            debugPrint('Using Last active: $lastActiveState');
-
-            if (timestamp is Timestamp) {
-              final lastUpdate = timestamp.toDate();
-              final now = DateTime.now();
-              final difference = now.difference(lastUpdate).inMinutes;
-
-              if (difference > 20) {
-                debugPrint("Driver ${doc.id} removed: last update $difference min ago");
-                return null;
-              }
-            } else {
-              debugPrint("Driver ${doc.id} removed: no valid timestamp found");
-              return null;
-            }
-          } else {
-            debugPrint("Driver ${doc.id} skipped: LastActiveApp is empty or 0");
-          }
-        } else {
-          debugPrint("No valid context found — skipping driver ${doc.id}");
+        // Drop drivers whose location hasn't been refreshed recently: an app that was killed
+        // stays 'active'/'available' in Firestore and used to receive (and time out) requests.
+        // This used to run only when the admin 'LastActiveApp' setting was set.
+        if (timestamp is! Timestamp ||
+            DateTime.now().difference(timestamp.toDate()).inMinutes > 20) {
+          debugPrint("Driver ${doc.id} skipped: stale or missing location timestamp");
+          return null;
         }
 
         if (geopoint != null) {

@@ -195,10 +195,11 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     final rideRequestRef =
         FirebaseDatabase.instance.ref().child("ride_requests");
     try {
-      await rideRequestRef.child(updatedRideId).update({
-        'bookingId': upDatedBookingId,
-        'status': 'accepted',
-      });
+      // Only the bookingId: the driver owns `status`. Re-writing 'accepted' here (this also
+      // runs when the app is reopened mid-ride) rolled pick_up/confirmed back to accepted.
+      final node = rideRequestRef.child(updatedRideId);
+      if (!(await node.get()).exists) return; // ride already removed: don't recreate a ghost node
+      await node.update({'bookingId': upDatedBookingId});
       debugPrint("Ride updated successfully.");
     } catch (error) {
       debugPrint("Failed to update ride: $error");

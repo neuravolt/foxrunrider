@@ -8,21 +8,29 @@ class GetRideRequestStatusCubit extends Cubit<String> {
   final DatabaseReference _rideRequestsRef =
       FirebaseDatabase.instance.ref().child('ride_requests');
 
+  StreamSubscription<DatabaseEvent>? _statusSubscription;
+
+  // onValue on the status child delivers the current status immediately (onChildChanged did
+  // not, so a reopened app never learned the ride was already pick_up/ongoing/completed), and
+  // the previous listener is cancelled instead of piling up one per call.
   void listenToRouteStatus({required String rideId}) {
-
-    _rideRequestsRef.child(rideId).onChildChanged.listen((event) {
-      final updatedKey = event.snapshot.key;
-      final updatedValue = event.snapshot.value;
-
-      if (updatedKey == 'status') {
-        emit(updatedValue.toString());
-
-      }
+    _statusSubscription?.cancel();
+    _statusSubscription =
+        _rideRequestsRef.child(rideId).child('status').onValue.listen((event) {
+      final value = event.snapshot.value;
+      if (value != null) emit(value.toString());
     });
   }
 
   void resetState() {
+    _statusSubscription?.cancel();
     emit("");
+  }
+
+  @override
+  Future<void> close() {
+    _statusSubscription?.cancel();
+    return super.close();
   }
 }
 

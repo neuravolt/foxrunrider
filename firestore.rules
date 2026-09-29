@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Interim rules for launch: signed-in app users only (both apps sign in with Firebase
+    // phone auth / Google). The rider app still writes other drivers' docs during dispatch,
+    // so per-driver ownership rules need server-side dispatch first. Laravel uses a service
+    // account and is not affected by these rules.
+    match /drivers/{driverId} {
+      allow read, write: if request.auth != null;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
