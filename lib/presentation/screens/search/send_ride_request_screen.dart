@@ -643,7 +643,6 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
   void _handleBookRideSuccess(
       BuildContext context, String pikupOtp, String rideID, String bookingID) {
-    _stopCountdown();
     context
         .read<GetRideRequestStatusCubit>()
         .listenToRouteStatus(rideId: rideID.toString());
@@ -2058,12 +2057,24 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
     _startCountdown();
   }
 
+  bool get _isRideAcceptedOrBooked {
+    if (!mounted) return true;
+    final rideReqState = context.read<RideRequestCubit>().state;
+    final hasDriver = rideReqState.selectedDriverId.isNotEmpty &&
+        rideReqState.selectedDriverId != "0";
+    final isSubmitting = rideReqState.isSubmitting;
+    final hasOtp = (box.get('PickOtp')?.toString().isNotEmpty ?? false);
+    final hasBooking = (box.get('bookingId')?.toString().isNotEmpty ?? false);
+    final hasRideData = box.get('ride_data') != null;
+    return hasDriver || isSubmitting || hasOtp || hasBooking || hasRideData;
+  }
+
   void _startCountdown() {
     _startTime = DateTime.now();
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       if (!mounted) return;
-      if (isSuccessFirst || bookingId.isNotEmpty || otp.isNotEmpty || widget.statusOfRide == "accepted") {
+      if (_isRideAcceptedOrBooked) {
         _timer?.cancel();
         return;
       }
@@ -2073,11 +2084,7 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
         _timer?.cancel();
         setState(() {});
         Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted &&
-              !isSuccessFirst &&
-              bookingId.isEmpty &&
-              otp.isEmpty &&
-              widget.statusOfRide != "accepted") {
+          if (mounted && !_isRideAcceptedOrBooked) {
             showBottomSheetMessage();
           }
         });
@@ -2116,10 +2123,7 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
   }
 
   void showBottomSheetMessage() {
-    if (isSuccessFirst ||
-        bookingId.isNotEmpty ||
-        otp.isNotEmpty ||
-        widget.statusOfRide == "accepted") {
+    if (_isRideAcceptedOrBooked) {
       return;
     }
     showModalBottomSheet(
