@@ -516,8 +516,8 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                 child: BlocBuilder<RideRequestCubit, RideRequestState>(
                   builder: (context, rideRequestState) {
                     if (rideRequestState.isSubmitting &&
-                        // ignore: unrelated_type_equality_checks
-                        rideRequestState.selectedDriverId != 0) {
+                        rideRequestState.selectedDriverId.toString().isNotEmpty &&
+                        rideRequestState.selectedDriverId.toString() != "0") {
                       _handleRideBooking(context, rideRequestState);
                     }
                     if (rideRequestState.rideMessage.isNotEmpty) {
@@ -643,6 +643,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
   void _handleBookRideSuccess(
       BuildContext context, String pikupOtp, String rideID, String bookingID) {
+    _stopCountdown();
     context
         .read<GetRideRequestStatusCubit>()
         .listenToRouteStatus(rideId: rideID.toString());
@@ -2062,13 +2063,23 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       if (!mounted) return;
+      if (isSuccessFirst || bookingId.isNotEmpty || otp.isNotEmpty || widget.statusOfRide == "accepted") {
+        _timer?.cancel();
+        return;
+      }
       final elapsed = _elapsedSecondsPrecise;
 
       if (elapsed >= totalSeconds) {
         _timer?.cancel();
         setState(() {});
         Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) showBottomSheetMessage();
+          if (mounted &&
+              !isSuccessFirst &&
+              bookingId.isEmpty &&
+              otp.isEmpty &&
+              widget.statusOfRide != "accepted") {
+            showBottomSheetMessage();
+          }
         });
       } else {
         setState(() {});
@@ -2105,6 +2116,12 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
   }
 
   void showBottomSheetMessage() {
+    if (isSuccessFirst ||
+        bookingId.isNotEmpty ||
+        otp.isNotEmpty ||
+        widget.statusOfRide == "accepted") {
+      return;
+    }
     showModalBottomSheet(
       context: context,
       backgroundColor: notifires.getbgcolor,
