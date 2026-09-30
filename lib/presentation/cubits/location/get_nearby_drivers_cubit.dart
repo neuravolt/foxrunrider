@@ -413,8 +413,47 @@ class GetPolylineUpdatedError extends GetPolylineState {
   List<Object?> get props => [error];
 }
 
+/// The drawn route shortened to the part still ahead of the vehicle. Handled by the ride map
+/// without re-fitting the camera (a normal GetPolylineUpdated re-fits it every time).
+class GetPolylineTrimmed extends GetPolylineState {
+  final Set<Polyline> polylines;
+  GetPolylineTrimmed(this.polylines);
+
+  @override
+  List<Object?> get props => [polylines];
+}
+
 class GetPolylineCubit extends Cubit<GetPolylineState> {
   GetPolylineCubit() : super(GetPolylineInitial());
+
+  // Last fetched route, kept for live tracking (snapping / trimming). The ride map calls
+  // resetPolylines() right after drawing, which must not lose it.
+  List<LatLng> activeRoute = const [];
+  PolylineId? _activeRouteId;
+
+  void clearActiveRoute() {
+    activeRoute = const [];
+    _activeRouteId = null;
+  }
+
+  /// Redraw only the part of the active route still ahead of the vehicle.
+  void showRouteAhead(List<LatLng> ahead) {
+    final id = _activeRouteId;
+    if (id == null || ahead.length < 2) return;
+    emit(GetPolylineTrimmed({
+      Polyline(
+        polylineId: id,
+        color: Colors.black,
+        width: 5,
+        jointType: JointType.round,
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+        points: ahead,
+        geodesic: true,
+        zIndex: 2,
+      )
+    }));
+  }
 
   final Map<PolylineId, Polyline> _polylines = {};
   final PolylinePoints _polylinePoints = PolylinePoints();
@@ -471,6 +510,8 @@ class GetPolylineCubit extends Cubit<GetPolylineState> {
           id: polylineId,
           color: Colors.black,
         );
+        activeRoute = polylineCoordinates;
+        _activeRouteId = polylineId;
 
         emit(GetPolylineUpdated(polylines: _polylines.values.toSet()));
       } else {

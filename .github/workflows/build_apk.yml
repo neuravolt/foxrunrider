@@ -51,6 +51,9 @@ jobs:
           echo "::notice::analyzer: $(grep -c '^ERROR|' analyze.txt || true) errors, $(grep -c '^WARNING|' analyze.txt || true) warnings"
           grep '^ERROR|' analyze.txt | awk -F'|' '{f=$4; sub(/.*\/lib\//,"lib/",f); print "::error file="f",line="$5",col="$6"::"f":"$5" "$8}' || true
 
+      - name: Tracking geometry tests
+        run: flutter test test/route_geometry_test.dart
+
       - name: Build Debug APK
         run: flutter build apk --debug --android-skip-build-dependency-validation
 

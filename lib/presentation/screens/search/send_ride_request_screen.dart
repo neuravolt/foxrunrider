@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:geolocator/geolocator.dart';
+import 'package:ride_on/core/utils/route_geometry.dart';
 import 'package:ride_on/core/services/data_store.dart';
 import 'package:ride_on/core/extensions/workspace.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -85,7 +86,9 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     isManuallyCancelled = false;
     isCurrentScreenActive = true;
     context.read<UserMarkerCubit>().clear();
-    context.read<GetPolylineCubit>().resetPolylines();
+    context.read<GetPolylineCubit>()
+      ..resetPolylines()
+      ..clearActiveRoute();
 
     if (widget.statusOfRide.isEmpty) {
       getNearByDrivers();
@@ -714,7 +717,9 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                 .dropoffAddressLongitude) ??
             0.0,
         beforePickUp: false);
-    context.read<GetPolylineCubit>().resetPolylines();
+    context.read<GetPolylineCubit>()
+      ..resetPolylines()
+      ..clearActiveRoute(); // don't snap to the pickup route while the drop route loads
 
     context.read<GetPolylineCubit>().getPolyline(
           sourcelat: context.read<RideRequestCubit>().state.acceptedDriverLat,
@@ -855,54 +860,76 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     super.dispose();
   }
 
-// Animate marker to the next position with 60 FPS fast updates
+  DateTime? _lastDriverFixAt;
+
+  // Glide the driver marker to its new position. The glide lasts about as long as the gap between
+  // location updates (it used to be a fixed 1 s, so the bike moved 1 s and then stood still until
+  // the next update), follows the route's bends when both fixes are on it (snapping GPS drift onto
+  // the road), and when it arrives trims the part of the route already driven.
   void _animateMarkerToNextPosition(LatLng current, LatLng next) {
-    const int animationDurationMs = 1000;
-    const int steps = 20;
+    final now = DateTime.now();
+    final gapMs = _lastDriverFixAt == null
+        ? 1000
+        : now.difference(_lastDriverFixAt!).inMilliseconds;
+    _lastDriverFixAt = now;
+    final int animationDurationMs = gapMs.clamp(1000, 6000);
+    const int frameMs = 50;
+    final int steps = (animationDurationMs / frameMs).round();
 
-    final double latStep = (next.latitude - current.latitude) / steps;
-    final double lngStep = (next.longitude - current.longitude) / steps;
-
-    // Smooth angle difference to prevent 360 degree spin flips
-    final double targetBearing = _bearingBetween(current, next);
-    final angleDiff = ((targetBearing - _driverMarkerRotation + 540) % 360) - 180;
+    final routeCubit = context.read<GetPolylineCubit>();
+    final List<RoutePoint> route = routeCubit.activeRoute
+        .map((p) => (lat: p.latitude, lng: p.longitude))
+        .toList();
+    final RoutePoint from = (lat: current.latitude, lng: current.longitude);
+    final RoutePoint rawTo = (lat: next.latitude, lng: next.longitude);
+    final List<RoutePoint> path =
+        route.length >= 2 ? pathAlongRoute(route, from, rawTo) : [from, rawTo];
+    final RoutePoint target = path.last;
+    final RouteSnap? targetSnap =
+        route.length >= 2 ? snapToRoute(rawTo, route) : null;
 
     int currentStep = 0;
     locationUpdateTimer?.cancel();
-
     locationUpdateTimer = Timer.periodic(
-      const Duration(milliseconds: animationDurationMs ~/ steps),
+      const Duration(milliseconds: frameMs),
       (timer) {
         if (!mounted) {
           timer.cancel();
           return;
         }
+        currentStep++;
+        final double t = currentStep / steps;
+        final RoutePoint p = pointAlongPath(path, t);
+        final RoutePoint lookAhead =
+            pointAlongPath(path, (t + 0.05).clamp(0.0, 1.0));
+
+        // Face the direction of travel along the path; shortest-arc turn, no 360 spins
+        if (metersBetween(p, lookAhead) > 0.5) {
+          final double targetBearing = _bearingBetween(
+              LatLng(p.lat, p.lng), LatLng(lookAhead.lat, lookAhead.lng));
+          final angleDiff =
+              ((targetBearing - _driverMarkerRotation + 540) % 360) - 180;
+          _driverMarkerRotation =
+              (_driverMarkerRotation + angleDiff * 0.25 + 360) % 360;
+        }
+
+        driverLat = p.lat;
+        driverLng = p.lng;
+        context.read<UserMarkerCubit>().updateDriverMarkerFast(
+              LatLng(p.lat, p.lng),
+              _driverMarkerRotation,
+            );
 
         if (currentStep >= steps) {
           timer.cancel();
-          driverLat = next.latitude;
-          driverLng = next.longitude;
-          _driverMarkerRotation = targetBearing;
-          context.read<UserMarkerCubit>().updateDriverMarkerFast(
-            next,
-            _driverMarkerRotation,
-          );
-          return;
+          driverLat = target.lat;
+          driverLng = target.lng;
+          if (targetSnap != null) {
+            routeCubit.showRouteAhead(routeAhead(route, targetSnap)
+                .map((q) => LatLng(q.lat, q.lng))
+                .toList());
+          }
         }
-
-        final double t = currentStep / steps;
-        final interpolatedLat = current.latitude + latStep * currentStep;
-        final interpolatedLng = current.longitude + lngStep * currentStep;
-        final currentRotation = (_driverMarkerRotation + angleDiff * t + 360) % 360;
-
-        driverLat = interpolatedLat;
-        driverLng = interpolatedLng;
-
-        context.read<UserMarkerCubit>().updateDriverMarkerFast(
-          LatLng(interpolatedLat, interpolatedLng),
-          currentRotation,
-        );
-        currentStep++;
       },
     );
   }
@@ -2554,6 +2581,9 @@ class PersistentGoogleMapState extends State<PersistentGoogleMap> {
             });
           }
           context.read<GetPolylineCubit>().resetPolylines();
+        } else if (polylineState is GetPolylineTrimmed) {
+          // route already driven removed; camera stays where the rider left it
+          polyline = polylineState.polylines;
         }
 
         return BlocBuilder<UserMarkerCubit, UserMarkerState>(
