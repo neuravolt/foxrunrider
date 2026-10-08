@@ -148,7 +148,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
     final ByteData data = await rootBundle.load(assetPath);
     final ui.Codec codec = await ui.instantiateImageCodec(
       data.buffer.asUint8List(),
-      targetWidth: 80,
+      targetWidth: 55,
     );
     final ui.FrameInfo fi = await codec.getNextFrame();
     final bytes = (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
