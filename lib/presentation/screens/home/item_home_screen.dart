@@ -971,17 +971,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                     zoomControlsEnabled: false,
                     mapToolbarEnabled: false,
                     compassEnabled: true,
-                    markers: hasLocation
-                        ? {
-                            Marker(
-                              markerId: const MarkerId('current_location'),
-                              position: latLng,
-                              infoWindow: InfoWindow(
-                                title: 'Your Location'.translate(context),
-                              ),
-                            ),
-                          }
-                        : {},
+                    markers: const {},
                     onMapCreated: (controller) {
                       _homeMapController = controller;
                       if (hasLocation) {
@@ -1019,8 +1009,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                       // Pin Marker Graphic
                       Image.asset(
                         "assets/images/dropmarker.png",
-                        height: 38,
-                        width: 38,
+                        height: 48,
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => Container(
                           padding: const EdgeInsets.all(6),

@@ -62,7 +62,7 @@ class MarkerCubit extends Cubit<MarkerState> {
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
     final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker');
-    final int? targetH = height ?? (isPin ? 42 : null);
+    final int? targetH = height ?? (isPin ? 50 : null);
     final int? targetW = targetH != null ? null : (width > 0 ? width : null);
 
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
@@ -186,7 +186,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
     Uint8List markerIcon;
 
     if (iconPath.endsWith('.png') && (iconPath.contains('BIKE') || iconPath.contains('AUTO') || iconPath.contains('CAB'))) {
-      markerIcon = await getBytesFromAsset(iconPath, size > 0 ? size : 55);
+      markerIcon = await getBytesFromAsset(iconPath, size > 0 ? size : 60);
     } else if (title.toString() == "Driver Location") {
       markerIcon = await createCustomMarkerImage(iconPath);
     } else {
@@ -231,7 +231,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
     List<Map<String, dynamic>> drivers,
     String iconAsset,
   ) async {
-    final Uint8List iconBytes = await getBytesFromAsset(iconAsset, 55);
+    final Uint8List iconBytes = await getBytesFromAsset(iconAsset, 60);
     _markers.removeWhere((m) => m.markerId.value.startsWith('nearby_'));
 
     for (final driver in drivers) {
@@ -276,7 +276,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
     final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker');
-    final int? targetH = height ?? (isPin ? 42 : null);
+    final int? targetH = height ?? (isPin ? 50 : null);
     final int? targetW = targetH != null ? null : (width > 0 ? width : null);
 
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
