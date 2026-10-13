@@ -598,7 +598,6 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                     ? "3 seats • Shared ride" 
                                     : "4 seats • AC ride";
 
-                            final String vName = (data["vehicleName"] ?? "").toString().toLowerCase();
                             final bool isWaitingItem = vName.contains('rental') || vName.contains('parcel');
 
                             return GestureDetector(
