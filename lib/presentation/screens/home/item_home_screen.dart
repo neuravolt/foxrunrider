@@ -2106,6 +2106,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
           ),
         ),
       ),
+    );
   }
 
   Widget _buildParcelComingSoonBanner() {
