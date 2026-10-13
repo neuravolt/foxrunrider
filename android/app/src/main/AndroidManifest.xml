@@ -14,6 +14,10 @@
         android:label="FoxRun"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
+
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -12,6 +12,9 @@ jobs:
     name: Build Android APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: write
 
     steps:
       - name: Free Disk Space
@@ -20,6 +23,28 @@ jobs:
           sudo rm -rf /opt/ghc
           sudo rm -rf /usr/local/share/boost
           df -h
+
+      - name: Clean up old artifacts to free quota
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            try {
+              const res = await github.rest.actions.listArtifactsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              for (const artifact of res.data.artifacts) {
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id,
+                });
+                console.log(`Deleted old artifact: ${artifact.name}`);
+              }
+            } catch (err) {
+              console.log('Artifact cleanup notice:', err.message);
+            }
 
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -54,17 +79,6 @@ jobs:
       - name: Tracking geometry tests
         run: flutter test test/route_geometry_test.dart
 
-      - name: Build Debug APK
-        run: flutter build apk --debug --android-skip-build-dependency-validation
-
-      - name: Upload Debug APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: FoxRun-Rider-Debug-APK
-          path: build/app/outputs/flutter-apk/app-debug.apk
-          if-no-files-found: error
-          retention-days: 14
-
       - name: Build Release App Bundle (Play Store AAB)
         run: flutter build appbundle --release --android-skip-build-dependency-validation
 
@@ -74,7 +88,7 @@ jobs:
           name: FoxRun-Rider-Release-AAB
           path: build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 1
 
       - name: Build Release APK
         run: flutter build apk --release --android-skip-build-dependency-validation
@@ -85,4 +99,4 @@ jobs:
           name: FoxRun-Rider-Release-APK
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 1
