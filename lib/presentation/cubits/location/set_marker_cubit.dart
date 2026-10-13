@@ -186,7 +186,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
     Uint8List markerIcon;
 
     if (iconPath.endsWith('.png') && (iconPath.contains('BIKE') || iconPath.contains('AUTO') || iconPath.contains('CAB'))) {
-      markerIcon = await getBytesFromAsset(iconPath, size > 0 ? size : 60);
+      markerIcon = await getBytesFromAsset(iconPath, size > 0 ? size : 110);
     } else if (title.toString() == "Driver Location") {
       markerIcon = await createCustomMarkerImage(iconPath);
     } else {
@@ -231,7 +231,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
     List<Map<String, dynamic>> drivers,
     String iconAsset,
   ) async {
-    final Uint8List iconBytes = await getBytesFromAsset(iconAsset, 60);
+    final Uint8List iconBytes = await getBytesFromAsset(iconAsset, 110);
     _markers.removeWhere((m) => m.markerId.value.startsWith('nearby_'));
 
     for (final driver in drivers) {
