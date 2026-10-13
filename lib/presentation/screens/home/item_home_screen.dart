@@ -101,6 +101,22 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
   }
 
   Future<void> _loadPromoBanners() async {
+    // 1. Instantly display cached banners from local storage
+    try {
+      final cached = box.get('cached_promo_banners');
+      if (cached is List && cached.isNotEmpty && _promoBanners.isEmpty) {
+        setState(() {
+          _promoBanners = cached
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .where((item) => (item['image'] ?? '').toString().isNotEmpty)
+              .toList();
+        });
+        _startPromoBannerAutoScroll();
+      }
+    } catch (_) {}
+
+    // 2. Fetch fresh banners from API
     try {
       final response = await httpPost(
         Config.sliders,
@@ -113,20 +129,34 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
           : const [];
 
       if (!mounted) return;
-      setState(() {
-        _promoBanners = data
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .where((item) => (item['image'] ?? '').toString().isNotEmpty)
-            .toList();
-      });
+      final parsed = data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .where((item) => (item['image'] ?? '').toString().isNotEmpty)
+          .toList();
 
-      _startPromoBannerAutoScroll();
+      if (parsed.isNotEmpty) {
+        setState(() {
+          _promoBanners = parsed;
+        });
+        box.put('cached_promo_banners', parsed);
+        _startPromoBannerAutoScroll();
+      } else if (_promoBanners.isEmpty) {
+        // Retry once after 2.5s in case cold-start auth/token generation was in flight
+        Future.delayed(const Duration(milliseconds: 2500), () {
+          if (mounted && _promoBanners.isEmpty) {
+            _loadPromoBanners();
+          }
+        });
+      }
     } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _promoBanners = [];
-      });
+      if (_promoBanners.isEmpty) {
+        Future.delayed(const Duration(milliseconds: 2500), () {
+          if (mounted && _promoBanners.isEmpty) {
+            _loadPromoBanners();
+          }
+        });
+      }
     }
   }
 
@@ -700,14 +730,16 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                           const SizedBox(height: 20),
                           RepaintBoundary(child: _buildExploreSection()),
                           const SizedBox(height: 16),
+                          if (_promoBanners.isNotEmpty) ...[
+                            RepaintBoundary(child: _buildPromoBanner()),
+                            const SizedBox(height: 16),
+                          ],
                           RepaintBoundary(child: _buildParcelComingSoonBanner()),
+                          const SizedBox(height: 12),
+                          RepaintBoundary(child: _buildRentalComingSoonBanner()),
                           const SizedBox(height: 20),
                           if (recentDropLocations.isNotEmpty) ...[
                             _buildRecentSearches(),
-                            const SizedBox(height: 20),
-                          ],
-                          if (_promoBanners.isNotEmpty) ...[
-                            RepaintBoundary(child: _buildPromoBanner()),
                             const SizedBox(height: 20),
                           ],
                           RepaintBoundary(child: _buildFixedOfferBannerCard()),
@@ -1725,24 +1757,29 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
       );
     }
 
+    final bool hasParcelInItems =
+        items.any((i) => (i.name ?? '').toLowerCase().contains('parcel'));
+    final int totalCount =
+        isLoading ? 8 : (hasParcelInItems ? items.length : items.length + 1);
+
     return SizedBox(
       height: 88,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 4),
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: isLoading ? 8 : items.length + 1,
+        itemCount: totalCount,
         itemBuilder: (_, index) {
           if (isLoading) return ShimmerLoader();
 
-          if (index == items.length) {
+          if (!hasParcelInItems && index == items.length) {
             return Container(
               width: 72,
               margin: const EdgeInsets.only(right: 10),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
                 onTap: () {
-                  showParcelComingSoonSheet(context);
+                  showParcelComingSoonSheet(context, type: 'parcel');
                 },
                 child: Stack(
                   clipBehavior: Clip.none,
@@ -1826,6 +1863,10 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
           }
 
           final item = items[index];
+          final String itemName = (item.name ?? "").toLowerCase();
+          final bool isRental = itemName.contains('rental');
+          final bool isParcel = itemName.contains('parcel');
+          final bool isComingSoon = isRental || isParcel;
 
           return Container(
             width: 72,
@@ -1833,6 +1874,10 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: () {
+                if (isComingSoon) {
+                  showParcelComingSoonSheet(context, type: isRental ? 'rental' : 'parcel');
+                  return;
+                }
                 _checkProfileAndProceed(() async {
                   context
                       .read<VehicleDataUpdateCubit>()
@@ -1857,50 +1902,210 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                   _loadRecentDropLocations();
                 });
               },
-              child: Container(
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: isComingSoon
+                          ? Border.all(
+                              color: const Color(0xFFFFB74D).withValues(alpha: 0.6),
+                              width: 1,
+                            )
+                          : null,
+                      boxShadow: [
+                        BoxShadow(
+                          color: isComingSoon
+                              ? const Color(0xFFFF9800).withValues(alpha: 0.1)
+                              : Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.network(
-                      item.image ?? "",
-                      headers: const {"ngrok-skip-browser-warning": "true"},
-                      width: 32,
-                      height: 32,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.network(
+                          item.image ?? "",
+                          headers: const {"ngrok-skip-browser-warning": "true"},
+                          width: 32,
+                          height: 32,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 24),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          item.name ?? "",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: heading3(context).copyWith(
+                            color: isComingSoon ? const Color(0xFFE65100) : blackColor,
+                            fontSize: 10,
+                            fontWeight: isComingSoon ? FontWeight.w700 : FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      item.name ?? "",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: heading3(context).copyWith(
-                        color: blackColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+                  ),
+                  if (isComingSoon)
+                    Positioned(
+                      top: -3,
+                      right: -2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF5722).withValues(alpha: 0.35),
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          "SOON".translate(context),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 7,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
             ),
           );
         },
       ),
     );
+  }
+
+  Widget _buildRentalComingSoonBanner() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => showParcelComingSoonSheet(context, type: 'rental'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF1E2832),
+                Color(0xFF263544),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(
+              color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFFFFB300).withValues(alpha: 0.25),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/BIKE.png',
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          "FoxRun Bike Rental".translate(context),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            "COMING SOON".translate(context),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Hourly & daily self-drive bikes launching 16 Oct 2026"
+                          .translate(context),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 13,
+                color: Color(0xFFFF9800),
+              ),
+            ],
+          ),
+        ),
+      ),
   }
 
   Widget _buildParcelComingSoonBanner() {

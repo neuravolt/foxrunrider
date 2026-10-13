@@ -3,17 +3,18 @@ import '../../core/services/data_store.dart';
 import '../../core/utils/theme/project_color.dart';
 import '../../core/utils/translate.dart';
 
-void showParcelComingSoonSheet(BuildContext context) {
+void showParcelComingSoonSheet(BuildContext context, {String type = 'parcel'}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => const ParcelComingSoonSheet(),
+    builder: (ctx) => ParcelComingSoonSheet(type: type),
   );
 }
 
 class ParcelComingSoonSheet extends StatefulWidget {
-  const ParcelComingSoonSheet({super.key});
+  final String type;
+  const ParcelComingSoonSheet({super.key, this.type = 'parcel'});
 
   @override
   State<ParcelComingSoonSheet> createState() => _ParcelComingSoonSheetState();
@@ -22,17 +23,21 @@ class ParcelComingSoonSheet extends StatefulWidget {
 class _ParcelComingSoonSheetState extends State<ParcelComingSoonSheet> {
   bool isNotified = false;
 
+  bool get isRental => widget.type.toLowerCase().contains('rental');
+
   @override
   void initState() {
     super.initState();
-    isNotified = box.get("parcel_waitlist_registered") == true;
+    final boxKey = isRental ? "rental_waitlist_registered" : "parcel_waitlist_registered";
+    isNotified = box.get(boxKey) == true;
   }
 
   void _handleNotifyMe() {
     setState(() {
       isNotified = true;
     });
-    box.put("parcel_waitlist_registered", true);
+    final boxKey = isRental ? "rental_waitlist_registered" : "parcel_waitlist_registered";
+    box.put(boxKey, true);
   }
 
   @override
@@ -64,7 +69,7 @@ class _ParcelComingSoonSheetState extends State<ParcelComingSoonSheet> {
           ),
           const SizedBox(height: 20),
 
-          // 3D Parcel Delivery Graphic with Soft Glow
+          // 3D Delivery or Bike Rental Graphic with Soft Glow
           Container(
             width: 110,
             height: 110,
@@ -81,9 +86,9 @@ class _ParcelComingSoonSheetState extends State<ParcelComingSoonSheet> {
             ),
             child: Center(
               child: Image.asset(
-                'assets/images/parcel_box.png',
-                width: 90,
-                height: 90,
+                isRental ? 'assets/images/BIKE.png' : 'assets/images/parcel_box.png',
+                width: isRental ? 95 : 90,
+                height: isRental ? 95 : 90,
                 fit: BoxFit.contain,
               ),
             ),
@@ -131,7 +136,7 @@ class _ParcelComingSoonSheetState extends State<ParcelComingSoonSheet> {
 
           // Title
           Text(
-            "FoxRun Parcel Delivery".translate(context),
+            (isRental ? "FoxRun Bike Rental" : "FoxRun Parcel Delivery").translate(context),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 22,
@@ -144,7 +149,9 @@ class _ParcelComingSoonSheetState extends State<ParcelComingSoonSheet> {
 
           // Subtitle
           Text(
-            "Send packages, documents & daily essentials anywhere across town with trusted FoxRun delivery pilots."
+            (isRental
+                    ? "Rent self-drive bikes & scooters on flexible hourly or daily plans with zero fuel hassle."
+                    : "Send packages, documents & daily essentials anywhere across town with trusted FoxRun delivery pilots.")
                 .translate(context),
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -164,34 +171,63 @@ class _ParcelComingSoonSheetState extends State<ParcelComingSoonSheet> {
               border: Border.all(color: const Color(0xFFFFE0B2), width: 1),
             ),
             child: Column(
-              children: [
-                _buildFeatureRow(
-                  Icons.doorbell_outlined,
-                  "Doorstep Pickup & Drop",
-                  "Pilot reaches your location within minutes",
-                  const Color(0xFFE65100),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Divider(height: 1, color: Color(0xFFFFE0B2)),
-                ),
-                _buildFeatureRow(
-                  Icons.security_rounded,
-                  "Safe & OTP-Verified",
-                  "Secure delivery with secret handover PIN",
-                  const Color(0xFF2E7D32),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Divider(height: 1, color: Color(0xFFFFE0B2)),
-                ),
-                _buildFeatureRow(
-                  Icons.gps_fixed_rounded,
-                  "Live Package Tracking",
-                  "Watch your parcel travel in real-time on map",
-                  const Color(0xFF1565C0),
-                ),
-              ],
+              children: isRental
+                  ? [
+                      _buildFeatureRow(
+                        Icons.two_wheeler_rounded,
+                        "Flexible Hourly & Daily Plans",
+                        "Affordable self-drive rates tailored to your trip",
+                        const Color(0xFFE65100),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Divider(height: 1, color: Color(0xFFFFE0B2)),
+                      ),
+                      _buildFeatureRow(
+                        Icons.verified_user_rounded,
+                        "Zero Security Deposit",
+                        "Ride freely with instant paperless digital verification",
+                        const Color(0xFF2E7D32),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Divider(height: 1, color: Color(0xFFFFE0B2)),
+                      ),
+                      _buildFeatureRow(
+                        Icons.electric_moped_rounded,
+                        "Well-Maintained & Inspected",
+                        "Sanitized two-wheelers with safety helmets provided",
+                        const Color(0xFF1565C0),
+                      ),
+                    ]
+                  : [
+                      _buildFeatureRow(
+                        Icons.doorbell_outlined,
+                        "Doorstep Pickup & Drop",
+                        "Pilot reaches your location within minutes",
+                        const Color(0xFFE65100),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Divider(height: 1, color: Color(0xFFFFE0B2)),
+                      ),
+                      _buildFeatureRow(
+                        Icons.security_rounded,
+                        "Safe & OTP-Verified",
+                        "Secure delivery with secret handover PIN",
+                        const Color(0xFF2E7D32),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Divider(height: 1, color: Color(0xFFFFE0B2)),
+                      ),
+                      _buildFeatureRow(
+                        Icons.gps_fixed_rounded,
+                        "Live Package Tracking",
+                        "Watch your parcel travel in real-time on map",
+                        const Color(0xFF1565C0),
+                      ),
+                    ],
             ),
           ),
           const SizedBox(height: 24),

@@ -1620,45 +1620,21 @@ Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async
       .asUint8List();
 }
 
-Future<Uint8List> createCustomPickupMarker({double size = 32.0, Color color = const Color(0xFFFF9900)}) async {
-  final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
-  final Canvas canvas = Canvas(pictureRecorder);
-
-  // Draw glowing halo
-  final Paint haloPaint = Paint()
-    ..color = color.withValues(alpha: 0.25)
-    ..style = PaintingStyle.fill;
-  canvas.drawCircle(Offset(size / 2, size / 2), size / 2, haloPaint);
-
-  // Draw white border
-  final Paint whiteBorderPaint = Paint()
-    ..color = Colors.white
-    ..style = PaintingStyle.fill;
-  canvas.drawCircle(Offset(size / 2, size / 2), size / 3.4, whiteBorderPaint);
-
-  // Draw core
-  final Paint corePaint = Paint()
-    ..color = color
-    ..style = PaintingStyle.fill;
-  canvas.drawCircle(Offset(size / 2, size / 2), size / 5.2, corePaint);
-
-  // Draw small white dot in center
-  final Paint whiteDotPaint = Paint()
-    ..color = Colors.white
-    ..style = PaintingStyle.fill;
-  canvas.drawCircle(Offset(size / 2, size / 2), size / 14, whiteDotPaint);
-
-  final ui.Image image = await pictureRecorder.endRecording().toImage(size.toInt(), size.toInt());
-  final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-  return byteData!.buffer.asUint8List();
+Future<Uint8List> createCustomPickupMarker({
+  double width = 36.0,
+  double height = 40.0,
+  Color color = const Color(0xFF4CAF50),
+  double size = 32.0,
+}) async {
+  return await getBytesFromAsset("assets/images/pickupmarker.png", 0, height: 40);
 }
 
 Future<Uint8List> createCustomDropoffMarker({
   double width = 36.0,
-  double height = 42.0,
+  double height = 40.0,
   Color color = const Color(0xFFE53935),
 }) async {
-  return await getBytesFromAsset("assets/images/dropmarker.png", 0, height: 42);
+  return await getBytesFromAsset("assets/images/dropmarker.png", 0, height: 40);
 }
 
 Widget languageButton({

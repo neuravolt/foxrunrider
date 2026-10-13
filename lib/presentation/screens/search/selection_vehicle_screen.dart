@@ -114,7 +114,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
       markerId: const MarkerId('pickup'),
       position: pickupPos,
       icon: BitmapDescriptor.bytes(markerIconPickUp),
-      anchor: const Offset(0.5, 0.5),
+      anchor: const Offset(0.5, 1.0),
       infoWindow: const InfoWindow(title: 'Pickup Location'),
     ));
 
@@ -598,8 +598,18 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                     ? "3 seats • Shared ride" 
                                     : "4 seats • AC ride";
 
+                            final String vName = (data["vehicleName"] ?? "").toString().toLowerCase();
+                            final bool isWaitingItem = vName.contains('rental') || vName.contains('parcel');
+
                             return GestureDetector(
                               onTap: () {
+                                if (isWaitingItem) {
+                                  showParcelComingSoonSheet(
+                                    context,
+                                    type: vName.contains('rental') ? 'rental' : 'parcel',
+                                  );
+                                  return;
+                                }
                                 if (!isSelected) {
                                   setState(() {
                                     showSelectionError = false;
@@ -622,12 +632,16 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                     horizontal: 20, vertical: 8),
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(0xFFFFF8EE)
-                                      : Colors.white,
+                                  color: isWaitingItem
+                                      ? const Color(0xFFFFF9F0)
+                                      : (isSelected
+                                          ? const Color(0xFFFFF8EE)
+                                          : Colors.white),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: isSelected ? Colors.orange.shade400 : Colors.grey.shade200,
+                                    color: isWaitingItem
+                                        ? const Color(0xFFFFCC80)
+                                        : (isSelected ? Colors.orange.shade400 : Colors.grey.shade200),
                                     width: 1,
                                   ),
                                 ),
@@ -637,7 +651,9 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                       width: 60,
                                       height: 60,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFF4F5F4),
+                                        color: isWaitingItem
+                                            ? const Color(0xFFFFECB3).withValues(alpha: 0.5)
+                                            : const Color(0xFFF4F5F4),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       padding: const EdgeInsets.all(8),
@@ -667,17 +683,45 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
+                                              if (isWaitingItem) ...[
+                                                const SizedBox(width: 6),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                      horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    gradient: const LinearGradient(
+                                                      colors: [
+                                                        Color(0xFFFF9800),
+                                                        Color(0xFFFF5722)
+                                                      ],
+                                                    ),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Text(
+                                                    "SOON".translate(context),
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 8,
+                                                      fontWeight: FontWeight.w800,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ],
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            subtitle,
+                                            isWaitingItem
+                                                ? (vName.contains('rental')
+                                                    ? "Self-drive rentals • Launches 16 Oct".translate(context)
+                                                    : "Doorstep delivery • Launches 16 Oct".translate(context))
+                                                : subtitle,
                                             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    if (hasFares)
+                                    if (!isWaitingItem && hasFares)
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
@@ -701,11 +745,18 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                         ],
                                       ),
                                     const SizedBox(width: 16),
-                                    Icon(
-                                      isSelected ? Icons.check_circle : Icons.circle_outlined,
-                                      color: isSelected ? Colors.orange.shade500 : Colors.grey.shade300,
-                                      size: 24,
-                                    ),
+                                    if (isWaitingItem)
+                                      const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        color: Color(0xFFFF9800),
+                                        size: 14,
+                                      )
+                                    else
+                                      Icon(
+                                        isSelected ? Icons.check_circle : Icons.circle_outlined,
+                                        color: isSelected ? Colors.orange.shade500 : Colors.grey.shade300,
+                                        size: 24,
+                                      ),
                                   ],
                                 ),
                               ),
@@ -716,7 +767,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                         // FoxRun Parcel Coming Soon Option
                         GestureDetector(
                           onTap: () {
-                            showParcelComingSoonSheet(context);
+                            showParcelComingSoonSheet(context, type: 'parcel');
                           },
                           child: Container(
                             margin: const EdgeInsets.symmetric(
@@ -787,6 +838,98 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
                                       const SizedBox(height: 4),
                                       Text(
                                         "Send packages & gifts • Launches 16 Oct"
+                                            .translate(context),
+                                        style: TextStyle(
+                                            fontSize: 11.5,
+                                            color: Colors.grey.shade600),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 14,
+                                  color: Color(0xFFFF9800),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // FoxRun Bike Rental Coming Soon Option
+                        GestureDetector(
+                          onTap: () {
+                            showParcelComingSoonSheet(context, type: 'rental');
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF9F0),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFFFCC80),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFECB3).withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.all(6),
+                                  child: Image.asset(
+                                    'assets/images/BIKE.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "FoxRun Bike Rental".translate(context),
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                              color: notifires.getwhiteblackColor,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                colors: [
+                                                  Color(0xFFFF9800),
+                                                  Color(0xFFFF5722)
+                                                ],
+                                              ),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              "SOON".translate(context),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "Hourly & daily self-drive bikes • Launches 16 Oct"
                                             .translate(context),
                                         style: TextStyle(
                                             fontSize: 11.5,

@@ -344,7 +344,7 @@ class DriverMapCubit extends Cubit<DriverMapState> {
         markerId: const MarkerId('pickup'),
         position: LatLng(sourcelat, sourcelng),
         icon: BitmapDescriptor.bytes(markerIconPickUp),
-        anchor: const Offset(0.5, 0.5),
+        anchor: const Offset(0.5, 1.0),
         infoWindow: const InfoWindow(title: 'Pickup Location'),
       ));
 
