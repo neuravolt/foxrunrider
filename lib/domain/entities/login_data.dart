@@ -248,6 +248,10 @@ class Data {
 
   set gender(String? gender) => _gender = gender;
 
+  set tokenSetter(value) {
+    _token = value;
+  }
+
   set birthdateSetter(value) {
     _birthdate = value;
   }

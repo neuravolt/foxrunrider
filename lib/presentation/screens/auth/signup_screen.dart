@@ -681,6 +681,7 @@ class _SignUpState extends State<SignUp> {
                                             "phone_country": loginModel?.data?.phoneCountry ?? "+91",
                                             "id": loginModel?.data?.id ?? "",
                                             "user_id": loginModel?.data?.id ?? "",
+                                            "token": (token.isNotEmpty ? token : loginModel?.data?.token) ?? "",
                                           },
                                         );
                                         return;

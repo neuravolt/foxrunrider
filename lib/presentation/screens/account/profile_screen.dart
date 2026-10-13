@@ -90,9 +90,13 @@ class _EditProfileState extends State<EditProfile> {
           });
         } else if (state is UpdateProfileSuccess) {
           Widgets.hideLoder(context);
+          final currentToken = (token.isNotEmpty ? token : loginModel?.data?.token) ?? "";
           loginModel = logmod.LoginModel(
               data: logmod.Data.fromJson(state.loginModel.data!.toJson()));
           if (loginModel?.data != null) {
+            if ((loginModel!.data!.token ?? "").isEmpty && currentToken.isNotEmpty) {
+              loginModel!.data!.tokenSetter = currentToken;
+            }
             if (textEditingEditProfileNameController.text.trim().isNotEmpty) {
               loginModel!.data!.firstNameSetter = textEditingEditProfileNameController.text.trim();
             }
@@ -319,6 +323,7 @@ class _EditProfileState extends State<EditProfile> {
             ),
             GestureDetector(
               onTap: () {
+                final currentToken = (token.isNotEmpty ? token : loginModel?.data?.token) ?? "";
                 context
                     .read<UpdateProfileCubit>()
                     .updateProfileMethod(postData: {
@@ -330,6 +335,7 @@ class _EditProfileState extends State<EditProfile> {
                   "phone_country": loginModel?.data?.phoneCountry ?? "+91",
                   "id": loginModel?.data?.id ?? "",
                   "user_id": loginModel?.data?.id ?? "",
+                  "token": currentToken,
                 });
               },
               child: Container(

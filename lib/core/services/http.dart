@@ -67,6 +67,7 @@ Future<dynamic> httpPost(path, data, {required BuildContext context}) async {
     }
     var headers = {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       "Authorization": "Bearer $bearerToken",
     };
 
@@ -82,8 +83,15 @@ Future<dynamic> httpPost(path, data, {required BuildContext context}) async {
       body: jsonEncode(data),
     );
 
-    var responseData =
-        json.decode(const Utf8Codec().decode(response.bodyBytes));
+    dynamic responseData;
+    try {
+      responseData = json.decode(const Utf8Codec().decode(response.bodyBytes));
+    } catch (_) {
+      return {
+        "status": response.statusCode,
+        "error": "Server error (${response.statusCode}). Please try again."
+      };
+    }
     log(responseData.toString() + "post response data");
     if (response.statusCode == 498) {
       final newToken = await generateToken();
@@ -96,8 +104,14 @@ Future<dynamic> httpPost(path, data, {required BuildContext context}) async {
           body: jsonEncode(data),
         );
         log(response.body.toString() + "post response");
-        responseData =
-            json.decode(const Utf8Codec().decode(response.bodyBytes));
+        try {
+          responseData = json.decode(const Utf8Codec().decode(response.bodyBytes));
+        } catch (_) {
+          return {
+            "status": response.statusCode,
+            "error": "Server error (${response.statusCode}). Please try again."
+          };
+        }
       } else {
         return {"error": "Token regeneration failed"};
       }
@@ -132,6 +146,7 @@ Future<dynamic> httpGet(String path, Map<String, dynamic> data,
     }
     var headers = {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       'x-auth-token': token,
       'Authorization': "Bearer $bearerToken",
     };
@@ -199,6 +214,7 @@ Future<String?> generateToken() async {
     const String url = '${Config.baseUrlForBearer}${Config.generateToken}';
     const Map<String, String> headers = {
       "Content-Type": "application/json",
+      "Accept": "application/json",
     };
 
     Map<String, dynamic> body = {
@@ -221,9 +237,12 @@ Future<String?> generateToken() async {
       completer.complete(token);
     } else if (response.statusCode == 419) {
       showErrorToastMessage("Session expired. Please log in again.");
+      completer.complete(null);
       Future.delayed(const Duration(seconds: 1), () {
-        clearData(navigatorKey.currentContext!);
-        goToWithClear(const LoginScreen());
+        if (navigatorKey.currentContext != null) {
+          clearData(navigatorKey.currentContext!);
+          goToWithClear(const LoginScreen());
+        }
       });
     } else {
       completer.complete(null);

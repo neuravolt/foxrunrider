@@ -3,6 +3,7 @@ import 'package:ride_on/domain/entities/login_data.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/extensions/workspace.dart';
 import '../../../data/repositories/profile_repository.dart';
 
 abstract class UpdateProfileState extends Equatable {
@@ -50,19 +51,34 @@ class UpdateProfileCubit extends Cubit<UpdateProfileState> {
       {required Map<String, dynamic> postData}) async {
     try {
       emit(UpdateProfileLoading());
-      final response = await repository.editProfile(postData: postData);
+      final Map<String, dynamic> resolvedData = Map<String, dynamic>.from(postData);
+      if (resolvedData["token"] == null || resolvedData["token"].toString().trim().isEmpty) {
+        resolvedData["token"] = (token.isNotEmpty ? token : loginModel?.data?.token) ?? "";
+      }
+      final response = await repository.editProfile(postData: resolvedData);
 
       if (response["status"] == 200) {
         // Also update email on admin backend via dedicated changeEmail flow
-        final email = postData["email"]?.toString().trim() ?? "";
+        final email = resolvedData["email"]?.toString().trim() ?? "";
         if (email.isNotEmpty && !email.endsWith("@foxrun.com")) {
-          await repository.updateEmailDirectly(email: email);
+          try {
+            await repository.updateEmailDirectly(email: email);
+          } catch (_) {}
         }
 
-        LoginModel loginModel = LoginModel.fromJson(response);
-        emit(UpdateProfileSuccess(loginModel));
+        LoginModel updatedModel = LoginModel.fromJson(response);
+        if (updatedModel.data != null && (updatedModel.data!.token ?? "").isEmpty) {
+          final fallbackToken = resolvedData["token"]?.toString() ?? "";
+          if (fallbackToken.isNotEmpty) {
+            updatedModel.data!.tokenSetter = fallbackToken;
+          }
+        }
+        emit(UpdateProfileSuccess(updatedModel));
       } else {
-        emit(UpdateProfileFailed(response["error"]));
+        final errorMsg = response["error"]?.toString() ??
+            response["message"]?.toString() ??
+            "Failed to save profile";
+        emit(UpdateProfileFailed(errorMsg));
       }
     } catch (e) {
       emit(UpdateProfileFailed("something went wrong"));
