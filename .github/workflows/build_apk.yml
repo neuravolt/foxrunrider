@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: read
+      contents: write
       actions: write
 
     steps:
@@ -50,7 +50,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -84,6 +84,7 @@ jobs:
 
       - name: Upload Release AAB Artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: FoxRun-Rider-Release-AAB
           path: build/app/outputs/bundle/release/app-release.aab
@@ -95,8 +96,22 @@ jobs:
 
       - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: FoxRun-Rider-Release-APK
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 1
+
+      - name: Publish to GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp build/app/outputs/bundle/release/app-release.aab FoxRun-Rider-Release.aab
+          cp build/app/outputs/flutter-apk/app-release.apk FoxRun-Rider-Release.apk
+          gh release delete rider-latest --yes || true
+          git push origin :refs/tags/rider-latest || true
+          gh release create rider-latest FoxRun-Rider-Release.apk FoxRun-Rider-Release.aab \
+            --title "FoxRun Rider Build (Latest)" \
+            --notes "Automated signed release build from commit ${{ github.sha }}" \
+            --prerelease
