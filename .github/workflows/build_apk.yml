@@ -101,5 +101,5 @@ jobs:
           gh release create rider-latest FoxRun-Rider-Release.apk FoxRun-Rider-Release.aab \
             --title "FoxRun Rider Build (Latest)" \
             --notes "Automated signed release build from commit ${{ github.sha }}" \
-            --prerelease \
-            --clobber
+            --prerelease || \
+          gh release upload rider-latest FoxRun-Rider-Release.apk FoxRun-Rider-Release.aab --clobber
