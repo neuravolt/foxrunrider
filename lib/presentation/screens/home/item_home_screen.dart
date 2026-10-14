@@ -1278,7 +1278,9 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
               itemBuilder: (context, index) {
                 final banner = _promoBanners[index];
                 final imageUrl = (banner['image'] ?? '').toString();
-                final heading = (banner['heading'] ?? '').toString().trim();
+                final rawHeading = (banner['heading'] ?? '').toString().trim();
+                final bool hasValidHeading = rawHeading.isNotEmpty &&
+                    rawHeading.replaceAll(RegExp(r'^[.\s\-_]+$'), '').isNotEmpty;
 
                 return InkWell(
                   onTap: () {
@@ -1334,7 +1336,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                             errorBuilder: (_, __, ___) =>
                                 const SizedBox.shrink(),
                           ),
-                          if (heading.isNotEmpty)
+                          if (hasValidHeading)
                             Align(
                               alignment: Alignment.bottomLeft,
                               child: Padding(
@@ -1347,7 +1349,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    heading,
+                                    rawHeading,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: heading2Grey1(context).copyWith(
@@ -1759,33 +1761,63 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
   Widget _buildExploreSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: BlocBuilder<GetVehicleDataCubit, GetVehicleDataState>(
+        builder: (context, state) {
+          List<ItemTypes> itemList = [];
+          if (state is GetVehicleSuccess && state.itemTypes.isNotEmpty) {
+            itemList = state.itemTypes;
+            context
+                .read<SetVehicleCategoryCubit>()
+                .updateSetVehicleCategoryList(itemList);
+          }
+          final bool isLoading = state is GetVehicleLoading;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Explore".translate(context),
-                style: heading3Grey1(context).copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Explore".translate(context),
+                    style: heading3Grey1(context).copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (itemList.isNotEmpty)
+                    InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => _showAllServicesBottomSheet(itemList),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "View all".translate(context),
+                              style: heading3(context).copyWith(
+                                color: const Color(0xFFE65100),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              size: 18,
+                              color: Color(0xFFE65100),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               ),
+              const SizedBox(height: 10),
+              _buildVehicleGrid(itemList, isLoading),
             ],
-          ),
-          BlocBuilder<GetVehicleDataCubit, GetVehicleDataState>(
-              builder: (context, state) {
-            List<ItemTypes> itemList = [];
-            if (state is GetVehicleSuccess && state.itemTypes.isNotEmpty) {
-              itemList = state.itemTypes;
-              context
-                  .read<SetVehicleCategoryCubit>()
-                  .updateSetVehicleCategoryList(itemList);
-            }
-            bool isLoading = state is GetVehicleLoading;
-            return _buildVehicleGrid(itemList, isLoading);
-          }),
-        ],
+          );
+        },
       ),
     );
   }
@@ -1793,7 +1825,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
   Widget _buildVehicleGrid(List<ItemTypes> items, bool isLoading) {
     if (items.isEmpty && !isLoading) {
       return Padding(
-        padding: const EdgeInsets.only(top: 30, bottom: 20),
+        padding: const EdgeInsets.only(top: 20, bottom: 10),
         child: Center(
           child: InkWell(
             onTap: () {
@@ -1809,238 +1841,355 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
       );
     }
 
-    final bool hasParcelInItems =
-        items.any((i) => (i.name ?? '').toLowerCase().contains('parcel'));
-    final int totalCount =
-        isLoading ? 8 : (hasParcelInItems ? items.length : items.length + 1);
+    if (isLoading) {
+      return Row(
+        children: [
+          Expanded(child: ShimmerLoader()),
+          const SizedBox(width: 10),
+          Expanded(child: ShimmerLoader()),
+          const SizedBox(width: 10),
+          Expanded(child: ShimmerLoader()),
+        ],
+      );
+    }
+
+    final displayItems = items.take(3).toList();
+    return Row(
+      children: [
+        for (int i = 0; i < displayItems.length; i++) ...[
+          if (i > 0) const SizedBox(width: 10),
+          Expanded(
+            child: _buildServiceItemCard(displayItems[i]),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildServiceItemCard(ItemTypes item, {bool isGrid = false}) {
+    final String itemName = (item.name ?? "").toLowerCase();
+    final bool isRental = itemName.contains('rental');
+    final bool isParcel = itemName.contains('parcel');
+    final bool isComingSoon = isRental || isParcel;
 
     return SizedBox(
-      height: 88,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: totalCount,
-        itemBuilder: (_, index) {
-          if (isLoading) return ShimmerLoader();
-
-          if (!hasParcelInItems && index == items.length) {
-            return Container(
-              width: 72,
-              margin: const EdgeInsets.only(right: 10),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () {
-                  showParcelComingSoonSheet(context, type: 'parcel');
-                },
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFFFB74D).withValues(alpha: 0.6),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFF9800).withValues(alpha: 0.1),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/parcel_box.png',
-                            width: 32,
-                            height: 32,
-                            fit: BoxFit.contain,
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            "Parcel".translate(context),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: heading3(context).copyWith(
-                              color: const Color(0xFFE65100),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
+      height: isGrid ? 92 : 88,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          if (isComingSoon) {
+            showParcelComingSoonSheet(context, type: isRental ? 'rental' : 'parcel');
+            return;
+          }
+          _onSelectVehicle(item);
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: double.infinity,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isComingSoon
+                      ? const Color(0xFFFFB74D).withValues(alpha: 0.6)
+                      : Colors.black.withValues(alpha: 0.06),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isComingSoon
+                        ? const Color(0xFFFF9800).withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4, bottom: 2, left: 4, right: 4),
+                      child: (item.image != null && item.image.toString().isNotEmpty)
+                          ? Image.network(
+                              item.image.toString(),
+                              fit: BoxFit.contain,
+                              headers: const {
+                                "ngrok-skip-browser-warning": "true"
+                              },
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.directions_car_rounded,
+                                size: 28,
+                                color: Colors.black54,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.directions_car_rounded,
+                              size: 28,
+                              color: Colors.black54,
                             ),
-                          ),
-                        ],
-                      ),
                     ),
-                    Positioned(
-                      top: -3,
-                      right: -2,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                  ),
+                  Text(
+                    (item.name ?? "").translate(context),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: heading3(context).copyWith(
+                      color: isComingSoon ? const Color(0xFFE65100) : blackColor,
+                      fontSize: 11,
+                      fontWeight: isComingSoon ? FontWeight.w700 : FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isComingSoon)
+              Positioned(
+                top: -3,
+                right: -2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF5722).withValues(alpha: 0.35),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    "SOON".translate(context),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 7,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onSelectVehicle(ItemTypes item) {
+    _checkProfileAndProceed(() async {
+      context
+          .read<VehicleDataUpdateCubit>()
+          .updateVehicleTypeSelectedId(item.id);
+
+      context
+          .read<SelectedAddressCubit>()
+          .pickupAddressController
+          .text = _currentAddress;
+      context
+          .read<GetSuggestionAddressCubit>()
+          .getSuggestions("");
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UserSearchLocation(
+            currentAddress: _currentAddress,
+          ),
+        ),
+      );
+      _loadRecentDropLocations();
+    });
+  }
+
+  void _showAllServicesBottomSheet(List<ItemTypes> items) {
+    final bool hasParcel = items.any((i) => (i.name ?? '').toLowerCase().contains('parcel'));
+    final List<ItemTypes> allItems = List.from(items);
+    if (!hasParcel) {
+      allItems.add(ItemTypes(
+        id: 9999,
+        name: 'Parcel',
+        image: '',
+      ));
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFFAF8F5),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "All Services".translate(context),
+                          style: heading2(context).copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Select a ride or service for your destination".translate(context),
+                          style: regular2(context).copyWith(
+                            color: Colors.black54,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: Container(
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
-                          ),
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFFF5722).withValues(alpha: 0.35),
-                              blurRadius: 3,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
+                          color: Colors.black.withValues(alpha: 0.05),
+                          shape: BoxShape.circle,
                         ),
-                        child: Text(
-                          "SOON".translate(context),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 7,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
+                        child: const Icon(Icons.close_rounded, size: 18, color: Colors.black87),
                       ),
                     ),
                   ],
                 ),
-              ),
-            );
-          }
-
-          final item = items[index];
-          final String itemName = (item.name ?? "").toLowerCase();
-          final bool isRental = itemName.contains('rental');
-          final bool isParcel = itemName.contains('parcel');
-          final bool isComingSoon = isRental || isParcel;
-
-          return Container(
-            width: 72,
-            margin: const EdgeInsets.only(right: 10),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                if (isComingSoon) {
-                  showParcelComingSoonSheet(context, type: isRental ? 'rental' : 'parcel');
-                  return;
-                }
-                _checkProfileAndProceed(() async {
-                  context
-                      .read<VehicleDataUpdateCubit>()
-                      .updateVehicleTypeSelectedId(item.id);
-
-                  context
-                      .read<SelectedAddressCubit>()
-                      .pickupAddressController
-                      .text = _currentAddress;
-                  context
-                      .read<GetSuggestionAddressCubit>()
-                      .getSuggestions("");
-
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => UserSearchLocation(
-                        currentAddress: _currentAddress,
-                      ),
-                    ),
-                  );
-                  _loadRecentDropLocations();
-                });
-              },
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: isComingSoon
-                          ? Border.all(
-                              color: const Color(0xFFFFB74D).withValues(alpha: 0.6),
-                              width: 1,
-                            )
-                          : null,
-                      boxShadow: [
-                        BoxShadow(
-                          color: isComingSoon
-                              ? const Color(0xFFFF9800).withValues(alpha: 0.1)
-                              : Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.network(
-                          item.image ?? "",
-                          headers: const {"ngrok-skip-browser-warning": "true"},
-                          width: 32,
-                          height: 32,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 24),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          item.name ?? "",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: heading3(context).copyWith(
-                            color: isComingSoon ? const Color(0xFFE65100) : blackColor,
-                            fontSize: 10,
-                            fontWeight: isComingSoon ? FontWeight.w700 : FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                const SizedBox(height: 16),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: allItems.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 1.15,
                   ),
-                  if (isComingSoon)
-                    Positioned(
-                      top: -3,
-                      right: -2,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+                  itemBuilder: (context, index) {
+                    final item = allItems[index];
+                    if (item.id == 9999) {
+                      return SizedBox(
+                        height: 92,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            showParcelComingSoonSheet(context, type: 'parcel');
+                          },
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFB74D).withValues(alpha: 0.6),
+                                    width: 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFFF9800).withValues(alpha: 0.08),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 4, bottom: 2),
+                                        child: Image.asset(
+                                          'assets/images/parcel_box.png',
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      "Parcel".translate(context),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: heading3(context).copyWith(
+                                        color: const Color(0xFFE65100),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Positioned(
+                                top: -3,
+                                right: -2,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    "SOON".translate(context),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 7,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFFF5722).withValues(alpha: 0.35),
-                              blurRadius: 3,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
                         ),
-                        child: Text(
-                          "SOON".translate(context),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 7,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+                      );
+                    }
+                    return _buildServiceItemCard(item, isGrid: true);
+                  },
+                ),
+                const SizedBox(height: 12),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
