@@ -98,8 +98,9 @@ jobs:
           cp build/app/outputs/bundle/release/app-release.aab FoxRun-Rider-Release.aab
           cp build/app/outputs/flutter-apk/app-release.apk FoxRun-Rider-Release.apk
           gh release delete rider-latest --yes --cleanup-tag || true
+          git push origin :refs/tags/rider-latest || true
           gh release create rider-latest FoxRun-Rider-Release.apk FoxRun-Rider-Release.aab \
+            --target "${{ github.sha }}" \
             --title "FoxRun Rider Build (Latest)" \
             --notes "Automated signed release build from commit ${{ github.sha }}" \
-            --prerelease || \
-          gh release upload rider-latest FoxRun-Rider-Release.apk FoxRun-Rider-Release.aab --clobber
+            --prerelease
