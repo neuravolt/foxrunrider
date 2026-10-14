@@ -86,37 +86,20 @@ jobs:
       - name: Build Release App Bundle (Play Store AAB)
         run: flutter build appbundle --release --android-skip-build-dependency-validation
 
-      - name: Upload Release AAB Artifact
-        uses: actions/upload-artifact@v4
-        continue-on-error: true
-        with:
-          name: FoxRun-Rider-Release-AAB
-          path: build/app/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
-          retention-days: 1
-
       - name: Build Release APK
         run: flutter build apk --release --android-skip-build-dependency-validation
-
-      - name: Upload Release APK Artifact
-        uses: actions/upload-artifact@v4
-        continue-on-error: true
-        with:
-          name: FoxRun-Rider-Release-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
-          retention-days: 1
 
       - name: Publish to GitHub Releases
         if: github.event_name != 'pull_request'
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cp build/app/outputs/bundle/release/app-release.aab FoxRun-Rider-Release.aab
           cp build/app/outputs/flutter-apk/app-release.apk FoxRun-Rider-Release.apk
-          gh release delete rider-latest --yes || true
-          git push origin :refs/tags/rider-latest || true
+          gh release delete rider-latest --yes --cleanup-tag || true
           gh release create rider-latest FoxRun-Rider-Release.apk FoxRun-Rider-Release.aab \
             --title "FoxRun Rider Build (Latest)" \
             --notes "Automated signed release build from commit ${{ github.sha }}" \
-            --prerelease
+            --prerelease \
+            --clobber
