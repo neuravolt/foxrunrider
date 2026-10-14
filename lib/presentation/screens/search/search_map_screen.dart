@@ -279,9 +279,11 @@ class _SearchMapScreenState extends State<SearchMapScreen> {
               offset: const Offset(0, -15),
               child: Center(
                 child: Image.asset(
-                  "assets/images/dropmarker.png",
-                  height: 34,
-                  width: 34,
+                  widget.checkStatus == true
+                      ? "assets/images/pickupmarker.png"
+                      : "assets/images/dropmarker.png",
+                  height: 32,
+                  width: 32,
 
                   alignment: Alignment
                       .bottomCenter, // Ensure pin's tip points to the location
@@ -331,6 +333,8 @@ class _SearchMapScreenState extends State<SearchMapScreen> {
               onPressed: () {
                 if (textEditingAddressSearchController.text.isNotEmpty) {
                   if (widget.checkStatus == true) {
+                    final pickupAddress =
+                        textEditingAddressSearchController.text.toString();
                     context
                         .read<SelectedAddressCubit>()
                         .updateIsSelectePickupdAddress(
@@ -344,13 +348,20 @@ class _SearchMapScreenState extends State<SearchMapScreen> {
                         .updateIsCrossIconSelectePickup(
                             icheckedCrossIconPickup: true);
                     context
-                            .read<SelectedAddressCubit>()
-                            .pickupAddressController
-                            .text =
-                        textEditingAddressSearchController.text.toString();
-                    context.read<GetCordinatesCubit>().getCoordinates(
-                        address:
-                            textEditingAddressSearchController.text.toString());
+                        .read<SelectedAddressCubit>()
+                        .pickupAddressController
+                        .text = pickupAddress;
+                    context
+                        .read<BookRideRealTimeDataBaseCubit>()
+                        .updatePickupLatAndLng(
+                          pickupAddressLatitude: selectedMapLat.toString(),
+                          pickupAddressLongitude: selectedMapLng.toString(),
+                        );
+                    context
+                        .read<BookRideRealTimeDataBaseCubit>()
+                        .updatePickupAddress(
+                          pickupAddress: pickupAddress,
+                        );
 
                     Navigator.of(context).pop();
                   } else {
@@ -378,8 +389,17 @@ class _SearchMapScreenState extends State<SearchMapScreen> {
                         .read<SelectedAddressCubit>()
                         .dropOffAddressController
                         .text = dropAddress;
-                    context.read<GetCordinatesCubit>().getCoordinates(
-                        address: dropAddress);
+                    context
+                        .read<BookRideRealTimeDataBaseCubit>()
+                        .updateDropOffLatAndLng(
+                          dropoffAddressLatitude: selectedMapLat.toString(),
+                          dropoffAddressLongitude: selectedMapLng.toString(),
+                        );
+                    context
+                        .read<BookRideRealTimeDataBaseCubit>()
+                        .updateDropOffAddress(
+                          dropoffAddress: dropAddress,
+                        );
 
                     if (context
                             .read<SelectedAddressCubit>()

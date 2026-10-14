@@ -1644,6 +1644,49 @@ Future<Uint8List> createCustomDropoffMarker({
   return await getBytesFromAsset("assets/images/dropmarker.png", 0, height: 32);
 }
 
+Future<Uint8List> createLiveLocationMarker() async {
+  final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  final Canvas canvas = Canvas(pictureRecorder);
+  const double size = 64.0;
+
+  // Outer soft blue pulse halo
+  final Paint haloPaint = Paint()
+    ..color = const Color(0x332196F3)
+    ..style = PaintingStyle.fill;
+  canvas.drawCircle(const Offset(size / 2, size / 2), 28.0, haloPaint);
+
+  // Outer blue ring
+  final Paint outerRingPaint = Paint()
+    ..color = const Color(0x661976D2)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2.0;
+  canvas.drawCircle(const Offset(size / 2, size / 2), 20.0, outerRingPaint);
+
+  // White border circle with subtle drop shadow
+  final Paint shadowPaint = Paint()
+    ..color = const Color(0x40000000)
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+  canvas.drawCircle(const Offset(size / 2, size / 2 + 1.5), 14.0, shadowPaint);
+
+  final Paint borderPaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.fill;
+  canvas.drawCircle(const Offset(size / 2, size / 2), 14.0, borderPaint);
+
+  // Inner solid vibrant Google blue dot
+  final Paint dotPaint = Paint()
+    ..color = const Color(0xFF1976D2)
+    ..style = PaintingStyle.fill;
+  canvas.drawCircle(const Offset(size / 2, size / 2), 10.0, dotPaint);
+
+  final ui.Image image = await pictureRecorder
+      .endRecording()
+      .toImage(size.toInt(), size.toInt());
+  final ByteData? byteData =
+      await image.toByteData(format: ui.ImageByteFormat.png);
+  return byteData!.buffer.asUint8List();
+}
+
 Widget languageButton({
   required VoidCallback onTap,
 

@@ -53,12 +53,26 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
   String _selectedDropAddress = "";
   bool _isFetchingDropAddress = false;
   Timer? _dropAddressDebounce;
+  Uint8List? _liveLocationMarkerIcon;
+  bool _isLocationPermissionGranted = false;
+
+  Future<void> _loadLiveLocationIcon() async {
+    try {
+      final icon = await createLiveLocationMarker();
+      if (mounted) {
+        setState(() {
+          _liveLocationMarkerIcon = icon;
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     getFCMToken();
+    _loadLiveLocationIcon();
     _loadRecentDropLocations();
     context.read<MyImageCubit>().updateMyImage(myImage);
     context
@@ -245,6 +259,10 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
       if (permission == LocationPermission.denied) {
         setState(() => _isLoadingLocation = false);
         return;
+      }
+
+      if (mounted) {
+        setState(() => _isLocationPermissionGranted = true);
       }
 
       final position = await Geolocator.getCurrentPosition(
@@ -439,8 +457,18 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
           if (mounted) {
             setState(() {
               _selectedDropAddress = address;
+              _currentAddress = address;
               _isFetchingDropAddress = false;
             });
+            context.read<BookRideRealTimeDataBaseCubit>().updatePickupAddress(
+                  pickupAddress: address,
+                );
+            context.read<BookRideRealTimeDataBaseCubit>().updatePickupLatAndLng(
+                  pickupAddressLatitude: lat.toString(),
+                  pickupAddressLongitude: lng.toString(),
+                );
+            context.read<SelectedAddressCubit>().pickupAddressController.text =
+                address;
           }
           return;
         }
@@ -998,12 +1026,23 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                     scrollGesturesEnabled: true,
                     rotateGesturesEnabled: true,
                     tiltGesturesEnabled: true,
-                    myLocationEnabled: true,
+                    myLocationEnabled: _isLocationPermissionGranted,
                     myLocationButtonEnabled: false,
                     zoomControlsEnabled: false,
                     mapToolbarEnabled: false,
                     compassEnabled: true,
-                    markers: const {},
+                    markers: {
+                      if (hasLocation && _liveLocationMarkerIcon != null)
+                        Marker(
+                          markerId: const MarkerId('live_location_blue_dot'),
+                          position: latLng,
+                          icon: BitmapDescriptor.bytes(_liveLocationMarkerIcon!,
+                              height: 22.0),
+                          anchor: const Offset(0.5, 0.5),
+                          zIndex: 1,
+                          flat: true,
+                        ),
+                    },
                     onMapCreated: (controller) {
                       _homeMapController = controller;
                       if (hasLocation) {
@@ -1032,7 +1071,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                 },
               ),
 
-              // Center Drop Point Pin Marker
+              // Center Drop Point Pin Marker (32px uniform height)
               IgnorePointer(
                 child: Center(
                   child: Column(
@@ -1041,31 +1080,31 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                       // Pin Marker Graphic
                       Image.asset(
                         "assets/images/dropmarker.png",
-                        height: 48,
+                        height: 32,
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(
-                            color: Color(0xFF10B981),
+                            color: Color(0xFFEF4444),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.location_on,
-                              color: Colors.white, size: 24),
+                              color: Colors.white, size: 20),
                         ),
                       ),
 
                       // Ground Shadow Effect underneath pin tip
                       Container(
-                        width: 14,
-                        height: 5,
+                        width: 10,
+                        height: 3.5,
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.25),
                           borderRadius:
-                              const BorderRadius.all(Radius.elliptical(7, 2.5)),
+                              const BorderRadius.all(Radius.elliptical(5, 1.75)),
                         ),
                       ),
 
-                      const SizedBox(height: 19),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
@@ -1112,22 +1151,35 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                 ),
               ),
 
-              // Bottom Live Address Pill & Set Drop Button
+              // Bottom Live Address Pill & Set Pickup Button
               Positioned(
                 bottom: 8,
                 left: 8,
                 right: 8,
                 child: InkWell(
                   onTap: () {
-                    if (_mapCenterLat != 0 && _mapCenterLng != 0) {
-                      _confirmSelectedDropLocation(
-                        _mapCenterLat,
-                        _mapCenterLng,
-                        _selectedDropAddress.isNotEmpty
-                            ? _selectedDropAddress
-                            : _currentAddress,
+                    _checkProfileAndProceed(() async {
+                      context
+                          .read<VehicleDataUpdateCubit>()
+                          .updateVehicleTypeSelectedId(1);
+
+                      context
+                          .read<SelectedAddressCubit>()
+                          .pickupAddressController
+                          .text = _currentAddress;
+                      context
+                          .read<GetSuggestionAddressCubit>()
+                          .getSuggestions("");
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => UserSearchLocation(
+                            currentAddress: _currentAddress,
+                          ),
+                        ),
                       );
-                    }
+                      _loadRecentDropLocations();
+                    });
                   },
                   borderRadius: BorderRadius.circular(24),
                   child: Container(
@@ -1165,7 +1217,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                             _isFetchingDropAddress
                                 ? "Locating address...".translate(context)
                                 : (_selectedDropAddress.isEmpty
-                                    ? "Drag map to set drop location"
+                                    ? "Drag map to set pickup location"
                                         .translate(context)
                                     : _selectedDropAddress),
                             maxLines: 1,
@@ -1189,7 +1241,7 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                "Set Drop".translate(context),
+                                "Set Pickup".translate(context),
                                 style: regular2(context).copyWith(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 11,
