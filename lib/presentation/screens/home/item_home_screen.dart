@@ -2039,8 +2039,8 @@ class _ItemHomeScreenState extends State<ItemHomeScreen>
                 child: Center(
                   child: Image.asset(
                     'assets/images/BIKE.png',
-                    width: 40,
-                    height: 40,
+                    width: 48,
+                    height: 48,
                     fit: BoxFit.contain,
                   ),
                 ),

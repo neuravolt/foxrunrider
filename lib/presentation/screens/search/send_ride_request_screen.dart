@@ -416,7 +416,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           'Driver Location',
           'driver_marker',
           _vehicleMarkerAsset(),
-          75,
+          90,
         );
   }
 
