@@ -1626,7 +1626,7 @@ Future<Uint8List> createCustomPickupMarker({
   Color color = const Color(0xFF4CAF50),
   double size = 32.0,
 }) async {
-  return await getBytesFromAsset("assets/images/pickupmarker.png", 0, height: 40);
+  return await getBytesFromAsset("assets/images/pickupmarker.png", 0, height: 120);
 }
 
 Future<Uint8List> createCustomDropoffMarker({
@@ -1634,7 +1634,7 @@ Future<Uint8List> createCustomDropoffMarker({
   double height = 40.0,
   Color color = const Color(0xFFE53935),
 }) async {
-  return await getBytesFromAsset("assets/images/dropmarker.png", 0, height: 40);
+  return await getBytesFromAsset("assets/images/dropmarker.png", 0, height: 120);
 }
 
 Widget languageButton({

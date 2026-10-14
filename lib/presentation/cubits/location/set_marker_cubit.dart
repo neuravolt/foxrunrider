@@ -62,7 +62,7 @@ class MarkerCubit extends Cubit<MarkerState> {
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
     final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker') || path.contains('drop_pin') || path.contains('pin_user');
-    final int? targetH = height ?? (isPin ? 40 : null);
+    final int? targetH = height ?? (isPin ? 120 : null);
     final int? targetW = targetH != null ? null : (width > 0 ? width : null);
 
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
@@ -276,7 +276,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
     final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker') || path.contains('drop_pin') || path.contains('pin_user');
-    final int? targetH = height ?? (isPin ? 40 : null);
+    final int? targetH = height ?? (isPin ? 120 : null);
     final int? targetW = targetH != null ? null : (width > 0 ? width : null);
 
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
