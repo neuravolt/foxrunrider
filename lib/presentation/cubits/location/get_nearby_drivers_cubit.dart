@@ -444,7 +444,7 @@ class GetPolylineCubit extends Cubit<GetPolylineState> {
       Polyline(
         polylineId: id,
         color: Colors.black,
-        width: 5,
+        width: 3,
         jointType: JointType.round,
         startCap: Cap.roundCap,
         endCap: Cap.roundCap,
@@ -532,7 +532,7 @@ class GetPolylineCubit extends Cubit<GetPolylineState> {
     final polylineCore = Polyline(
       polylineId: id,
       color: color,
-      width: 5,
+      width: 3,
       jointType: JointType.round,
       startCap: Cap.roundCap,
       endCap: Cap.roundCap,
