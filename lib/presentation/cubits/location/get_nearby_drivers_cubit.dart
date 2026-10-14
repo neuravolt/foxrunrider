@@ -343,7 +343,7 @@ class DriverMapCubit extends Cubit<DriverMapState> {
       markers.add(Marker(
         markerId: const MarkerId('pickup'),
         position: LatLng(sourcelat, sourcelng),
-        icon: BitmapDescriptor.bytes(markerIconPickUp),
+        icon: BitmapDescriptor.bytes(markerIconPickUp, height: 32.0),
         anchor: const Offset(0.5, 1.0),
         infoWindow: const InfoWindow(title: 'Pickup Location'),
       ));
@@ -351,7 +351,7 @@ class DriverMapCubit extends Cubit<DriverMapState> {
       markers.add(Marker(
         markerId: const MarkerId('dropoff'),
         position: LatLng(destinationlat, destinationlng),
-        icon: BitmapDescriptor.bytes(markerIconDropOff),
+        icon: BitmapDescriptor.bytes(markerIconDropOff, height: 32.0),
         anchor: const Offset(0.5, 1.0),
         infoWindow: const InfoWindow(title: 'Dropoff Location'),
       ));
@@ -365,9 +365,12 @@ class DriverMapCubit extends Cubit<DriverMapState> {
 
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
-    final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker');
-    final int? targetH = height ?? (isPin ? 30 : null);
-    final int? targetW = targetH != null ? null : (width > 0 ? width : null);
+    final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker') || path.contains('drop_pin') || path.contains('pin_user');
+    final bool isVehicle = path.contains('BIKE') || path.contains('AUTO') || path.contains('CAB');
+
+    // Decode at 3x Retina physical resolution to eliminate downsampling blur and pixelation
+    final int? targetH = height != null ? (height * 3) : (isPin ? 96 : null);
+    final int? targetW = targetH != null ? null : (width > 0 ? (width * 3) : (isVehicle ? 135 : 135));
 
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
         targetWidth: targetW, targetHeight: targetH);

@@ -113,7 +113,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
     markers.add(Marker(
       markerId: const MarkerId('pickup'),
       position: pickupPos,
-      icon: BitmapDescriptor.bytes(markerIconPickUp),
+      icon: BitmapDescriptor.bytes(markerIconPickUp, height: 32.0),
       anchor: const Offset(0.5, 1.0),
       infoWindow: const InfoWindow(title: 'Pickup Location'),
     ));
@@ -121,7 +121,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
     markers.add(Marker(
       markerId: const MarkerId('dropoff'),
       position: dropoffPos,
-      icon: BitmapDescriptor.bytes(markerIconDropOff),
+      icon: BitmapDescriptor.bytes(markerIconDropOff, height: 32.0),
       anchor: const Offset(0.5, 1.0),
       infoWindow: const InfoWindow(title: 'Dropoff Location'),
     ));
@@ -148,7 +148,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
     final ByteData data = await rootBundle.load(assetPath);
     final ui.Codec codec = await ui.instantiateImageCodec(
       data.buffer.asUint8List(),
-      targetWidth: 45,
+      targetWidth: 135,
     );
     final ui.FrameInfo fi = await codec.getNextFrame();
     final bytes = (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
@@ -268,7 +268,7 @@ class _SelectionVehicleScreenState extends State<SelectionVehicleScreen> {
             Marker(
               markerId: MarkerId('nearby_${d['id']}'),
               position: LatLng(d['latitude'], d['longitude']),
-              icon: BitmapDescriptor.bytes(iconBytes),
+              icon: BitmapDescriptor.bytes(iconBytes, width: 45.0),
               rotation: d['heading'],
               flat: true,
               anchor: const Offset(0.5, 0.5),

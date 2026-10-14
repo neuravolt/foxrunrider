@@ -50,7 +50,11 @@ class MarkerCubit extends Cubit<MarkerState> {
       rotation: rotation,
       anchor: anchor,
       infoWindow: InfoWindow(title: title),
-      icon: BitmapDescriptor.bytes(markerIcon),
+      icon: BitmapDescriptor.bytes(
+        markerIcon,
+        width: (markerId.toLowerCase().contains('driver') || markerId.startsWith('nearby_') || image.contains('BIKE') || image.contains('AUTO') || image.contains('CAB')) ? 45.0 : null,
+        height: (image.contains('dropmarker') || image.contains('pickupmarker') || image.contains('drop_pin') || image.contains('pin_user')) ? 32.0 : null,
+      ),
     );
 
     _markers.removeWhere((m) => m.markerId.value == markerId);
@@ -62,8 +66,11 @@ class MarkerCubit extends Cubit<MarkerState> {
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
     final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker') || path.contains('drop_pin') || path.contains('pin_user');
-    final int? targetH = height ?? (isPin ? 30 : null);
-    final int? targetW = targetH != null ? null : (width > 0 ? width : null);
+    final bool isVehicle = path.contains('BIKE') || path.contains('AUTO') || path.contains('CAB');
+
+    // Decode at 3x Retina physical resolution to eliminate downsampling blur and pixelation
+    final int? targetH = height != null ? (height * 3) : (isPin ? 96 : null);
+    final int? targetW = targetH != null ? null : (width > 0 ? (width * 3) : (isVehicle ? 135 : 135));
 
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
         targetWidth: targetW, targetHeight: targetH);
@@ -183,10 +190,18 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
     int size,
     {double rotation = 0.0}
   ) async {
-    Uint8List markerIcon;
+    final bool isVehicle = iconPath.contains('BIKE') ||
+        iconPath.contains('AUTO') ||
+        iconPath.contains('CAB') ||
+        markerId.toLowerCase().contains('driver') ||
+        markerId.startsWith('nearby_');
+    final bool isPin = iconPath.contains('dropmarker') ||
+        iconPath.contains('pickupmarker') ||
+        iconPath.contains('drop_pin') ||
+        iconPath.contains('pin_user');
 
     if (iconPath.endsWith('.png') && (iconPath.contains('BIKE') || iconPath.contains('AUTO') || iconPath.contains('CAB'))) {
-      markerIcon = await getBytesFromAsset(iconPath, size > 0 ? size : 110);
+      markerIcon = await getBytesFromAsset(iconPath, 45);
     } else if (title.toString() == "Driver Location") {
       markerIcon = await createCustomMarkerImage(iconPath);
     } else {
@@ -208,7 +223,11 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
         rotation: rotation,
         flat: true,
         anchor: anchor,
-        icon: BitmapDescriptor.bytes(markerIcon),
+        icon: BitmapDescriptor.bytes(
+          markerIcon,
+          width: isVehicle ? 45.0 : null,
+          height: isPin ? 32.0 : null,
+        ),
       ),
     );
     emit(UserMarkerUpdated(markers: _markers));
@@ -251,7 +270,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
             rotation: heading,
             anchor: const Offset(0.5, 0.5),
             zIndex: 1,
-            icon: BitmapDescriptor.bytes(iconBytes),
+            icon: BitmapDescriptor.bytes(iconBytes, width: 45.0),
           ),
         );
       }
@@ -276,8 +295,11 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
     final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker') || path.contains('drop_pin') || path.contains('pin_user');
-    final int? targetH = height ?? (isPin ? 30 : null);
-    final int? targetW = targetH != null ? null : (width > 0 ? width : null);
+    final bool isVehicle = path.contains('BIKE') || path.contains('AUTO') || path.contains('CAB');
+
+    // Decode at 3x Retina physical resolution to eliminate downsampling blur and pixelation
+    final int? targetH = height != null ? (height * 3) : (isPin ? 96 : null);
+    final int? targetW = targetH != null ? null : (width > 0 ? (width * 3) : (isVehicle ? 135 : 135));
 
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
         targetWidth: targetW, targetHeight: targetH);

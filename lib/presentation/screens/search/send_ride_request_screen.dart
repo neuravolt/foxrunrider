@@ -385,7 +385,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
             'User Location',
             'User_marker',
             'assets/images/pickupmarker.png',
-            42,
+            32,
           );
     } else {
       debugPrint('Invalid pickup coordinates');
@@ -399,7 +399,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
             'Drop Location',
             'drop_marker',
             "assets/images/dropmarker.png",
-            42,
+            32,
           );
     } else {
       debugPrint('Invalid pickup coordinates');
@@ -416,7 +416,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           'Driver Location',
           'driver_marker',
           _vehicleMarkerAsset(),
-          90,
+          45,
         );
   }
 

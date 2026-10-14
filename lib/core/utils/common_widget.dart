@@ -1609,10 +1609,17 @@ class MapShimmerScreen extends StatelessWidget {
 }
 Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
   ByteData data = await rootBundle.load(path);
+  final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker') || path.contains('drop_pin') || path.contains('pin_user');
+  final bool isVehicle = path.contains('BIKE') || path.contains('AUTO') || path.contains('CAB');
+
+  // Decode at 3x Retina physical resolution to eliminate downsampling blur and pixelation
+  final int? targetH = height != null ? (height * 3) : (isPin ? 96 : null);
+  final int? targetW = targetH != null ? null : (width > 0 ? (width * 3) : (isVehicle ? 135 : 135));
+
   ui.Codec codec = await ui.instantiateImageCodec(
     data.buffer.asUint8List(),
-    targetWidth: height != null ? null : (width > 0 ? width : null),
-    targetHeight: height,
+    targetWidth: targetW,
+    targetHeight: targetH,
   );
   ui.FrameInfo fi = await codec.getNextFrame();
   return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
@@ -1626,7 +1633,7 @@ Future<Uint8List> createCustomPickupMarker({
   Color color = const Color(0xFF4CAF50),
   double size = 32.0,
 }) async {
-  return await getBytesFromAsset("assets/images/pickupmarker.png", 0, height: 30);
+  return await getBytesFromAsset("assets/images/pickupmarker.png", 0, height: 32);
 }
 
 Future<Uint8List> createCustomDropoffMarker({
@@ -1634,7 +1641,7 @@ Future<Uint8List> createCustomDropoffMarker({
   double height = 40.0,
   Color color = const Color(0xFFE53935),
 }) async {
-  return await getBytesFromAsset("assets/images/dropmarker.png", 0, height: 30);
+  return await getBytesFromAsset("assets/images/dropmarker.png", 0, height: 32);
 }
 
 Widget languageButton({
