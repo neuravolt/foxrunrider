@@ -200,6 +200,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
         iconPath.contains('drop_pin') ||
         iconPath.contains('pin_user');
 
+    final Uint8List markerIcon;
     if (iconPath.endsWith('.png') && (iconPath.contains('BIKE') || iconPath.contains('AUTO') || iconPath.contains('CAB'))) {
       markerIcon = await getBytesFromAsset(iconPath, 45);
     } else if (title.toString() == "Driver Location") {
