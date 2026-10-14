@@ -825,7 +825,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           'Driver Location',
           'driver_marker',
           _vehicleMarkerAsset(),
-          110,
+          45,
           rotation: _driverMarkerRotation,
         );
   }
@@ -882,6 +882,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
         .toList();
     final RoutePoint from = (lat: current.latitude, lng: current.longitude);
     final RoutePoint rawTo = (lat: next.latitude, lng: next.longitude);
+    final double moveDist = metersBetween(from, rawTo);
     final List<RoutePoint> path =
         route.length >= 2 ? pathAlongRoute(route, from, rawTo) : [from, rawTo];
     final RoutePoint target = path.last;
@@ -903,8 +904,8 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
         final RoutePoint lookAhead =
             pointAlongPath(path, (t + 0.05).clamp(0.0, 1.0));
 
-        // Face the direction of travel along the path; shortest-arc turn, no 360 spins
-        if (metersBetween(p, lookAhead) > 0.5) {
+        // Face the direction of travel along the path; ignore stationary GPS jitter (< 3.0m)
+        if (moveDist >= 3.0 && metersBetween(p, lookAhead) > 0.5) {
           final double targetBearing = _bearingBetween(
               LatLng(p.lat, p.lng), LatLng(lookAhead.lat, lookAhead.lng));
           final angleDiff =

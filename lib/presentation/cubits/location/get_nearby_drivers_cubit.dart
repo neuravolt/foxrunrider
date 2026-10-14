@@ -366,7 +366,7 @@ class DriverMapCubit extends Cubit<DriverMapState> {
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
     final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker');
-    final int? targetH = height ?? (isPin ? 42 : null);
+    final int? targetH = height ?? (isPin ? 30 : null);
     final int? targetW = targetH != null ? null : (width > 0 ? width : null);
 
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),

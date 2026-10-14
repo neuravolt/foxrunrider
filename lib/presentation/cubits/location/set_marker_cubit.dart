@@ -62,7 +62,7 @@ class MarkerCubit extends Cubit<MarkerState> {
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
     final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker') || path.contains('drop_pin') || path.contains('pin_user');
-    final int? targetH = height ?? (isPin ? 42 : null);
+    final int? targetH = height ?? (isPin ? 30 : null);
     final int? targetW = targetH != null ? null : (width > 0 ? width : null);
 
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
@@ -231,7 +231,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
     List<Map<String, dynamic>> drivers,
     String iconAsset,
   ) async {
-    final Uint8List iconBytes = await getBytesFromAsset(iconAsset, 110);
+    final Uint8List iconBytes = await getBytesFromAsset(iconAsset, 45);
     _markers.removeWhere((m) => m.markerId.value.startsWith('nearby_'));
 
     for (final driver in drivers) {
@@ -276,7 +276,7 @@ class UserMarkerCubit extends Cubit<UserMarkerState> {
   Future<Uint8List> getBytesFromAsset(String path, int width, {int? height}) async {
     ByteData data = await rootBundle.load(path);
     final bool isPin = path.contains('dropmarker') || path.contains('pickupmarker') || path.contains('drop_pin') || path.contains('pin_user');
-    final int? targetH = height ?? (isPin ? 42 : null);
+    final int? targetH = height ?? (isPin ? 30 : null);
     final int? targetW = targetH != null ? null : (width > 0 ? width : null);
 
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
