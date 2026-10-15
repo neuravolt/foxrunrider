@@ -79,6 +79,11 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   Timer? fetchTimer;
   StreamSubscription? _driverLocationSubscription;
   bool _isDriverCancelDialogShown = false;
+  int _lastDriverSeq = -1;
+  int _lastDriverCapturedAt = 0;
+  Timer? _predictionTimer;
+  double _lastDriverSpeed = 0.0;
+  String? _activeSubscribedRideId;
   @override
   void initState() {
     super.initState();
@@ -463,6 +468,10 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                       box.delete("rideId");
                       fetchTimer?.cancel();
                       locationUpdateTimer?.cancel();
+                      _predictionTimer?.cancel();
+                      _driverLocationSubscription?.cancel();
+                      _driverLocationSubscription = null;
+                      context.read<UserMarkerCubit>().removeMarker("driver_marker");
                       stopAutoDistanceTimer();
                       otp = "";
                       showDriverCancelledRideDialog(context);
@@ -475,6 +484,11 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                     } else if (status == "completed") {
                       stopAutoDistanceTimer();
                       fetchTimer?.cancel();
+                      locationUpdateTimer?.cancel();
+                      _predictionTimer?.cancel();
+                      _driverLocationSubscription?.cancel();
+                      _driverLocationSubscription = null;
+                      context.read<UserMarkerCubit>().removeMarker("driver_marker");
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -753,6 +767,13 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
   void _subscribeToDriverLocationRealtime(String targetRideId) {
     if (targetRideId.isEmpty) return;
+    if (_activeSubscribedRideId != targetRideId) {
+      _lastDriverSeq = -1;
+      _lastDriverCapturedAt = 0;
+      _activeSubscribedRideId = targetRideId;
+      locationUpdateTimer?.cancel();
+      _predictionTimer?.cancel();
+    }
     _driverLocationSubscription?.cancel();
     _driverLocationSubscription = FirebaseDatabase.instance
         .ref()
@@ -765,28 +786,89 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
       final locationData = event.snapshot.value as Map?;
       if (locationData == null) return;
 
-      final newLat = locationData['lat']?.toDouble();
-      final newLng = locationData['lng']?.toDouble();
+      final newLat = (locationData['lat'] as num?)?.toDouble();
+      final newLng = (locationData['lng'] as num?)?.toDouble();
+      if (newLat == null || newLng == null) return;
+
+      final int? seq = (locationData['seq'] as num?)?.toInt();
+      final int? capturedAt = (locationData['capturedAt'] as num?)?.toInt();
+      final double? speed = (locationData['speed'] as num?)?.toDouble();
+      final double? heading = (locationData['heading'] as num?)?.toDouble();
+      final double? accuracy = (locationData['accuracy'] as num?)?.toDouble();
+
+      // 1. Packet Sequence Validation: Drop out-of-order packets
+      if (seq != null) {
+        if (_lastDriverSeq != -1 && seq <= _lastDriverSeq) {
+          debugPrint("⚠️ [RIDER_TRACKING] Dropping out-of-order packet: seq=$seq <= lastSeq=$_lastDriverSeq");
+          return;
+        }
+        _lastDriverSeq = seq;
+      }
+
+      // 2. Timestamp Validation: Drop stale packets received late
+      if (capturedAt != null) {
+        if (_lastDriverCapturedAt != 0 && capturedAt < _lastDriverCapturedAt) {
+          debugPrint("⚠️ [RIDER_TRACKING] Dropping stale packet: capturedAt=$capturedAt < lastCapturedAt=$_lastDriverCapturedAt");
+          return;
+        }
+        _lastDriverCapturedAt = capturedAt;
+      }
+
+      // 3. Accuracy Gate: Ignore degraded GPS fixes (> 25m) if we already have a lock
+      if (accuracy != null && accuracy > 25.0 && driverLat != 0.0 && driverLng != 0.0) {
+        debugPrint("⚠️ [RIDER_TRACKING] Dropping degraded accuracy sample: ${accuracy}m");
+        return;
+      }
+
+      if (speed != null) _lastDriverSpeed = speed;
+
       updatedDriverLat = newLat;
       updatedDriverLng = newLng;
-      if (newLat == null || newLng == null) return;
-      if (newLat == driverLat && newLng == driverLng) return;
 
+      // Initial marker placement
       if (driverLat == 0.0 || driverLng == 0.0) {
         driverLat = newLat;
         driverLng = newLng;
+        if (heading != null && heading >= 0) {
+          _driverMarkerRotation = heading;
+        }
         _updateDriverMarkerPosition(newLat, newLng);
         return;
       }
 
-      // Filter out micro GPS jitter (< 1.0m) to keep vehicle rock steady when stopped
       final dist = metersBetween((lat: driverLat, lng: driverLng), (lat: newLat, lng: newLng));
-      if (dist < 1.0) return;
+
+      // 4. Idle Stability:
+      // When speed < 0.8 m/s AND dist < 2.5m, vehicle is stationary (at pickup / red light).
+      // Keep position and rotation 100% frozen; never jitter or rotate.
+      final bool isStationary = (_lastDriverSpeed < 0.8 && dist < 2.5) || dist < 1.0;
+      if (isStationary) {
+        _predictionTimer?.cancel();
+        return;
+      }
+
+      // 5. Large relocation / tunnel exit (> 80m): snap directly
+      if (dist > 80.0) {
+        locationUpdateTimer?.cancel();
+        _predictionTimer?.cancel();
+        driverLat = newLat;
+        driverLng = newLng;
+        if (heading != null && heading >= 0) {
+          _driverMarkerRotation = heading;
+        }
+        _updateDriverMarkerPosition(newLat, newLng);
+        return;
+      }
 
       final nextPosition = LatLng(newLat, newLng);
       final currentPosition = LatLng(driverLat, driverLng);
 
-      _animateMarkerToNextPosition(currentPosition, nextPosition);
+      _animateMarkerToNextPosition(
+        currentPosition,
+        nextPosition,
+        speed: speed ?? _lastDriverSpeed,
+        heading: heading,
+      );
     });
   }
 
@@ -807,19 +889,44 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
       if (locationData == null) return;
 
-      final newLat = locationData['lat']?.toDouble();
-      final newLng = locationData['lng']?.toDouble();
-      updatedDriverLat = newLat;
-      updatedDriverLng = newLng;
+      final newLat = (locationData['lat'] as num?)?.toDouble();
+      final newLng = (locationData['lng'] as num?)?.toDouble();
       if (newLat == null || newLng == null) return;
 
-      if (newLat == driverLat && newLng == driverLng) return;
+      updatedDriverLat = newLat;
+      updatedDriverLng = newLng;
+
+      final double? speed = (locationData['speed'] as num?)?.toDouble();
+      final double? heading = (locationData['heading'] as num?)?.toDouble();
+      final int? seq = (locationData['seq'] as num?)?.toInt();
+      final int? capturedAt = (locationData['capturedAt'] as num?)?.toInt();
+
+      if (seq != null) _lastDriverSeq = seq;
+      if (capturedAt != null) _lastDriverCapturedAt = capturedAt;
+      if (speed != null) _lastDriverSpeed = speed;
+
+      if (driverLat == 0.0 || driverLng == 0.0) {
+        driverLat = newLat;
+        driverLng = newLng;
+        if (heading != null && heading >= 0) {
+          _driverMarkerRotation = heading;
+        }
+        _updateDriverMarkerPosition(newLat, newLng);
+        return;
+      }
+
+      final dist = metersBetween((lat: driverLat, lng: driverLng), (lat: newLat, lng: newLng));
+      if (dist < 1.5) return;
 
       final nextPosition = LatLng(newLat, newLng);
       final currentPosition = LatLng(driverLat, driverLng);
 
-      _animateMarkerToNextPosition(currentPosition, nextPosition);
-      // ignore: empty_catches
+      _animateMarkerToNextPosition(
+        currentPosition,
+        nextPosition,
+        speed: speed ?? _lastDriverSpeed,
+        heading: heading,
+      );
     } catch (e) {}
   }
 
@@ -859,6 +966,8 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     fetchTimer?.cancel();
     locationUpdateTimer?.cancel();
     locationUpdateTimer = null;
+    _predictionTimer?.cancel();
+    _predictionTimer = null;
     fetchTimer = null;
     isCurrentScreenActive = true;
     super.dispose();
@@ -866,19 +975,22 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
   DateTime? _lastDriverFixAt;
 
-  // Glide the driver marker to its new position. The glide lasts about as long as the gap between
-  // location updates (it used to be a fixed 1 s, so the bike moved 1 s and then stood still until
-  // the next update), follows the route's bends when both fixes are on it (snapping GPS drift onto
-  // the road), and when it arrives trims the part of the route already driven.
-  void _animateMarkerToNextPosition(LatLng current, LatLng next) {
+  // Glide the driver marker to its new position. Target is the latest accepted GPS point.
+  // When interpolation finishes, a short bounded prediction (max 1.5s / 25m) runs if moving.
+  void _animateMarkerToNextPosition(
+    LatLng current,
+    LatLng next, {
+    double speed = 0.0,
+    double? heading,
+  }) {
     final now = DateTime.now();
     final gapMs = _lastDriverFixAt == null
         ? 1500
         : now.difference(_lastDriverFixAt!).inMilliseconds;
     _lastDriverFixAt = now;
-    final int animationDurationMs = gapMs.clamp(1000, 4500);
+    final int animationDurationMs = gapMs.clamp(800, 2500);
     const int frameMs = 33; // ~30 fps for butter-smooth motion
-    final int steps = (animationDurationMs / frameMs).round();
+    final int steps = (animationDurationMs / frameMs).round().clamp(1, 100);
 
     final routeCubit = context.read<GetPolylineCubit>();
     final List<RoutePoint> route = routeCubit.activeRoute
@@ -895,6 +1007,8 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
     int currentStep = 0;
     locationUpdateTimer?.cancel();
+    _predictionTimer?.cancel();
+
     locationUpdateTimer = Timer.periodic(
       const Duration(milliseconds: frameMs),
       (timer) {
@@ -903,18 +1017,19 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           return;
         }
         currentStep++;
-        final double t = currentStep / steps;
+        final double t = (currentStep / steps).clamp(0.0, 1.0);
         final RoutePoint p = pointAlongPath(path, t);
         final RoutePoint lookAhead =
             pointAlongPath(path, (t + 0.05).clamp(0.0, 1.0));
 
-        // Face the direction of travel along the path; ignore stationary GPS jitter (< 2.0m)
+        // Face travel direction along path; ignore stationary jitter (< 2.0m)
         if (moveDist >= 2.0 && metersBetween(p, lookAhead) > 0.4) {
-          final double targetBearing = _bearingBetween(
-              LatLng(p.lat, p.lng), LatLng(lookAhead.lat, lookAhead.lng));
+          final double targetBearing = (heading != null && heading >= 0 && speed >= 1.0)
+              ? heading
+              : _bearingBetween(LatLng(p.lat, p.lng), LatLng(lookAhead.lat, lookAhead.lng));
           final angleDiff =
               ((targetBearing - _driverMarkerRotation + 540) % 360) - 180;
-          final step = (angleDiff * 0.15).clamp(-10.0, 10.0);
+          final step = (angleDiff * 0.20).clamp(-12.0, 12.0);
           _driverMarkerRotation =
               (_driverMarkerRotation + step + 360) % 360;
         }
@@ -936,9 +1051,87 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                 .map((q) => LatLng(q.lat, q.lng))
                 .toList());
           }
+
+          // Bounded forward prediction (max 1.5s / 25m) only if confirmed moving
+          if (speed >= 1.0 && (rideStatus == "ongoing" || rideStatus == "accepted")) {
+            _startBoundedPrediction(
+              startPos: target,
+              speedMs: speed,
+              targetBearing: _driverMarkerRotation,
+              route: route,
+              currentSnap: targetSnap,
+            );
+          }
         }
       },
     );
+  }
+
+  void _startBoundedPrediction({
+    required RoutePoint startPos,
+    required double speedMs,
+    required double targetBearing,
+    required List<RoutePoint> route,
+    required RouteSnap? currentSnap,
+  }) {
+    _predictionTimer?.cancel();
+    if (speedMs < 1.0) return;
+
+    // Strict safety caps: Max 1.5 seconds extrapolation OR 25 meters total distance
+    const double kMaxPredictionDist = 25.0;
+    const int kMaxPredictionDurationMs = 1500;
+    const int frameMs = 33; // ~30 fps
+
+    int elapsedMs = 0;
+    double accumulatedDist = 0.0;
+    RoutePoint currentPos = startPos;
+
+    _predictionTimer = Timer.periodic(const Duration(milliseconds: frameMs), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      elapsedMs += frameMs;
+
+      // Smooth deceleration taper: 1.0 down to 0.0 as time approaches 1.5s
+      final double timeProgress = (elapsedMs / kMaxPredictionDurationMs).clamp(0.0, 1.0);
+      final double decelFactor = (1.0 - timeProgress);
+      final double frameSpeed = speedMs * decelFactor;
+      final double stepDist = frameSpeed * (frameMs / 1000.0);
+
+      accumulatedDist += stepDist;
+
+      // Stop condition: reach duration cap (1.5s), distance cap (25m), or speed near 0
+      if (elapsedMs >= kMaxPredictionDurationMs || accumulatedDist >= kMaxPredictionDist || stepDist < 0.01) {
+        timer.cancel();
+        _predictionTimer = null;
+        return;
+      }
+
+      RoutePoint nextPos;
+      if (route.length >= 2 && currentSnap != null) {
+        final remaining = routeAhead(route, currentSnap);
+        if (remaining.length >= 2) {
+          final totalRemaining = metersBetween(remaining.first, remaining.last);
+          final t = totalRemaining > 0 ? (accumulatedDist / totalRemaining).clamp(0.0, 1.0) : 1.0;
+          nextPos = pointAlongPath(remaining, t);
+        } else {
+          nextPos = pointAhead(currentPos, targetBearing, stepDist);
+        }
+      } else {
+        nextPos = pointAhead(currentPos, targetBearing, stepDist);
+      }
+
+      currentPos = nextPos;
+      driverLat = nextPos.lat;
+      driverLng = nextPos.lng;
+
+      context.read<UserMarkerCubit>().updateDriverMarkerFast(
+            LatLng(nextPos.lat, nextPos.lng),
+            _driverMarkerRotation,
+          );
+    });
   }
 
   double _bearingBetween(LatLng start, LatLng end) {
