@@ -779,6 +779,10 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
         return;
       }
 
+      // Filter out micro GPS jitter (< 1.0m) to keep vehicle rock steady when stopped
+      final dist = metersBetween((lat: driverLat, lng: driverLng), (lat: newLat, lng: newLng));
+      if (dist < 1.0) return;
+
       final nextPosition = LatLng(newLat, newLng);
       final currentPosition = LatLng(driverLat, driverLng);
 
@@ -869,11 +873,11 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   void _animateMarkerToNextPosition(LatLng current, LatLng next) {
     final now = DateTime.now();
     final gapMs = _lastDriverFixAt == null
-        ? 1000
+        ? 1500
         : now.difference(_lastDriverFixAt!).inMilliseconds;
     _lastDriverFixAt = now;
-    final int animationDurationMs = gapMs.clamp(1000, 6000);
-    const int frameMs = 50;
+    final int animationDurationMs = gapMs.clamp(1000, 4500);
+    const int frameMs = 33; // ~30 fps for butter-smooth motion
     final int steps = (animationDurationMs / frameMs).round();
 
     final routeCubit = context.read<GetPolylineCubit>();
@@ -904,14 +908,15 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
         final RoutePoint lookAhead =
             pointAlongPath(path, (t + 0.05).clamp(0.0, 1.0));
 
-        // Face the direction of travel along the path; ignore stationary GPS jitter (< 3.0m)
-        if (moveDist >= 3.0 && metersBetween(p, lookAhead) > 0.5) {
+        // Face the direction of travel along the path; ignore stationary GPS jitter (< 2.0m)
+        if (moveDist >= 2.0 && metersBetween(p, lookAhead) > 0.4) {
           final double targetBearing = _bearingBetween(
               LatLng(p.lat, p.lng), LatLng(lookAhead.lat, lookAhead.lng));
           final angleDiff =
               ((targetBearing - _driverMarkerRotation + 540) % 360) - 180;
+          final step = (angleDiff * 0.15).clamp(-10.0, 10.0);
           _driverMarkerRotation =
-              (_driverMarkerRotation + angleDiff * 0.25 + 360) % 360;
+              (_driverMarkerRotation + step + 360) % 360;
         }
 
         driverLat = p.lat;
@@ -923,6 +928,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
         if (currentStep >= steps) {
           timer.cancel();
+          locationUpdateTimer = null;
           driverLat = target.lat;
           driverLng = target.lng;
           if (targetSnap != null) {

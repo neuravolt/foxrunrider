@@ -82,7 +82,7 @@ List<RoutePoint> pathAlongRoute(
   final from = snapToRoute(rawFrom, route, maxMeters: maxMeters);
   final to = snapToRoute(rawTo, route, maxMeters: maxMeters);
   if (from == null || to == null || to.along < from.along || to.along - from.along > maxGap) {
-    return [rawFrom, to?.point ?? rawTo];
+    return [from?.point ?? rawFrom, to?.point ?? rawTo];
   }
   return [from.point, ...route.sublist(from.segment + 1, to.segment + 1), to.point];
 }
