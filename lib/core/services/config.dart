@@ -1,7 +1,7 @@
 class Config {
   // Must equal the +build number in pubspec.yaml. The admin's "minimum rider build"
   // setting is compared against this to force an update.
-  static const int appBuild = 27;
+  static const int appBuild = 47;
   static const String playStoreUrl =
       'https://play.google.com/store/apps/details?id=com.foxrunmobility.rider';
   static const googleKey = "AIzaSyA216snpD1X6FG_CPwwoo0qyeb097cmt1k";
