@@ -837,12 +837,12 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
         .toString()
         .toLowerCase();
 
-    if (vehicleName.contains('bike') || vehicleName.contains('motor')) {
-      return 'assets/images/BIKE.png';
+    if (vehicleName.contains('auto') || vehicleName.contains('rickshaw') || vehicleName.contains('tuk')) {
+      return 'assets/images/AUTO.png';
     }
 
-    if (vehicleName.contains('auto') || vehicleName.contains('rickshaw')) {
-      return 'assets/images/AUTO.png';
+    if (vehicleName.contains('bike') || vehicleName.contains('motor') || vehicleName.contains('moto') || vehicleName.contains('scooter')) {
+      return 'assets/images/BIKE.png';
     }
 
     return 'assets/images/CAB.png';
